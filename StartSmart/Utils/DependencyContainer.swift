@@ -90,6 +90,9 @@ struct Injected<T> {
 // MARK: - Content Generation Service (Combines AI + TTS)
 protocol ContentGenerationServiceProtocol {
     func generateAlarmContent(userIntent: String, tone: String, context: [String: String]) async throws -> AlarmContent
+    func generateContentForIntent(_ intent: Intent) async throws -> GeneratedContent
+    func processIntentQueue() async throws
+    func getGenerationStatus() -> ContentGenerationStatus
 }
 
 struct AlarmContent {
@@ -106,9 +109,56 @@ struct AlarmContentMetadata {
     let tone: String
 }
 
+// MARK: - Content Generation Status
+enum ContentGenerationStatus: Equatable {
+    case idle
+    case generating(intentId: UUID, progress: Double)
+    case completed(intentId: UUID)
+    case failed(intentId: UUID, error: Error)
+    
+    static func == (lhs: ContentGenerationStatus, rhs: ContentGenerationStatus) -> Bool {
+        switch (lhs, rhs) {
+        case (.idle, .idle):
+            return true
+        case (.generating(let lhsId, let lhsProgress), .generating(let rhsId, let rhsProgress)):
+            return lhsId == rhsId && lhsProgress == rhsProgress
+        case (.completed(let lhsId), .completed(let rhsId)):
+            return lhsId == rhsId
+        case (.failed(let lhsId, _), .failed(let rhsId, _)):
+            return lhsId == rhsId
+        default:
+            return false
+        }
+    }
+}
+
+// MARK: - Content Generation Errors
+enum ContentGenerationError: LocalizedError {
+    case generationFailed(UUID, Error)
+    case invalidIntent(UUID)
+    case serviceUnavailable
+    case rateLimitExceeded
+    
+    var errorDescription: String? {
+        switch self {
+        case .generationFailed(let intentId, let error):
+            return "Content generation failed for intent \(intentId.uuidString.prefix(8)): \(error.localizedDescription)"
+        case .invalidIntent(let intentId):
+            return "Invalid intent: \(intentId.uuidString.prefix(8))"
+        case .serviceUnavailable:
+            return "Content generation service is currently unavailable"
+        case .rateLimitExceeded:
+            return "Rate limit exceeded. Please try again later."
+        }
+    }
+}
+
 class ContentGenerationService: ContentGenerationServiceProtocol {
     private let aiService: Grok4ServiceProtocol
     private let ttsService: ElevenLabsServiceProtocol
+    private var currentStatus: ContentGenerationStatus = .idle
+    private var generationQueue: [UUID] = []
+    private let maxConcurrentGenerations = 3
     
     init(aiService: Grok4ServiceProtocol, ttsService: ElevenLabsServiceProtocol) {
         self.aiService = aiService
@@ -141,5 +191,78 @@ class ContentGenerationService: ContentGenerationServiceProtocol {
             audioData: audioData,
             metadata: metadata
         )
+    }
+    
+    func generateContentForIntent(_ intent: Intent) async throws -> GeneratedContent {
+        let startTime = Date()
+        
+        // Update status
+        currentStatus = .generating(intentId: intent.id, progress: 0.0)
+        
+        do {
+            // Step 1: Generate text content (60% of progress)
+            currentStatus = .generating(intentId: intent.id, progress: 0.2)
+            let textContent = try await aiService.generateContentForIntent(intent)
+            
+            currentStatus = .generating(intentId: intent.id, progress: 0.6)
+            
+            // Step 2: Generate audio content (30% of progress)
+            let voiceId = (ttsService as? ElevenLabsService)?.getVoiceId(for: intent.tone.rawValue) ?? "default"
+            let audioData = try await ttsService.generateSpeech(text: textContent, voiceId: voiceId)
+            
+            currentStatus = .generating(intentId: intent.id, progress: 0.9)
+            
+            // Step 3: Create metadata and finalize (10% of progress)
+            let generationTime = Date().timeIntervalSince(startTime)
+            let metadata = ContentMetadata(
+                textContent: textContent,
+                tone: intent.tone,
+                aiModel: "grok4",
+                ttsModel: "elevenlabs",
+                generationTime: generationTime
+            )
+            
+            let generatedContent = GeneratedContent(
+                textContent: textContent,
+                audioData: audioData,
+                voiceId: voiceId,
+                metadata: metadata
+            )
+            
+            currentStatus = .completed(intentId: intent.id)
+            
+            // Auto-reset status after delay
+            Task {
+                try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+                if case .completed = currentStatus {
+                    currentStatus = .idle
+                }
+            }
+            
+            return generatedContent
+            
+        } catch {
+            currentStatus = .failed(intentId: intent.id, error: error)
+            
+            // Auto-reset status after delay
+            Task {
+                try await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
+                if case .failed = currentStatus {
+                    currentStatus = .idle
+                }
+            }
+            
+            throw ContentGenerationError.generationFailed(intent.id, error)
+        }
+    }
+    
+    func processIntentQueue() async throws {
+        // This would be implemented to process multiple intents
+        // For now, it's a placeholder for future batch processing
+        currentStatus = .idle
+    }
+    
+    func getGenerationStatus() -> ContentGenerationStatus {
+        return currentStatus
     }
 }
