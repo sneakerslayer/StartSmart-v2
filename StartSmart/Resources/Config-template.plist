@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>GROK4_API_KEY</key>
+	<string>your_grok4_api_key_here</string>
+	<key>ELEVENLABS_API_KEY</key>
+	<string>your_elevenlabs_api_key_here</string>
+	<key>FIREBASE_CONFIG</key>
+	<dict>
+		<key>PROJECT_ID</key>
+		<string>your_firebase_project_id</string>
+		<key>APP_ID</key>
+		<string>your_firebase_app_id</string>
+	</dict>
+</dict>
+</plist>
