@@ -9,63 +9,114 @@ class AlarmViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var selectedAlarm: Alarm?
     
-    private let storageManager: StorageManager
+    private let alarmRepository: AlarmRepositoryProtocol
     private var cancellables = Set<AnyCancellable>()
     
     @Injected private var contentService: ContentGenerationServiceProtocol
     
-    init(storageManager: StorageManager = StorageManager()) {
-        self.storageManager = storageManager
+    init(alarmRepository: AlarmRepositoryProtocol = AlarmRepository()) {
+        self.alarmRepository = alarmRepository
+        setupSubscriptions()
         loadAlarms()
+    }
+    
+    // MARK: - Setup
+    private func setupSubscriptions() {
+        alarmRepository.alarms
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.alarms, on: self)
+            .store(in: &cancellables)
     }
     
     // MARK: - Public Methods
     func loadAlarms() {
-        isLoading = true
-        errorMessage = nil
-        
-        do {
-            alarms = try storageManager.loadAlarms()
-            isLoading = false
-        } catch {
-            errorMessage = "Failed to load alarms: \(error.localizedDescription)"
-            isLoading = false
+        Task {
+            do {
+                isLoading = true
+                errorMessage = nil
+                try await alarmRepository.loadAlarms()
+                isLoading = false
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to load alarms: \(error.localizedDescription)"
+                    isLoading = false
+                }
+            }
         }
     }
     
     func addAlarm(_ alarm: Alarm) {
-        alarms.append(alarm)
-        saveAlarms()
+        Task {
+            do {
+                try await alarmRepository.saveAlarm(alarm)
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to add alarm: \(error.localizedDescription)"
+                }
+            }
+        }
     }
     
     func updateAlarm(_ alarm: Alarm) {
-        if let index = alarms.firstIndex(where: { $0.id == alarm.id }) {
-            alarms[index] = alarm
-            saveAlarms()
+        Task {
+            do {
+                try await alarmRepository.updateAlarm(alarm)
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to update alarm: \(error.localizedDescription)"
+                }
+            }
         }
     }
     
     func deleteAlarm(_ alarm: Alarm) {
-        alarms.removeAll { $0.id == alarm.id }
-        saveAlarms()
+        Task {
+            do {
+                try await alarmRepository.deleteAlarm(alarm)
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to delete alarm: \(error.localizedDescription)"
+                }
+            }
+        }
     }
     
     func deleteAlarm(at indexSet: IndexSet) {
-        alarms.remove(atOffsets: indexSet)
-        saveAlarms()
+        Task {
+            do {
+                for index in indexSet {
+                    let alarm = alarms[index]
+                    try await alarmRepository.deleteAlarm(alarm)
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to delete alarm: \(error.localizedDescription)"
+                }
+            }
+        }
     }
     
     func toggleAlarm(_ alarm: Alarm) {
-        if let index = alarms.firstIndex(where: { $0.id == alarm.id }) {
-            alarms[index].toggle()
-            saveAlarms()
+        Task {
+            do {
+                try await alarmRepository.toggleAlarm(withId: alarm.id)
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to toggle alarm: \(error.localizedDescription)"
+                }
+            }
         }
     }
     
     func snoozeAlarm(_ alarm: Alarm) {
-        if let index = alarms.firstIndex(where: { $0.id == alarm.id }) {
-            alarms[index].snooze()
-            saveAlarms()
+        Task {
+            do {
+                try await alarmRepository.snoozeAlarm(withId: alarm.id)
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to snooze alarm: \(error.localizedDescription)"
+                }
+            }
         }
     }
     
@@ -109,12 +160,42 @@ class AlarmViewModel: ObservableObject {
         !enabledAlarms.isEmpty
     }
     
-    // MARK: - Private Methods
-    private func saveAlarms() {
+    // MARK: - Async Computed Properties
+    func getEnabledAlarms() async -> [Alarm] {
+        return await alarmRepository.getEnabledAlarms()
+    }
+    
+    func getNextAlarm() async -> Alarm? {
+        return await alarmRepository.getNextAlarm()
+    }
+    
+    // MARK: - Advanced Operations
+    func importAlarms(_ alarms: [Alarm]) async {
         do {
-            try storageManager.saveAlarms(alarms)
+            if let repository = alarmRepository as? AlarmRepository {
+                try await repository.importAlarms(alarms)
+            }
         } catch {
-            errorMessage = "Failed to save alarms: \(error.localizedDescription)"
+            await MainActor.run {
+                errorMessage = "Failed to import alarms: \(error.localizedDescription)"
+            }
+        }
+    }
+    
+    func exportAlarms() async -> [Alarm] {
+        if let repository = alarmRepository as? AlarmRepository {
+            return await repository.exportAlarms()
+        }
+        return alarms
+    }
+    
+    func deleteAllAlarms() async {
+        do {
+            try await alarmRepository.deleteAllAlarms()
+        } catch {
+            await MainActor.run {
+                errorMessage = "Failed to delete all alarms: \(error.localizedDescription)"
+            }
         }
     }
     
