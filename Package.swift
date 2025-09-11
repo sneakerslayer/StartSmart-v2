@@ -30,6 +30,9 @@ let package = Package(
         
         // Audio processing for TTS and playback
         .package(url: "https://github.com/AudioKit/AudioKit", from: "5.6.0"),
+        
+        // Google Sign In
+        .package(url: "https://github.com/google/GoogleSignIn-iOS", from: "7.0.0"),
     ],
     targets: [
         .target(
@@ -43,6 +46,7 @@ let package = Package(
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
                 .product(name: "KeychainSwift", package: "keychain-swift"),
                 .product(name: "AudioKit", package: "AudioKit"),
+                .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS"),
             ]
         ),
         .testTarget(

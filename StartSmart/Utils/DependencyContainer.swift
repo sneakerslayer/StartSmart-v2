@@ -13,6 +13,15 @@ class DependencyContainer: DependencyContainerProtocol {
     private var dependencies: [String: Any] = [:]
     private let queue = DispatchQueue(label: "dependency.container", attributes: .concurrent)
     
+    // MARK: - Convenience Properties
+    var firebaseService: FirebaseServiceProtocol {
+        resolve()
+    }
+    
+    var authenticationService: AuthenticationServiceProtocol {
+        resolve()
+    }
+    
     private init() {
         setupDefaultDependencies()
     }
@@ -35,6 +44,14 @@ class DependencyContainer: DependencyContainerProtocol {
     }
     
     private func setupDefaultDependencies() {
+        // Register Firebase Service
+        let firebaseService = FirebaseService()
+        register(firebaseService, for: FirebaseServiceProtocol.self)
+        
+        // Register Authentication Service
+        let authService = AuthenticationService()
+        register(authService, for: AuthenticationServiceProtocol.self)
+        
         // Register AI Content Service
         let grok4Service = Grok4Service(apiKey: ServiceConfiguration.APIKeys.grok4)
         register(grok4Service, for: Grok4ServiceProtocol.self)
@@ -49,6 +66,10 @@ class DependencyContainer: DependencyContainerProtocol {
             ttsService: elevenLabsService
         )
         register(contentService, for: ContentGenerationServiceProtocol.self)
+        
+        // Register Local Storage Service
+        let localStorage = LocalStorage()
+        register(localStorage, for: LocalStorageProtocol.self)
     }
 }
 
