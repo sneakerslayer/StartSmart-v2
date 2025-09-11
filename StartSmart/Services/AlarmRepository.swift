@@ -17,6 +17,7 @@ protocol AlarmRepositoryProtocol {
     func getNextAlarm() async -> Alarm?
     func toggleAlarm(withId id: UUID) async throws
     func snoozeAlarm(withId id: UUID) async throws
+    func dismissAlarm(withId id: UUID) async throws
     func markAlarmAsTriggered(withId id: UUID) async throws
 }
 
@@ -240,6 +241,26 @@ final class AlarmRepository: AlarmRepositoryProtocol, ObservableObject {
         
         // Note: Snooze notification is handled by NotificationDelegate
         // This just updates the alarm state
+    }
+    
+    func dismissAlarm(withId id: UUID) async throws {
+        guard let index = _alarms.firstIndex(where: { $0.id == id }) else {
+            let error = AlarmRepositoryError.alarmNotFound
+            lastError = error
+            throw error
+        }
+        
+        var alarm = _alarms[index]
+        alarm.markTriggered()
+        alarm.resetSnooze() // Reset snooze count when dismissed
+        _alarms[index] = alarm
+        
+        try await persistAlarms()
+        
+        // If it's a one-time alarm, it's now disabled - remove notification
+        if !alarm.isEnabled {
+            await removeNotification(for: alarm)
+        }
     }
     
     func markAlarmAsTriggered(withId id: UUID) async throws {

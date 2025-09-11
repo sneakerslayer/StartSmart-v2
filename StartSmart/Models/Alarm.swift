@@ -1,5 +1,24 @@
 import Foundation
 
+// MARK: - Alarm Generated Content
+struct AlarmGeneratedContent: Codable, Equatable {
+    let textContent: String
+    let audioFilePath: String
+    let voiceId: String
+    let generatedAt: Date
+    let duration: TimeInterval?
+    let intentId: String?
+    
+    var audioURL: URL {
+        URL(fileURLWithPath: audioFilePath)
+    }
+    
+    var isExpired: Bool {
+        // Consider content expired after 7 days
+        Date().timeIntervalSince(generatedAt) > 7 * 24 * 60 * 60
+    }
+}
+
 // MARK: - Alarm Model
 struct Alarm: Identifiable, Codable, Equatable {
     let id: UUID
@@ -16,6 +35,10 @@ struct Alarm: Identifiable, Codable, Equatable {
     var createdAt: Date
     var updatedAt: Date
     
+    // MARK: - Custom Audio Content
+    var customAudioPath: String?
+    var generatedContent: AlarmGeneratedContent?
+    
     // MARK: - Initialization
     init(
         id: UUID = UUID(),
@@ -26,7 +49,9 @@ struct Alarm: Identifiable, Codable, Equatable {
         tone: AlarmTone = .energetic,
         snoozeEnabled: Bool = true,
         snoozeDuration: TimeInterval = 300, // 5 minutes
-        maxSnoozeCount: Int = 3
+        maxSnoozeCount: Int = 3,
+        customAudioPath: String? = nil,
+        generatedContent: AlarmGeneratedContent? = nil
     ) {
         self.id = id
         self.time = time
@@ -41,6 +66,8 @@ struct Alarm: Identifiable, Codable, Equatable {
         self.lastTriggered = nil
         self.createdAt = Date()
         self.updatedAt = Date()
+        self.customAudioPath = customAudioPath
+        self.generatedContent = generatedContent
     }
     
     // MARK: - Computed Properties
@@ -90,6 +117,23 @@ struct Alarm: Identifiable, Codable, Equatable {
     
     var canSnooze: Bool {
         snoozeEnabled && currentSnoozeCount < maxSnoozeCount
+    }
+    
+    var hasCustomAudio: Bool {
+        customAudioPath != nil || generatedContent != nil
+    }
+    
+    var needsAudioGeneration: Bool {
+        generatedContent == nil || (generatedContent?.isExpired == true)
+    }
+    
+    var audioFileURL: URL? {
+        if let customPath = customAudioPath {
+            return URL(fileURLWithPath: customPath)
+        } else if let generated = generatedContent {
+            return generated.audioURL
+        }
+        return nil
     }
     
     // MARK: - Helper Methods
@@ -144,6 +188,18 @@ struct Alarm: Identifiable, Codable, Equatable {
     
     mutating func updateTime(_ newTime: Date) {
         time = newTime
+        updatedAt = Date()
+    }
+    
+    mutating func setGeneratedContent(_ content: AlarmGeneratedContent) {
+        generatedContent = content
+        customAudioPath = content.audioFilePath
+        updatedAt = Date()
+    }
+    
+    mutating func clearGeneratedContent() {
+        generatedContent = nil
+        customAudioPath = nil
         updatedAt = Date()
     }
 }

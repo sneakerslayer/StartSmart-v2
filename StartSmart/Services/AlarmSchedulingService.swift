@@ -126,6 +126,7 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
     // MARK: - Dependencies
     private let notificationService: NotificationServiceProtocol
     private let alarmRepository: AlarmRepositoryProtocol
+    private let alarmAudioService: AlarmAudioServiceProtocol?
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Configuration
@@ -141,12 +142,14 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
     init(
         notificationService: NotificationServiceProtocol,
         alarmRepository: AlarmRepositoryProtocol,
+        alarmAudioService: AlarmAudioServiceProtocol? = nil,
         maxScheduledNotifications: Int = 64, // iOS system limit
         futureSchedulingLimitDays: Int = 365,
         timezoneMonitoringEnabled: Bool = true
     ) {
         self.notificationService = notificationService
         self.alarmRepository = alarmRepository
+        self.alarmAudioService = alarmAudioService
         self.maxScheduledNotifications = maxScheduledNotifications
         self.futureSchedulingLimitDays = futureSchedulingLimitDays
         self.timezoneMonitoringEnabled = timezoneMonitoringEnabled
@@ -168,14 +171,27 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
             throw error
         }
         
+        // Ensure audio content is generated for the alarm
+        var alarmWithAudio = alarm
+        if let audioService = alarmAudioService, alarm.needsAudioGeneration {
+            do {
+                alarmWithAudio = try await audioService.ensureAudioForAlarm(alarm)
+                // Update the alarm in repository with generated content
+                try await alarmRepository.updateAlarm(alarmWithAudio)
+            } catch {
+                print("Warning: Failed to generate audio for alarm \(alarm.id): \(error)")
+                // Continue with default audio - don't fail the entire scheduling
+            }
+        }
+        
         // Remove existing notifications for this alarm
-        await removeScheduledAlarm(alarm)
+        await removeScheduledAlarm(alarmWithAudio)
         
         // Schedule new notifications
-        if alarm.isRepeating {
-            try await scheduleRepeatingAlarm(alarm)
+        if alarmWithAudio.isRepeating {
+            try await scheduleRepeatingAlarm(alarmWithAudio)
         } else {
-            try await scheduleOneTimeAlarm(alarm)
+            try await scheduleOneTimeAlarm(alarmWithAudio)
         }
         
         // Update scheduled alarms list

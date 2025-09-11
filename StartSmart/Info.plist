@@ -40,6 +40,8 @@
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>StartSmart needs microphone access for voice alarm dismissal and speech recognition features.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>StartSmart uses speech recognition to enable voice alarm dismissal. You can say commands like "I'm awake" to turn off alarms.</string>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>StartSmart needs notification permission to deliver your personalized wake-up alarms.</string>
 	<key>UIBackgroundModes</key>

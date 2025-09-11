@@ -120,6 +120,30 @@ class AlarmViewModel: ObservableObject {
         }
     }
     
+    func snoozeAlarm(_ alarmId: UUID) {
+        Task {
+            do {
+                try await alarmRepository.snoozeAlarm(withId: alarmId)
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to snooze alarm: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+    
+    func dismissAlarm(_ alarmId: UUID) {
+        Task {
+            do {
+                try await alarmRepository.dismissAlarm(withId: alarmId)
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to dismiss alarm: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+    
     func createQuickAlarm(time: Date, label: String = "Wake up") -> Alarm {
         let alarm = Alarm(time: time, label: label)
         addAlarm(alarm)

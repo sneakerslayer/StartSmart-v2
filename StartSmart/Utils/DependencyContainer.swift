@@ -22,6 +22,26 @@ class DependencyContainer: DependencyContainerProtocol {
         resolve()
     }
     
+    var audioCacheService: AudioCacheServiceProtocol {
+        resolve()
+    }
+    
+    var audioPlaybackService: AudioPlaybackServiceProtocol {
+        resolve()
+    }
+    
+    var audioPipelineService: AudioPipelineServiceProtocol {
+        resolve()
+    }
+    
+    var alarmAudioService: AlarmAudioServiceProtocol {
+        resolve()
+    }
+    
+    var speechRecognitionService: SpeechRecognitionServiceProtocol {
+        resolve()
+    }
+    
     private init() {
         setupDefaultDependencies()
     }
@@ -70,6 +90,46 @@ class DependencyContainer: DependencyContainerProtocol {
         // Register Local Storage Service
         let localStorage = LocalStorage()
         register(localStorage, for: LocalStorageProtocol.self)
+        
+        // MARK: - Phase 5 Audio Services Integration
+        
+        // Register Audio Cache Service
+        do {
+            let audioCacheService = try AudioCacheService()
+            register(audioCacheService, for: AudioCacheServiceProtocol.self)
+            
+            // Register Audio Playback Service
+            let audioPlaybackService = AudioPlaybackService()
+            register(audioPlaybackService, for: AudioPlaybackServiceProtocol.self)
+            
+            // Register Audio Pipeline Service (depends on cache service)
+            let audioPipelineService = AudioPipelineService(
+                aiService: grok4Service,
+                ttsService: elevenLabsService,
+                cacheService: audioCacheService
+            )
+            register(audioPipelineService, for: AudioPipelineServiceProtocol.self)
+            
+            // Register Alarm Audio Service (orchestrates audio generation for alarms)
+            let alarmAudioService = AlarmAudioService(
+                audioPipelineService: audioPipelineService,
+                intentRepository: IntentRepository(localStorage: localStorage),
+                alarmRepository: AlarmRepository(
+                    localStorage: localStorage,
+                    notificationService: NotificationService()
+                )
+            )
+            register(alarmAudioService, for: AlarmAudioServiceProtocol.self)
+            
+            // Register Speech Recognition Service
+            let speechRecognitionService = SpeechRecognitionService()
+            register(speechRecognitionService, for: SpeechRecognitionServiceProtocol.self)
+            
+        } catch {
+            print("Warning: Failed to initialize AudioCacheService: \(error)")
+            print("Audio pipeline services will not be available.")
+            // In a production app, you might want to register mock implementations
+        }
     }
 }
 

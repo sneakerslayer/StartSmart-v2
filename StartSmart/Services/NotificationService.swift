@@ -181,8 +181,20 @@ final class NotificationService: NotificationServiceProtocol, ObservableObject {
         let content = UNMutableNotificationContent()
         content.title = "StartSmart Alarm"
         content.body = alarm.label.isEmpty ? "Time to wake up!" : alarm.label
-        content.sound = .default
+        
+        // Set audio - use custom audio if available, otherwise default
+        if let audioURL = alarm.audioFileURL, FileManager.default.fileExists(atPath: audioURL.path) {
+            // For iOS notifications, we need to reference the audio file by name only
+            // The file should be accessible in the app's main bundle or Documents directory
+            let soundName = audioURL.lastPathComponent
+            content.sound = UNNotificationSound(named: UNNotificationSoundName(soundName))
+        } else {
+            // Fallback to default critical alarm sound
+            content.sound = .defaultCritical
+        }
+        
         content.categoryIdentifier = "ALARM_CATEGORY"
+        content.interruptionLevel = .critical // Ensures alarm sounds even in Do Not Disturb
         
         // Add custom data for alarm handling
         content.userInfo = [
@@ -190,7 +202,9 @@ final class NotificationService: NotificationServiceProtocol, ObservableObject {
             "alarmTone": alarm.tone.rawValue,
             "canSnooze": alarm.snoozeEnabled,
             "maxSnoozeCount": alarm.maxSnoozeCount,
-            "snoozeDuration": alarm.snoozeDuration
+            "snoozeDuration": alarm.snoozeDuration,
+            "hasCustomAudio": alarm.hasCustomAudio,
+            "audioFilePath": alarm.audioFileURL?.path ?? ""
         ]
         
         return content
