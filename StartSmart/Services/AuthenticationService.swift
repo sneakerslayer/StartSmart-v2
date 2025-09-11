@@ -75,7 +75,7 @@ class AuthenticationService: NSObject, AuthenticationServiceProtocol, Observable
         }
     }
     
-    private func updateAuthenticationState() async {
+    func updateAuthenticationState() async {
         isAuthenticated = firebaseService.isUserSignedIn
         
         if let firebaseUser = firebaseService.currentUser {
