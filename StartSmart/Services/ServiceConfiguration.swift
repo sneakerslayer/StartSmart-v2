@@ -26,6 +26,16 @@ struct ServiceConfiguration {
             
             return ProcessInfo.processInfo.environment["ELEVENLABS_API_KEY"] ?? ""
         }()
+        
+        static let revenueCat: String = {
+            if let path = Bundle.main.path(forResource: "Config", ofType: "plist"),
+               let config = NSDictionary(contentsOfFile: path),
+               let key = config["REVENUECAT_API_KEY"] as? String {
+                return key
+            }
+            
+            return ProcessInfo.processInfo.environment["REVENUECAT_API_KEY"] ?? "appl_placeholder_key"
+        }()
     }
     
     // MARK: - Service URLs
@@ -69,6 +79,10 @@ struct ServiceConfiguration {
             issues.append("ElevenLabs API key is not configured")
         }
         
+        if APIKeys.revenueCat.isEmpty || APIKeys.revenueCat == "appl_placeholder_key" {
+            issues.append("RevenueCat API key is not configured")
+        }
+        
         return issues
     }
     
@@ -77,6 +91,7 @@ struct ServiceConfiguration {
         return [
             "grok4_configured": !APIKeys.grok4.isEmpty,
             "elevenlabs_configured": !APIKeys.elevenLabs.isEmpty,
+            "revenuecat_configured": !APIKeys.revenueCat.isEmpty && APIKeys.revenueCat != "appl_placeholder_key",
             "offline_mode": FeatureFlags.enableOfflineMode,
             "content_caching": FeatureFlags.enableContentCaching,
             "max_tokens": ContentSettings.maxTokens,

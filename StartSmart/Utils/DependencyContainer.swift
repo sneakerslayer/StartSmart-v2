@@ -144,6 +144,19 @@ class DependencyContainer: DependencyContainerProtocol {
         // Register Social Sharing Service
         let socialSharingService = SocialSharingService(storage: localStorage)
         register(socialSharingService, for: SocialSharingServiceProtocol.self)
+        
+        // MARK: - Phase 8 Subscription Services
+        
+        // Register Subscription Service
+        let subscriptionService = SubscriptionService()
+        register(subscriptionService, for: SubscriptionServiceProtocol.self)
+        
+        // Register Subscription Manager
+        let subscriptionManager = SubscriptionManager(
+            subscriptionService: subscriptionService,
+            localStorage: localStorage
+        )
+        register(subscriptionManager, for: SubscriptionManagerProtocol.self)
     }
 }
 
@@ -160,6 +173,15 @@ extension DependencyContainer {
     
     // Existing services (for easy access in Phase 7 integration)
     var userViewModel: UserViewModel {
+        resolve()
+    }
+    
+    // Phase 8 Services
+    var subscriptionService: SubscriptionServiceProtocol {
+        resolve()
+    }
+    
+    var subscriptionManager: SubscriptionManagerProtocol {
         resolve()
     }
 }

@@ -33,6 +33,9 @@ let package = Package(
         
         // Google Sign In
         .package(url: "https://github.com/google/GoogleSignIn-iOS", from: "7.0.0"),
+        
+        // RevenueCat for subscription management
+        .package(url: "https://github.com/RevenueCat/purchases-ios", from: "4.31.0"),
     ],
     targets: [
         .target(
@@ -47,6 +50,7 @@ let package = Package(
                 .product(name: "KeychainSwift", package: "keychain-swift"),
                 .product(name: "AudioKit", package: "AudioKit"),
                 .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS"),
+                .product(name: "RevenueCat", package: "purchases-ios"),
             ]
         ),
         .testTarget(

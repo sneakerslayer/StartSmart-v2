@@ -3,7 +3,9 @@ import SwiftUI
 // MARK: - Alarm Form View
 struct AlarmFormView: View {
     @StateObject private var formViewModel: AlarmFormViewModel
+    @StateObject private var subscriptionManager = DependencyContainer.shared.resolve() as SubscriptionManager
     @Environment(\.dismiss) private var dismiss
+    @State private var showPaywall = false
     
     let onSave: (Alarm) -> Void
     
@@ -21,6 +23,11 @@ struct AlarmFormView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
+                    // Subscription Status Banner
+                    if !subscriptionManager.currentSubscriptionStatus.isPremium {
+                        AlarmCountBadge()
+                    }
+                    
                     // Time Picker Section
                     timePickerSection
                     
@@ -31,7 +38,12 @@ struct AlarmFormView: View {
                     repeatDaysSection
                     
                     // Tone Selection Section
-                    toneSelectionSection
+                    VoiceSelectionGate(
+                        selectedVoice: formViewModel.tone,
+                        onVoiceChange: { tone in
+                            formViewModel.tone = tone
+                        }
+                    )
                     
                     // Snooze Settings Section
                     snoozeSettingsSection
@@ -58,6 +70,14 @@ struct AlarmFormView: View {
                 }
             }
         }
+        .presentPaywall(
+            isPresented: $showPaywall,
+            configuration: subscriptionManager.getOptimalPaywallConfiguration(
+                for: .unlimitedAlarms,
+                source: "alarm_form"
+            ),
+            source: "alarm_form"
+        )
         .alert("Validation Error", isPresented: .constant(formViewModel.errorMessage != nil)) {
             Button("OK") {
                 formViewModel.errorMessage = nil
@@ -240,8 +260,20 @@ struct AlarmFormView: View {
     
     // MARK: - Helper Methods
     private func saveAlarm() {
+        // Check if user can create more alarms
+        if !formViewModel.isEditing && !subscriptionManager.canCreateAlarm() {
+            showPaywall = true
+            return
+        }
+        
         if formViewModel.validate() {
             let alarm = formViewModel.createAlarm()
+            
+            // Increment alarm count for new alarms
+            if !formViewModel.isEditing {
+                subscriptionManager.incrementAlarmCount()
+            }
+            
             onSave(alarm)
         }
     }

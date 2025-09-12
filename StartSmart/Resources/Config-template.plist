@@ -6,6 +6,8 @@
 	<string>your_grok4_api_key_here</string>
 	<key>ELEVENLABS_API_KEY</key>
 	<string>your_elevenlabs_api_key_here</string>
+	<key>REVENUECAT_API_KEY</key>
+	<string>your_revenuecat_api_key_here</string>
 	<key>FIREBASE_CONFIG</key>
 	<dict>
 		<key>PROJECT_ID</key>
