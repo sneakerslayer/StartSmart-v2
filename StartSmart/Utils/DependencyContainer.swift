@@ -130,6 +130,37 @@ class DependencyContainer: DependencyContainerProtocol {
             print("Audio pipeline services will not be available.")
             // In a production app, you might want to register mock implementations
         }
+        
+        // MARK: - Phase 7 Gamification Services
+        
+        // Register User View Model
+        let userViewModel = UserViewModel()
+        register(userViewModel, for: UserViewModel.self)
+        
+        // Register Streak Tracking Service
+        let streakTrackingService = StreakTrackingService(storage: localStorage)
+        register(streakTrackingService, for: StreakTrackingServiceProtocol.self)
+        
+        // Register Social Sharing Service
+        let socialSharingService = SocialSharingService(storage: localStorage)
+        register(socialSharingService, for: SocialSharingServiceProtocol.self)
+    }
+}
+
+// MARK: - Convenience Properties
+extension DependencyContainer {
+    // Phase 7 Services
+    var streakTrackingService: StreakTrackingServiceProtocol {
+        resolve()
+    }
+    
+    var socialSharingService: SocialSharingServiceProtocol {
+        resolve()
+    }
+    
+    // Existing services (for easy access in Phase 7 integration)
+    var userViewModel: UserViewModel {
+        resolve()
     }
 }
 

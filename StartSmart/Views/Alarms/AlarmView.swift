@@ -402,7 +402,7 @@ struct AlarmView: View {
     }
     
     private func handleStop() {
-        viewModel.dismissAlarm(alarm.id)
+        viewModel.dismissAlarm(alarm.id, method: .button)
         presentationMode.wrappedValue.dismiss()
     }
     
@@ -411,7 +411,7 @@ struct AlarmView: View {
         pulseScale = 1.2
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            viewModel.dismissAlarm(alarm.id)
+            viewModel.dismissAlarm(alarm.id, method: .voice)
             presentationMode.wrappedValue.dismiss()
         }
     }

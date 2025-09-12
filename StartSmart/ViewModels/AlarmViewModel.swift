@@ -13,6 +13,8 @@ class AlarmViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     @Injected private var contentService: ContentGenerationServiceProtocol
+    @Injected private var userViewModel: UserViewModel
+    @Injected private var streakService: StreakTrackingServiceProtocol
     
     init(alarmRepository: AlarmRepositoryProtocol = AlarmRepository()) {
         self.alarmRepository = alarmRepository
@@ -49,6 +51,10 @@ class AlarmViewModel: ObservableObject {
         Task {
             do {
                 try await alarmRepository.saveAlarm(alarm)
+                
+                // Record alarm creation for statistics
+                userViewModel.recordAlarmCreated()
+                
             } catch {
                 await MainActor.run {
                     errorMessage = "Failed to add alarm: \(error.localizedDescription)"
@@ -124,6 +130,19 @@ class AlarmViewModel: ObservableObject {
         Task {
             do {
                 try await alarmRepository.snoozeAlarm(withId: alarmId)
+                
+                // Record snooze for statistics
+                userViewModel.recordSnooze()
+                
+                // Get current snooze count for tracking
+                if let alarm = alarms.first(where: { $0.id == alarmId }) {
+                    await streakService.recordAlarmSnooze(
+                        alarmId: alarmId,
+                        count: alarm.currentSnoozeCount,
+                        time: Date()
+                    )
+                }
+                
             } catch {
                 await MainActor.run {
                     errorMessage = "Failed to snooze alarm: \(error.localizedDescription)"
@@ -132,10 +151,21 @@ class AlarmViewModel: ObservableObject {
         }
     }
     
-    func dismissAlarm(_ alarmId: UUID) {
+    func dismissAlarm(_ alarmId: UUID, method: StreakEvent.DismissMethod = .button) {
         Task {
             do {
                 try await alarmRepository.dismissAlarm(withId: alarmId)
+                
+                // Record successful wake-up for statistics
+                userViewModel.recordSuccessfulWakeUp()
+                
+                // Record streak tracking event
+                await streakService.recordAlarmDismiss(
+                    alarmId: alarmId,
+                    method: method,
+                    time: Date()
+                )
+                
             } catch {
                 await MainActor.run {
                     errorMessage = "Failed to dismiss alarm: \(error.localizedDescription)"
@@ -163,6 +193,12 @@ class AlarmViewModel: ObservableObject {
         )
         addAlarm(newAlarm)
         return newAlarm
+    }
+    
+    func recordAlarmMiss(_ alarmId: UUID) {
+        Task {
+            await streakService.recordAlarmMiss(alarmId: alarmId, time: Date())
+        }
     }
     
     // MARK: - Computed Properties

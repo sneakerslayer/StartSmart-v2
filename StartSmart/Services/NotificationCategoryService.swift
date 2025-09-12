@@ -303,7 +303,7 @@ final class EnhancedNotificationDelegate: NSObject, UNUserNotificationCenterDele
             NotificationCenter.default.post(
                 name: .alarmDismissed,
                 object: nil,
-                userInfo: ["alarmId": alarmId.uuidString, "method": "dismiss"]
+                userInfo: ["alarmId": alarmId.uuidString, "method": "notification"]
             )
         }
     }
