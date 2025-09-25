@@ -3,7 +3,7 @@ import Combine
 
 // MARK: - Streak View
 struct StreakView: View {
-    @StateObject private var streakService = DependencyContainer.shared.resolve(StreakTrackingServiceProtocol.self) as! StreakTrackingService
+    @StateObject private var streakService = DependencyContainer.shared.streakTrackingService as! StreakTrackingService
     @State private var enhancedStats = EnhancedUserStats()
     @State private var newAchievements: [StreakAchievement] = []
     @State private var showingAchievementDetails = false

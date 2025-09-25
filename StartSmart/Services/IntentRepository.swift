@@ -16,6 +16,13 @@ protocol IntentRepositoryProtocol {
     func deleteUsedIntents() async throws
     func exportIntents() async throws -> Data
     func importIntents(_ data: Data) async throws
+    
+    // Content Generation Methods
+    func markIntentAsGenerating(_ id: UUID) async throws
+    func setGeneratedContent(for id: UUID, content: String) async throws
+    func markIntentAsFailed(_ id: UUID, error: String) async throws
+    func getIntentsNeedingGeneration() async throws -> [Intent]
+    func getIntentStatistics() async throws -> IntentStatistics
 }
 
 // MARK: - Intent Repository
@@ -167,12 +174,25 @@ class IntentRepository: IntentRepositoryProtocol {
         try await updateIntent(intent)
     }
     
-    func setGeneratedContent(for intentId: UUID, content: GeneratedContent) async throws {
+    func setGeneratedContent(for intentId: UUID, content: String) async throws {
         guard var intent = try await getIntent(by: intentId) else {
             throw IntentRepositoryError.intentNotFound
         }
         
-        intent.setGeneratedContent(content)
+        let generatedContent = GeneratedContent(
+            textContent: content,
+            audioURL: nil,
+            audioData: nil,
+            voiceId: "default",
+            metadata: ContentMetadata(
+                textContent: content,
+                tone: intent.tone,
+                aiModel: "grok4",
+                ttsModel: "elevenlabs",
+                generationTime: 0.0
+            )
+        )
+        intent.setGeneratedContent(generatedContent)
         try await updateIntent(intent)
     }
     

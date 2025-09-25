@@ -8,9 +8,12 @@
 import Foundation
 import AuthenticationServices
 import GoogleSignIn
-import Firebase
 import FirebaseAuth
 import Combine
+
+extension Notification.Name {
+    static let authStateDidChange = Notification.Name("authStateDidChange")
+}
 import CryptoKit
 
 // MARK: - Authentication Service Protocol
@@ -18,10 +21,10 @@ import CryptoKit
 /// Protocol defining authentication operations
 protocol AuthenticationServiceProtocol {
     var isAuthenticated: Bool { get }
-    var currentUser: UserProfile? { get }
+    var currentUser: User? { get }
     
-    func signInWithApple() async throws -> UserProfile
-    func signInWithGoogle() async throws -> UserProfile
+    func signInWithApple() async throws -> User
+    func signInWithGoogle() async throws -> User
     func signOut() async throws
     func deleteAccount() async throws
 }
@@ -30,12 +33,12 @@ protocol AuthenticationServiceProtocol {
 
 /// Service managing user authentication flows
 @MainActor
-class AuthenticationService: NSObject, AuthenticationServiceProtocol, ObservableObject {
+class AuthenticationService: NSObject, @preconcurrency AuthenticationServiceProtocol, ObservableObject {
     
     // MARK: - Published Properties
     
     @Published var isAuthenticated: Bool = false
-    @Published var currentUser: UserProfile?
+    @Published var currentUser: User?
     @Published var authenticationState: AuthenticationState = .signedOut
     
     // MARK: - Private Properties
@@ -57,17 +60,21 @@ class AuthenticationService: NSObject, AuthenticationServiceProtocol, Observable
     
     private func setupAuthenticationStateListener() {
         // Listen to Firebase auth state changes
-        Publishers.CombineLatest(
-            firebaseService.objectWillChange,
-            userViewModel.objectWillChange
-        )
-        .receive(on: DispatchQueue.main)
-        .sink { [weak self] _ in
+        Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
                 await self?.updateAuthenticationState()
             }
         }
-        .store(in: &cancellables)
+        
+        // Also listen to userViewModel changes
+        userViewModel.objectWillChange
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    await self?.updateAuthenticationState()
+                }
+            }
+            .store(in: &cancellables)
         
         // Initial state update
         Task {
@@ -78,7 +85,7 @@ class AuthenticationService: NSObject, AuthenticationServiceProtocol, Observable
     func updateAuthenticationState() async {
         isAuthenticated = firebaseService.isUserSignedIn
         
-        if let firebaseUser = firebaseService.currentUser {
+        if let firebaseUser = Auth.auth().currentUser {
             // Load user profile from Firebase
             do {
                 currentUser = try await firebaseService.loadUserProfile(userId: firebaseUser.uid)
@@ -95,7 +102,7 @@ class AuthenticationService: NSObject, AuthenticationServiceProtocol, Observable
     
     // MARK: - Sign In with Apple
     
-    func signInWithApple() async throws -> UserProfile {
+    func signInWithApple() async throws -> User {
         authenticationState = .signingIn
         
         do {
@@ -116,13 +123,13 @@ class AuthenticationService: NSObject, AuthenticationServiceProtocol, Observable
             )
             
             // Load or create user profile
-            let userProfile = try await loadOrCreateUserProfile(
+            let user = try await loadOrCreateUserProfile(
                 firebaseUser: firebaseUser,
                 appleCredential: appleIDCredential
             )
             
             await updateAuthenticationState()
-            return userProfile
+            return user
             
         } catch {
             authenticationState = .error(error)
@@ -150,7 +157,7 @@ class AuthenticationService: NSObject, AuthenticationServiceProtocol, Observable
     
     // MARK: - Sign In with Google
     
-    func signInWithGoogle() async throws -> UserProfile {
+    func signInWithGoogle() async throws -> User {
         authenticationState = .signingIn
         
         do {
@@ -158,9 +165,7 @@ class AuthenticationService: NSObject, AuthenticationServiceProtocol, Observable
                 throw AuthenticationError.noPresentingViewController
             }
             
-            guard let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController) else {
-                throw AuthenticationError.googleSignInCancelled
-            }
+            let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController)
             
             guard let idToken = result.user.idToken?.tokenString else {
                 throw AuthenticationError.invalidGoogleCredentials
@@ -175,13 +180,13 @@ class AuthenticationService: NSObject, AuthenticationServiceProtocol, Observable
             )
             
             // Load or create user profile
-            let userProfile = try await loadOrCreateUserProfile(
+            let user = try await loadOrCreateUserProfile(
                 firebaseUser: firebaseUser,
                 googleUser: result.user
             )
             
             await updateAuthenticationState()
-            return userProfile
+            return user
             
         } catch {
             authenticationState = .error(error)
@@ -216,7 +221,7 @@ class AuthenticationService: NSObject, AuthenticationServiceProtocol, Observable
             // This would include alarms, preferences, etc.
             
             // Delete Firebase Auth user
-            try await user.delete()
+            try await firebaseService.deleteUser()
             
             await updateAuthenticationState()
             
@@ -232,10 +237,10 @@ class AuthenticationService: NSObject, AuthenticationServiceProtocol, Observable
         firebaseUser: User,
         appleCredential: ASAuthorizationAppleIDCredential? = nil,
         googleUser: GIDGoogleUser? = nil
-    ) async throws -> UserProfile {
+    ) async throws -> User {
         
         // Try to load existing profile
-        if let existingProfile = try await firebaseService.loadUserProfile(userId: firebaseUser.uid) {
+        if let existingProfile = try await firebaseService.loadUserProfile(userId: firebaseUser.id.uuidString) {
             return existingProfile
         }
         
@@ -254,17 +259,15 @@ class AuthenticationService: NSObject, AuthenticationServiceProtocol, Observable
             displayName = firebaseUser.displayName ?? "User"
         }
         
-        let userProfile = UserProfile(
-            id: firebaseUser.uid,
-            email: firebaseUser.email ?? "",
+        let user = User(
+            email: firebaseUser.email,
             displayName: displayName,
-            createdAt: Date(),
-            subscriptionTier: .free,
-            preferences: UserPreferences()
+            preferences: UserPreferences(),
+            subscription: .free
         )
         
-        try await firebaseService.saveUserProfile(userProfile)
-        return userProfile
+        try await firebaseService.saveUserProfile(user)
+        return user
     }
     
     // MARK: - Apple Sign In Helpers

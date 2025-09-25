@@ -129,7 +129,7 @@ struct AlarmView: View {
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
             
-            if let content = alarm.generatedContent {
+            if alarm.generatedContent != nil {
                 Text("AI-Generated Motivation")
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.7))

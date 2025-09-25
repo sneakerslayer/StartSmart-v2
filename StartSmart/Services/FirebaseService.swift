@@ -23,10 +23,11 @@ protocol FirebaseServiceProtocol {
     func signInWithApple(idToken: String, nonce: String) async throws -> User
     func signInWithGoogle(idToken: String, accessToken: String) async throws -> User
     func signOut() throws
+    func deleteUser() async throws
     
     // User Profile
-    func saveUserProfile(_ userProfile: UserProfile) async throws
-    func loadUserProfile(userId: String) async throws -> UserProfile?
+    func saveUserProfile(_ user: User) async throws
+    func loadUserProfile(userId: String) async throws -> User?
     
     // Alarms
     func saveAlarm(_ alarm: Alarm, userId: String) async throws
@@ -42,7 +43,7 @@ protocol FirebaseServiceProtocol {
 
 /// Firebase service managing authentication, Firestore, and Storage operations
 @MainActor
-class FirebaseService: FirebaseServiceProtocol, ObservableObject {
+class FirebaseService: @preconcurrency FirebaseServiceProtocol, ObservableObject {
     
     // MARK: - Published Properties
     
@@ -73,10 +74,21 @@ class FirebaseService: FirebaseServiceProtocol, ObservableObject {
     // MARK: - Authentication State Management
     
     private func setupAuthStateListener() {
-        authStateListenerHandle = auth.addStateDidChangeListener { [weak self] _, user in
+        authStateListenerHandle = auth.addStateDidChangeListener { [weak self] _, firebaseUser in
             Task { @MainActor in
-                self?.currentUser = user
-                self?.isUserSignedIn = user != nil
+                if let firebaseUser = firebaseUser {
+                    // Convert FirebaseAuth.User to StartSmart.User if needed
+                    self?.isUserSignedIn = true
+                    // Load existing user profile or create new one
+                    do {
+                        self?.currentUser = try await self?.loadUserProfile(userId: firebaseUser.uid)
+                    } catch {
+                        print("Failed to load user profile: \(error)")
+                    }
+                } else {
+                    self?.currentUser = nil
+                    self?.isUserSignedIn = false
+                }
             }
         }
     }
@@ -92,20 +104,27 @@ class FirebaseService: FirebaseServiceProtocol, ObservableObject {
         
         let result = try await auth.signIn(with: credential)
         
+        let firebaseUser = result.user
+        
         // Create user profile if new user
-        if let user = result.user, result.additionalUserInfo?.isNewUser == true {
-            let userProfile = UserProfile(
-                id: user.uid,
-                email: user.email ?? "",
-                displayName: user.displayName ?? "User",
-                createdAt: Date(),
-                subscriptionTier: .free,
-                preferences: UserPreferences()
+        if result.additionalUserInfo?.isNewUser == true {
+            let newUser = User(
+                email: firebaseUser.email,
+                displayName: firebaseUser.displayName,
+                preferences: UserPreferences(),
+                subscription: .free
             )
-            try await saveUserProfile(userProfile)
+            try await saveUserProfile(newUser)
+            return newUser
         }
         
-        return result.user
+        // Load existing user profile
+        return try await loadUserProfile(userId: firebaseUser.uid) ?? User(
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            preferences: UserPreferences(),
+            subscription: .free
+        )
     }
     
     func signInWithGoogle(idToken: String, accessToken: String) async throws -> User {
@@ -116,35 +135,57 @@ class FirebaseService: FirebaseServiceProtocol, ObservableObject {
         
         let result = try await auth.signIn(with: credential)
         
+        let firebaseUser = result.user
+        
         // Create user profile if new user
-        if let user = result.user, result.additionalUserInfo?.isNewUser == true {
-            let userProfile = UserProfile(
-                id: user.uid,
-                email: user.email ?? "",
-                displayName: user.displayName ?? "User",
-                createdAt: Date(),
-                subscriptionTier: .free,
-                preferences: UserPreferences()
+        if result.additionalUserInfo?.isNewUser == true {
+            let newUser = User(
+                email: firebaseUser.email,
+                displayName: firebaseUser.displayName,
+                preferences: UserPreferences(),
+                subscription: .free
             )
-            try await saveUserProfile(userProfile)
+            try await saveUserProfile(newUser)
+            return newUser
         }
         
-        return result.user
+        // Load existing user profile
+        return try await loadUserProfile(userId: firebaseUser.uid) ?? User(
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            preferences: UserPreferences(),
+            subscription: .free
+        )
     }
     
-    func signOut() throws {
-        try auth.signOut()
+    nonisolated func signOut() throws {
+        Task { @MainActor in
+            try auth.signOut()
+        }
+    }
+    
+    func deleteUser() async throws {
+        guard let firebaseUser = auth.currentUser else {
+            throw NSError(domain: "FirebaseService", code: -1, userInfo: [NSLocalizedDescriptionKey: "No user to delete"])
+        }
+        
+        // Delete user data from Firestore
+        let userRef = firestore.collection("users").document(firebaseUser.uid)
+        try await userRef.delete()
+        
+        // Delete Firebase Auth user
+        try await firebaseUser.delete()
     }
     
     // MARK: - User Profile Management
     
-    func saveUserProfile(_ userProfile: UserProfile) async throws {
-        let userRef = firestore.collection("users").document(userProfile.id)
-        let data = try userProfile.toDictionary()
+    func saveUserProfile(_ user: User) async throws {
+        let userRef = firestore.collection("users").document(user.id.uuidString)
+        let data = try user.toDictionary()
         try await userRef.setData(data)
     }
     
-    func loadUserProfile(userId: String) async throws -> UserProfile? {
+    func loadUserProfile(userId: String) async throws -> User? {
         let userRef = firestore.collection("users").document(userId)
         let document = try await userRef.getDocument()
         
@@ -152,7 +193,7 @@ class FirebaseService: FirebaseServiceProtocol, ObservableObject {
             return nil
         }
         
-        return try UserProfile.fromDictionary(data)
+        return try User.fromDictionary(data)
     }
     
     // MARK: - Alarm Management
@@ -227,22 +268,6 @@ class FirebaseConfiguration {
 
 // MARK: - Data Model Extensions
 
-extension UserProfile {
-    func toDictionary() throws -> [String: Any] {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        let data = try encoder.encode(self)
-        let json = try JSONSerialization.jsonObject(with: data)
-        return json as? [String: Any] ?? [:]
-    }
-    
-    static func fromDictionary(_ dict: [String: Any]) throws -> UserProfile {
-        let data = try JSONSerialization.data(withJSONObject: dict)
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode(UserProfile.self, from: data)
-    }
-}
 
 extension Alarm {
     func toDictionary() throws -> [String: Any] {

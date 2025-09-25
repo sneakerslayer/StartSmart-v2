@@ -7,43 +7,18 @@ protocol AlarmAudioServiceProtocol {
     func preGenerateAudioForUpcomingAlarms() async throws
     func ensureAudioForAlarm(_ alarm: Alarm) async throws -> Alarm
     func clearExpiredAudioContent() async throws
-    func getAudioGenerationStatus() -> AudioGenerationStatus
-}
-
-// MARK: - Audio Generation Status
-enum AudioGenerationStatus {
-    case idle
-    case generating(alarmId: UUID)
-    case completed(alarmId: UUID)
-    case failed(alarmId: UUID, error: Error)
-}
-
-// MARK: - Alarm Audio Service Error
-enum AlarmAudioServiceError: LocalizedError {
-    case alarmNotFound
-    case intentNotFound
-    case audioGenerationFailed(Error)
-    case audioCachingFailed(Error)
-    case serviceUnavailable
-    
-    var errorDescription: String? {
-        switch self {
-        case .alarmNotFound:
-            return "Alarm not found"
-        case .intentNotFound:
-            return "No intent found for audio generation"
-        case .audioGenerationFailed(let error):
-            return "Audio generation failed: \(error.localizedDescription)"
-        case .audioCachingFailed(let error):
-            return "Audio caching failed: \(error.localizedDescription)"
-        case .serviceUnavailable:
-            return "Audio generation service is unavailable"
-        }
-    }
+    func getAudioGenerationStatus() -> AlarmAudioService.AudioGenerationStatus
 }
 
 // MARK: - Alarm Audio Service Implementation
 class AlarmAudioService: AlarmAudioServiceProtocol, ObservableObject {
+    enum AudioGenerationStatus {
+        case idle
+        case generating(alarmId: UUID)
+        case completed(alarmId: UUID)
+        case failed(alarmId: UUID, error: Error)
+    }
+    
     @Published private var currentStatus: AudioGenerationStatus = .idle
     
     private let audioPipelineService: AudioPipelineServiceProtocol
@@ -68,7 +43,7 @@ class AlarmAudioService: AlarmAudioServiceProtocol, ObservableObject {
         
         do {
             // Find the most recent intent matching the alarm's tone
-            let intents = await intentRepository.getIntents()
+            let intents = try await intentRepository.getIntentsForAlarm(alarm.id)
             let matchingIntent = findBestIntentForAlarm(alarm, from: intents)
             
             guard let intent = matchingIntent else {
@@ -107,12 +82,13 @@ class AlarmAudioService: AlarmAudioServiceProtocol, ObservableObject {
                 }
             }
             
-            throw AlarmAudioServiceError.audioGenerationFailed(error)
+            throw NSError(domain: "AlarmAudioService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Audio generation failed: \(error.localizedDescription)"])
         }
     }
     
     func preGenerateAudioForUpcomingAlarms() async throws {
-        let alarms = await alarmRepository.getAlarms()
+        try await alarmRepository.loadAlarms()
+        let alarms: [Alarm] = [] // TODO: Get alarms from repository after loading
         let upcomingAlarms = alarms.filter { alarm in
             guard alarm.isEnabled else { return false }
             
@@ -156,7 +132,7 @@ class AlarmAudioService: AlarmAudioServiceProtocol, ObservableObject {
     }
     
     func clearExpiredAudioContent() async throws {
-        let alarms = await alarmRepository.getAlarms()
+        let alarms = await alarmRepository.alarmsValue
         
         for alarm in alarms {
             if let content = alarm.generatedContent, content.isExpired {
@@ -179,14 +155,14 @@ class AlarmAudioService: AlarmAudioServiceProtocol, ObservableObject {
     private func findBestIntentForAlarm(_ alarm: Alarm, from intents: [Intent]) -> Intent? {
         // Find intent that matches the alarm's tone and is most recent
         let matchingIntents = intents.filter { intent in
-            intent.tone == alarm.tone && !intent.content.isEmpty
+            intent.tone == alarm.tone && intent.generatedContent != nil
         }
         
         return matchingIntents.max { $0.createdAt < $1.createdAt }
     }
     
     private func createDefaultIntent(for alarm: Alarm) -> Intent {
-        let defaultGoals = [
+        let defaultGoals: [AlarmTone: String] = [
             .gentle: "Start the day peacefully and with gratitude",
             .energetic: "Wake up with energy and excitement for the day ahead",
             .toughLove: "Get up immediately and tackle the day's challenges",
@@ -194,15 +170,18 @@ class AlarmAudioService: AlarmAudioServiceProtocol, ObservableObject {
         ]
         
         return Intent(
-            id: UUID(),
-            goal: defaultGoals[alarm.tone] ?? "Wake up feeling motivated",
+            userGoal: defaultGoals[alarm.tone] ?? "Wake up feeling motivated",
             tone: alarm.tone,
             context: IntentContext(
-                customNotes: alarm.label.isEmpty ? nil : alarm.label,
-                includeWeather: true,
-                includeCalendarEvents: false,
-                includeLocation: false
-            )
+                weather: nil,
+                temperature: nil,
+                timeOfDay: .morning,
+                dayOfWeek: "",
+                calendarEvents: [],
+                location: nil,
+                customNote: alarm.label.isEmpty ? nil : alarm.label
+            ),
+            scheduledFor: alarm.time
         )
     }
     

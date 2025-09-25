@@ -116,7 +116,10 @@ struct IntentInputView: View {
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color(.systemBackground))
-                    .stroke(formViewModel.userGoal.isEmpty ? Color(.systemGray4) : Color.blue, lineWidth: 1)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(formViewModel.userGoal.isEmpty ? Color(.systemGray4) : Color.blue, lineWidth: 1)
+                    )
                 
                 if formViewModel.userGoal.isEmpty {
                     Text("e.g., Exercise for 30 minutes, Read 20 pages, Meditate for 10 minutes...")

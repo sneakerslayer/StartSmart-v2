@@ -4,8 +4,8 @@ import Combine
 
 // MARK: - Subscription Service Protocol
 protocol SubscriptionServiceProtocol {
-    var currentSubscriptionStatus: SubscriptionStatus { get }
-    var subscriptionStatusPublisher: AnyPublisher<SubscriptionStatus, Never> { get }
+    var currentSubscriptionStatus: StartSmartSubscriptionStatus { get }
+    var subscriptionStatusPublisher: AnyPublisher<StartSmartSubscriptionStatus, Never> { get }
     var customerInfo: CustomerInfo? { get }
     var availableOfferings: Offerings? { get }
     
@@ -13,15 +13,15 @@ protocol SubscriptionServiceProtocol {
     func getOfferings() async throws -> Offerings
     func purchasePackage(_ package: Package) async throws -> CustomerInfo
     func restorePurchases() async throws -> CustomerInfo
-    func checkSubscriptionStatus() async throws -> SubscriptionStatus
+    func checkSubscriptionStatus() async throws -> StartSmartSubscriptionStatus
     func getCustomerInfo() async throws -> CustomerInfo
     func presentCodeRedemptionSheet()
     func canMakePayments() -> Bool
 }
 
 // MARK: - Subscription Service Implementation
-class SubscriptionService: SubscriptionServiceProtocol, ObservableObject {
-    @Published private(set) var currentSubscriptionStatus: SubscriptionStatus = .free
+class SubscriptionService: NSObject, SubscriptionServiceProtocol, ObservableObject {
+    @Published private(set) var currentSubscriptionStatus: StartSmartSubscriptionStatus = .free
     @Published private(set) var customerInfo: CustomerInfo?
     @Published private(set) var availableOfferings: Offerings?
     @Published private(set) var isConfigured = false
@@ -30,13 +30,14 @@ class SubscriptionService: SubscriptionServiceProtocol, ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Published Properties
-    var subscriptionStatusPublisher: AnyPublisher<SubscriptionStatus, Never> {
+    var subscriptionStatusPublisher: AnyPublisher<StartSmartSubscriptionStatus, Never> {
         $currentSubscriptionStatus.eraseToAnyPublisher()
     }
     
     // MARK: - Initialization
     init(revenueCatApiKey: String = ServiceConfiguration.APIKeys.revenueCat) {
         self.revenueCatApiKey = revenueCatApiKey
+        super.init()
         setupRevenueCat()
     }
     
@@ -146,7 +147,7 @@ class SubscriptionService: SubscriptionServiceProtocol, ObservableObject {
         }
     }
     
-    func checkSubscriptionStatus() async throws -> SubscriptionStatus {
+    func checkSubscriptionStatus() async throws -> StartSmartSubscriptionStatus {
         let customerInfo = try await getCustomerInfo()
         return mapToSubscriptionStatus(customerInfo)
     }
@@ -163,7 +164,7 @@ class SubscriptionService: SubscriptionServiceProtocol, ObservableObject {
     }
     
     // MARK: - Subscription Status Mapping
-    private func mapToSubscriptionStatus(_ customerInfo: CustomerInfo) -> SubscriptionStatus {
+    private func mapToSubscriptionStatus(_ customerInfo: CustomerInfo) -> StartSmartSubscriptionStatus {
         // Check for active entitlements
         if customerInfo.entitlements.active.isEmpty {
             return .free
@@ -275,9 +276,3 @@ enum SubscriptionError: LocalizedError, Equatable {
     }
 }
 
-// MARK: - Service Configuration Extension
-extension ServiceConfiguration.APIKeys {
-    static var revenueCat: String {
-        return getAPIKey(for: "REVENUECAT_API_KEY") ?? "appl_placeholder_key"
-    }
-}

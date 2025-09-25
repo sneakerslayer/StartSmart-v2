@@ -12,6 +12,9 @@ class DependencyContainer: DependencyContainerProtocol {
     
     private var dependencies: [String: Any] = [:]
     private let queue = DispatchQueue(label: "dependency.container", attributes: .concurrent)
+    var isInitialized = false
+    private let initializationQueue = DispatchQueue(label: "dependency.initialization")
+    
     
     // MARK: - Convenience Properties
     var firebaseService: FirebaseServiceProtocol {
@@ -43,17 +46,28 @@ class DependencyContainer: DependencyContainerProtocol {
     }
     
     private init() {
-        setupDefaultDependencies()
+        print("🔥 DEBUG: DependencyContainer init() called")
+        // Initialize dependencies asynchronously on background thread to avoid blocking UI
+        Task.detached(priority: .high) { @MainActor in
+            await self.setupDefaultDependencies()
+        }
     }
     
     func register<T>(_ dependency: T, for type: T.Type) {
         let key = String(describing: type)
-        queue.async(flags: .barrier) {
+        queue.sync(flags: .barrier) {
             self.dependencies[key] = dependency
         }
     }
     
     func resolve<T>() -> T {
+        // Wait for initialization to complete
+        initializationQueue.sync {
+            while !isInitialized {
+                Thread.sleep(forTimeInterval: 0.001) // Wait 1ms
+            }
+        }
+        
         let key = String(describing: T.self)
         return queue.sync {
             guard let dependency = dependencies[key] as? T else {
@@ -63,101 +77,207 @@ class DependencyContainer: DependencyContainerProtocol {
         }
     }
     
-    private func setupDefaultDependencies() {
-        // Register Firebase Service
-        let firebaseService = FirebaseService()
-        register(firebaseService, for: FirebaseServiceProtocol.self)
+    @MainActor
+    private func setupDefaultDependencies() async {
+        print("DEBUG: Starting dependency setup...")
+        print("DEBUG: About to start Stage 1...")
         
-        // Register Authentication Service
-        let authService = AuthenticationService()
-        register(authService, for: AuthenticationServiceProtocol.self)
+        do {
+            // Stage 1: Core Services
+            // Progress handled by ContentView
+            print("DEBUG: Creating FirebaseService...")
+            let firebaseService = FirebaseService()
+            register(firebaseService, for: FirebaseServiceProtocol.self)
+            print("DEBUG: Successfully registered FirebaseService")
+            
+        } catch {
+            print("DEBUG: ERROR in Stage 1 - Firebase: \(error)")
+            // Continue with basic service for now
+            // updateProgress(1, stage: "Firebase Error - Using Fallback...")
+        }
         
-        // Register AI Content Service
-        let grok4Service = Grok4Service(apiKey: ServiceConfiguration.APIKeys.grok4)
-        register(grok4Service, for: Grok4ServiceProtocol.self)
+        do {
+            // Stage 2: Authentication
+            // updateProgress(2, stage: "Setting up Authentication...")
+            print("DEBUG: Creating AuthenticationService...")
+            let authService = AuthenticationService()
+            register(authService, for: AuthenticationServiceProtocol.self)
+            print("DEBUG: Successfully registered AuthenticationService")
+            
+        } catch {
+            print("DEBUG: ERROR in Stage 2 - Auth: \(error)")
+            // updateProgress(2, stage: "Auth Error - Using Fallback...")
+        }
         
-        // Register TTS Service
-        let elevenLabsService = ElevenLabsService(apiKey: ServiceConfiguration.APIKeys.elevenLabs)
-        register(elevenLabsService, for: ElevenLabsServiceProtocol.self)
+        do {
+            // Stage 3: AI Services
+            // updateProgress(3, stage: "Connecting AI Services...")
+            print("DEBUG: Creating Grok4Service...")
+            let grok4Service = Grok4Service(apiKey: ServiceConfiguration.APIKeys.grok4)
+            register(grok4Service, for: Grok4ServiceProtocol.self)
+            print("DEBUG: Successfully registered Grok4Service")
+            
+        } catch {
+            print("DEBUG: ERROR in Stage 3 - Grok4: \(error)")
+            // updateProgress(3, stage: "AI Service Error - Using Fallback...")
+        }
         
-        // Register Content Generation Service (combines both)
-        let contentService = ContentGenerationService(
-            aiService: grok4Service,
-            ttsService: elevenLabsService
-        )
-        register(contentService, for: ContentGenerationServiceProtocol.self)
+        do {
+            // Stage 4: Voice Services
+            // updateProgress(4, stage: "Initializing Voice Engine...")
+            print("DEBUG: Creating ElevenLabsService...")
+            let elevenLabsService = ElevenLabsService(apiKey: ServiceConfiguration.APIKeys.elevenLabs)
+            register(elevenLabsService, for: ElevenLabsServiceProtocol.self)
+            print("DEBUG: Successfully registered ElevenLabsService")
+            
+        } catch {
+            print("DEBUG: ERROR in Stage 4 - ElevenLabs: \(error)")
+            // updateProgress(4, stage: "Voice Service Error - Using Fallback...")
+        }
         
-        // Register Local Storage Service
-        let localStorage = LocalStorage()
-        register(localStorage, for: LocalStorageProtocol.self)
+        do {
+            // Register Content Generation Service (combines both)
+            print("DEBUG: Creating ContentGenerationService...")
+            let grok4Service: Grok4ServiceProtocol = resolve()
+            let elevenLabsService: ElevenLabsServiceProtocol = resolve()
+            let contentService = ContentGenerationService(
+                aiService: grok4Service,
+                ttsService: elevenLabsService
+            )
+            register(contentService, for: ContentGenerationServiceProtocol.self)
+            print("DEBUG: Successfully registered ContentGenerationService")
+            
+        } catch {
+            print("DEBUG: ERROR creating ContentGenerationService: \(error)")
+        }
+        
+        do {
+            // Stage 5: Storage & Audio
+            // updateProgress(5, stage: "Setting up Storage & Audio...")
+            print("DEBUG: Creating UserDefaultsStorage...")
+            let localStorage = UserDefaultsStorage()
+            register(localStorage, for: LocalStorageProtocol.self)
+            print("DEBUG: Successfully registered UserDefaultsStorage")
+            
+        } catch {
+            print("DEBUG: ERROR in Stage 5 - Storage: \(error)")
+            // updateProgress(5, stage: "Storage Error - Using Fallback...")
+        }
         
         // MARK: - Phase 5 Audio Services Integration
         
+        print("DEBUG: Starting Audio Services initialization...")
+        
         // Register Audio Cache Service
         do {
+            print("DEBUG: Creating AudioCacheService...")
             let audioCacheService = try AudioCacheService()
             register(audioCacheService, for: AudioCacheServiceProtocol.self)
+            print("DEBUG: Successfully registered AudioCacheService")
             
             // Register Audio Playback Service
+            print("DEBUG: Creating AudioPlaybackService...")
             let audioPlaybackService = AudioPlaybackService()
             register(audioPlaybackService, for: AudioPlaybackServiceProtocol.self)
+            print("DEBUG: Successfully registered AudioPlaybackService")
             
             // Register Audio Pipeline Service (depends on cache service)
+            print("DEBUG: Creating AudioPipelineService...")
+            let grok4Service: Grok4ServiceProtocol = resolve()
+            let elevenLabsService: ElevenLabsServiceProtocol = resolve()
             let audioPipelineService = AudioPipelineService(
                 aiService: grok4Service,
                 ttsService: elevenLabsService,
                 cacheService: audioCacheService
             )
             register(audioPipelineService, for: AudioPipelineServiceProtocol.self)
+            print("DEBUG: Successfully registered AudioPipelineService")
             
             // Register Alarm Audio Service (orchestrates audio generation for alarms)
+            print("DEBUG: Creating AlarmAudioService...")
             let alarmAudioService = AlarmAudioService(
                 audioPipelineService: audioPipelineService,
-                intentRepository: IntentRepository(localStorage: localStorage),
+                intentRepository: IntentRepository(),
                 alarmRepository: AlarmRepository(
-                    localStorage: localStorage,
                     notificationService: NotificationService()
                 )
             )
             register(alarmAudioService, for: AlarmAudioServiceProtocol.self)
+            print("DEBUG: Successfully registered AlarmAudioService")
             
             // Register Speech Recognition Service
+            print("DEBUG: Creating SpeechRecognitionService...")
             let speechRecognitionService = SpeechRecognitionService()
             register(speechRecognitionService, for: SpeechRecognitionServiceProtocol.self)
+            print("DEBUG: Successfully registered SpeechRecognitionService")
             
         } catch {
-            print("Warning: Failed to initialize AudioCacheService: \(error)")
-            print("Audio pipeline services will not be available.")
-            // In a production app, you might want to register mock implementations
+            print("DEBUG: ERROR in Audio Services: \(error)")
+            print("DEBUG: Audio pipeline services will not be available.")
+            // Continue without audio services for now
         }
         
         // MARK: - Phase 7 Gamification Services
-        
-        // Register User View Model
-        let userViewModel = UserViewModel()
-        register(userViewModel, for: UserViewModel.self)
-        
-        // Register Streak Tracking Service
-        let streakTrackingService = StreakTrackingService(storage: localStorage)
-        register(streakTrackingService, for: StreakTrackingServiceProtocol.self)
-        
-        // Register Social Sharing Service
-        let socialSharingService = SocialSharingService(storage: localStorage)
-        register(socialSharingService, for: SocialSharingServiceProtocol.self)
+        do {
+            // updateProgress(6, stage: "Loading Gamification...")
+            print("DEBUG: Creating Gamification Services...")
+            
+            // Register User View Model
+            let userViewModel = UserViewModel()
+            register(userViewModel, for: UserViewModel.self)
+            print("DEBUG: Successfully registered UserViewModel")
+            
+            // Register Streak Tracking Service
+            let localStorage: LocalStorageProtocol = resolve()
+            let streakTrackingService = StreakTrackingService(storage: localStorage)
+            register(streakTrackingService, for: StreakTrackingServiceProtocol.self)
+            print("DEBUG: Successfully registered StreakTrackingService")
+            
+            // Register Social Sharing Service
+            let socialSharingService = SocialSharingService(storage: localStorage)
+            register(socialSharingService, for: SocialSharingServiceProtocol.self)
+            print("DEBUG: Successfully registered SocialSharingService")
+            
+        } catch {
+            print("DEBUG: ERROR in Stage 6 - Gamification: \(error)")
+            // updateProgress(6, stage: "Gamification Error - Using Fallback...")
+        }
         
         // MARK: - Phase 8 Subscription Services
+        do {
+            // updateProgress(7, stage: "Configuring Subscriptions...")
+            print("DEBUG: Creating Subscription Services...")
+            
+            // Register Subscription Service
+            let subscriptionService = SubscriptionService()
+            register(subscriptionService, for: SubscriptionServiceProtocol.self)
+            print("DEBUG: Successfully registered SubscriptionService")
+            
+            // Register Subscription Manager
+            let localStorage: LocalStorageProtocol = resolve()
+            let subscriptionManager = SubscriptionManager(
+                subscriptionService: subscriptionService,
+                localStorage: localStorage
+            )
+            register(subscriptionManager, for: SubscriptionManagerProtocol.self)
+            print("DEBUG: Successfully registered SubscriptionManager")
+            
+        } catch {
+            print("DEBUG: ERROR in Stage 7 - Subscriptions: \(error)")
+            // updateProgress(7, stage: "Subscription Error - Using Fallback...")
+        }
         
-        // Register Subscription Service
-        let subscriptionService = SubscriptionService()
-        register(subscriptionService, for: SubscriptionServiceProtocol.self)
+        print("DEBUG: All dependencies registered successfully")
         
-        // Register Subscription Manager
-        let subscriptionManager = SubscriptionManager(
-            subscriptionService: subscriptionService,
-            localStorage: localStorage
-        )
-        register(subscriptionManager, for: SubscriptionManagerProtocol.self)
-    }
+        // Stage 8: Finalization
+        // updateProgress(8, stage: "Ready!")
+        
+        // Mark initialization as complete
+        initializationQueue.sync {
+            self.isInitialized = true
+            print("DEBUG: isInitialized set to true")
+        }
+    } // End of setupDefaultDependencies
 }
 
 // MARK: - Convenience Properties

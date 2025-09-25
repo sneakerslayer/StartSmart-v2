@@ -1,5 +1,12 @@
+//
+//  StartSmartApp.swift
+//  StartSmart
+//
+//  Created by StartSmart Team on 9/11/25.
+//
+
 import SwiftUI
-import Firebase
+import FirebaseCore
 import GoogleSignIn
 
 @main
@@ -7,7 +14,7 @@ struct StartSmartApp: App {
     
     init() {
         // Configure Firebase
-        FirebaseConfiguration.configure()
+        FirebaseApp.configure()
         
         // Configure Google Sign In
         configureGoogleSignIn()
@@ -16,13 +23,10 @@ struct StartSmartApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(DependencyContainer.shared.authenticationService)
-                .environmentObject(DependencyContainer.shared.firebaseService)
         }
     }
     
     private func configureGoogleSignIn() {
-        // Google Sign In configuration will be set up when GoogleService-Info.plist is added
         guard let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
               let plist = NSDictionary(contentsOfFile: path),
               let clientId = plist["CLIENT_ID"] as? String else {

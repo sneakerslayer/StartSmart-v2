@@ -160,7 +160,9 @@ class AudioPipelineService: AudioPipelineServiceProtocol, ObservableObject {
     
     func preGenerateAudio(forAlarm alarm: Alarm) async throws {
         // Pre-generate audio for alarms scheduled within the next 24 hours
-        let nextTrigger = alarm.nextTriggerDate
+        guard let nextTrigger = alarm.nextTriggerDate else {
+            return
+        }
         let timeUntilTrigger = nextTrigger.timeIntervalSinceNow
         
         // Only pre-generate if alarm is within next 24 hours
@@ -195,8 +197,8 @@ class AudioPipelineService: AudioPipelineServiceProtocol, ObservableObject {
         let context = createContextDictionary(from: intent)
         
         return try await aiService.generateMotivationalScript(
-            userIntent: intent.description,
-            tone: intent.preferredTone,
+            userIntent: intent.userGoal,
+            tone: intent.tone.rawValue,
             context: context
         )
     }
@@ -216,7 +218,7 @@ class AudioPipelineService: AudioPipelineServiceProtocol, ObservableObject {
     
     private func cacheAudio(data: Data, intent: Intent, textContent: String) async throws -> String {
         let metadata = SimpleAudioMetadata(
-            intentId: intent.id,
+            intentId: intent.id.uuidString,
             voiceId: getVoiceId(for: intent),
             duration: estimateAudioDuration(from: data),
             format: "mp3",
@@ -229,7 +231,7 @@ class AudioPipelineService: AudioPipelineServiceProtocol, ObservableObject {
     
     private func createCacheKey(for intent: Intent) -> String {
         // Create a unique cache key based on intent content and preferences
-        let baseKey = "\(intent.id)_\(intent.preferredTone)_\(intent.description.prefix(50))"
+        let baseKey = "\(intent.id)_\(intent.tone.rawValue)_\(intent.userGoal.prefix(50))"
         return baseKey.replacingOccurrences(of: " ", with: "_")
             .replacingOccurrences(of: "\n", with: "_")
             .lowercased()
@@ -238,7 +240,7 @@ class AudioPipelineService: AudioPipelineServiceProtocol, ObservableObject {
     private func getVoiceId(for intent: Intent) -> String {
         // Map intent tone to voice ID (if we had access to ElevenLabsService.voiceConfigurations)
         // For now, use a simple mapping
-        switch intent.preferredTone.lowercased() {
+        switch intent.tone.rawValue.lowercased() {
         case "gentle":
             return "21m00Tcm4TlvDq8ikWAM" // Rachel
         case "energetic":
@@ -265,18 +267,16 @@ class AudioPipelineService: AudioPipelineServiceProtocol, ObservableObject {
         context["day_of_week"] = Calendar.current.weekdaySymbols[Calendar.current.component(.weekday, from: now) - 1]
         
         // Add intent-specific context
-        if let customPrompts = intent.customPrompts {
-            context["custom_prompts"] = customPrompts.joined(separator: ", ")
+        if let customNote = intent.context.customNote {
+            context["custom_note"] = customNote
         }
         
-        if let targetTime = intent.targetTime {
-            formatter.timeStyle = .short
-            context["target_time"] = formatter.string(from: targetTime)
-        }
+        formatter.timeStyle = .short
+        context["target_time"] = formatter.string(from: intent.scheduledFor)
         
         // Add motivational context
-        context["motivation_level"] = intent.motivationLevel.rawValue
-        context["intent_category"] = intent.category.rawValue
+        context["tone"] = intent.tone.rawValue
+        context["user_goal"] = intent.userGoal
         
         return context
     }
@@ -290,12 +290,11 @@ class AudioPipelineService: AudioPipelineServiceProtocol, ObservableObject {
     private func createDefaultIntent(for alarm: Alarm) -> Intent {
         // Create a basic intent for alarms without specific intents
         return Intent(
-            description: "Wake up refreshed and ready for the day",
-            category: .general,
-            motivationLevel: .medium,
-            preferredTone: "gentle",
-            targetTime: alarm.time,
-            customPrompts: nil
+            userGoal: "Wake up refreshed and ready for the day",
+            tone: .gentle,
+            context: IntentContext(),
+            scheduledFor: alarm.time,
+            alarmId: alarm.id
         )
     }
     
@@ -419,7 +418,7 @@ extension Intent {
     // Add convenience computed properties if needed
     var estimatedSpeechDuration: TimeInterval {
         // Rough estimation: ~150 words per minute, ~5 characters per word
-        let estimatedWords = Double(description.count) / 5.0
+        let estimatedWords = Double(userGoal.count) / 5.0
         return (estimatedWords / 150.0) * 60.0
     }
 }

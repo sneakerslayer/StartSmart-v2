@@ -4,22 +4,22 @@ import RevenueCat
 
 // MARK: - Subscription Manager Protocol
 protocol SubscriptionManagerProtocol {
-    var currentSubscriptionStatus: SubscriptionStatus { get }
-    var subscriptionStatusPublisher: AnyPublisher<SubscriptionStatus, Never> { get }
+    var currentSubscriptionStatus: StartSmartSubscriptionStatus { get }
+    var subscriptionStatusPublisher: AnyPublisher<StartSmartSubscriptionStatus, Never> { get }
     var analytics: SubscriptionAnalytics { get }
     
     func canCreateAlarm() -> Bool
     func getRemainingAlarms() -> Int?
-    func canAccessFeature(_ feature: SubscriptionFeature) -> Bool
-    func getUpgradeMessage(for feature: SubscriptionFeature) -> String
-    func trackFeatureUsage(_ feature: SubscriptionFeature, context: String?)
-    func shouldShowPaywall(for feature: SubscriptionFeature) -> Bool
-    func presentPaywallIfNeeded(for feature: SubscriptionFeature, source: String) -> Bool
+    func canAccessFeature(_ feature: StartSmartFeature) -> Bool
+    func getUpgradeMessage(for feature: StartSmartFeature) -> String
+    func trackFeatureUsage(_ feature: StartSmartFeature, context: String?)
+    func shouldShowPaywall(for feature: StartSmartFeature) -> Bool
+    func presentPaywallIfNeeded(for feature: StartSmartFeature, source: String) -> Bool
 }
 
 // MARK: - Subscription Manager Implementation
 class SubscriptionManager: SubscriptionManagerProtocol, ObservableObject {
-    @Published private(set) var currentSubscriptionStatus: SubscriptionStatus = .free
+    @Published private(set) var currentSubscriptionStatus: StartSmartSubscriptionStatus = .free
     @Published private(set) var analytics: SubscriptionAnalytics = SubscriptionAnalytics()
     @Published private(set) var currentAlarmCount: Int = 0
     
@@ -28,7 +28,7 @@ class SubscriptionManager: SubscriptionManagerProtocol, ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Published Properties
-    var subscriptionStatusPublisher: AnyPublisher<SubscriptionStatus, Never> {
+    var subscriptionStatusPublisher: AnyPublisher<StartSmartSubscriptionStatus, Never> {
         $currentSubscriptionStatus.eraseToAnyPublisher()
     }
     
@@ -63,19 +63,19 @@ class SubscriptionManager: SubscriptionManagerProtocol, ObservableObject {
     }
     
     private func loadAnalytics() {
-        analytics = localStorage.load(SubscriptionAnalytics.self, key: "subscription_analytics") ?? SubscriptionAnalytics()
+        analytics = (try? localStorage.load(SubscriptionAnalytics.self, forKey: "subscription_analytics")) ?? SubscriptionAnalytics()
     }
     
     private func loadCurrentAlarmCount() {
-        currentAlarmCount = localStorage.load(Int.self, key: "current_month_alarm_count") ?? 0
+        currentAlarmCount = (try? localStorage.load(Int.self, forKey: "current_month_alarm_count")) ?? 0
     }
     
     private func saveAnalytics() {
-        localStorage.save(analytics, key: "subscription_analytics")
+        try? localStorage.save(analytics, forKey: "subscription_analytics")
     }
     
     private func saveCurrentAlarmCount() {
-        localStorage.save(currentAlarmCount, key: "current_month_alarm_count")
+        try? localStorage.save(currentAlarmCount, forKey: "current_month_alarm_count")
     }
     
     // MARK: - Feature Access Management
@@ -102,27 +102,30 @@ class SubscriptionManager: SubscriptionManagerProtocol, ObservableObject {
         return max(0, limit - currentAlarmCount)
     }
     
-    func canAccessFeature(_ feature: SubscriptionFeature) -> Bool {
-        let featureGate = FeatureGate(subscriptionStatus: currentSubscriptionStatus)
-        return featureGate.canAccess(feature)
+    func canAccessFeature(_ feature: StartSmartFeature) -> Bool {
+        return currentSubscriptionStatus.hasFeature(feature)
     }
     
-    func getUpgradeMessage(for feature: SubscriptionFeature) -> String {
-        let featureGate = FeatureGate(subscriptionStatus: currentSubscriptionStatus)
-        return featureGate.getUpgradeMessage(for: feature)
+    func getUpgradeMessage(for feature: StartSmartFeature) -> String {
+        return "Upgrade to Pro to access \(feature.displayName)"
     }
     
-    func shouldShowPaywall(for feature: SubscriptionFeature) -> Bool {
+    func shouldShowPaywall(for feature: StartSmartFeature) -> Bool {
         return !canAccessFeature(feature)
     }
     
-    func presentPaywallIfNeeded(for feature: SubscriptionFeature, source: String) -> Bool {
+    func presentPaywallIfNeeded(for feature: StartSmartFeature, source: String) -> Bool {
         if shouldShowPaywall(for: feature) {
             // Track that paywall was triggered
             trackFeatureUsage(feature, context: "paywall_triggered_\(source)")
             return true
         }
         return false
+    }
+    
+    func trackFeatureUsage(_ feature: StartSmartFeature, context: String?) {
+        // Track feature usage for analytics (simple logging for now)
+        print("Feature used: \(feature.rawValue), context: \(context ?? "unknown")")
     }
     
     // MARK: - Alarm Count Management
@@ -143,46 +146,23 @@ class SubscriptionManager: SubscriptionManagerProtocol, ObservableObject {
         
         // Get the last reset date (or use subscription start date)
         let lastResetKey = "last_alarm_count_reset"
-        let lastReset = localStorage.load(Date.self, key: lastResetKey) ?? analytics.subscriptionStartDate ?? now
+        let lastReset = (try? localStorage.load(Date.self, forKey: lastResetKey)) ?? analytics.subscriptionStartDate ?? now
         
         // Check if we've crossed into a new month
         if !calendar.isDate(lastReset, equalTo: now, toGranularity: .month) {
             currentAlarmCount = 0
             saveCurrentAlarmCount()
-            localStorage.save(now, key: lastResetKey)
+            try? localStorage.save(now, forKey: lastResetKey)
         }
     }
     
     // MARK: - Analytics and Tracking
-    func trackFeatureUsage(_ feature: SubscriptionFeature, context: String?) {
-        // This could integrate with analytics services like Firebase, Mixpanel, etc.
-        let eventData: [String: Any] = [
-            "feature_id": feature.id,
-            "feature_name": feature.name,
-            "subscription_status": currentSubscriptionStatus.rawValue,
-            "context": context ?? "unknown",
-            "timestamp": Date().timeIntervalSince1970
-        ]
-        
-        print("Feature usage tracked: \(eventData)")
-        
-        // Store for local analytics if needed
-        saveFeatureUsageLocally(feature: feature, context: context)
-    }
     
-    private func saveFeatureUsageLocally(feature: SubscriptionFeature, context: String?) {
+    private func saveFeatureUsageLocally(feature: StartSmartFeature, context: String?) {
         // Save to local storage for offline analytics
-        var usageHistory = localStorage.load([String: Any].self, key: "feature_usage_history") ?? [:]
-        
-        let usageKey = "\(feature.id)_\(Date().timeIntervalSince1970)"
-        usageHistory[usageKey] = [
-            "feature_id": feature.id,
-            "context": context ?? "unknown",
-            "subscription_status": currentSubscriptionStatus.rawValue,
-            "timestamp": Date().timeIntervalSince1970
-        ]
-        
-        localStorage.save(usageHistory, key: "feature_usage_history")
+        // Note: Using simple string storage instead of [String: Any] for now
+        let usageKey = "feature_usage_\(feature.rawValue)_\(Date().timeIntervalSince1970)"
+        try? localStorage.save("\(context ?? "unknown")", forKey: usageKey)
     }
     
     private func updateAnalyticsFromRevenueCat() {

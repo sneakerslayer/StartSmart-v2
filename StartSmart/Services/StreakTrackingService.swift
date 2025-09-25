@@ -1,8 +1,9 @@
 import Foundation
 import Combine
+import SwiftUI
 
 // MARK: - Achievement Types
-enum StreakAchievement: String, CaseIterable, Codable {
+enum StreakAchievement: String, CaseIterable, Codable, Equatable {
     case firstWakeUp = "first_wake_up"
     case threeDayStreak = "three_day_streak"
     case weekStreak = "week_streak"
@@ -76,12 +77,12 @@ enum StreakAchievement: String, CaseIterable, Codable {
 }
 
 // MARK: - Streak Event Types
-enum StreakEvent: Codable {
+enum StreakEvent: Codable, Equatable {
     case alarmDismissed(alarmId: UUID, method: DismissMethod, time: Date)
     case alarmSnoozed(alarmId: UUID, count: Int, time: Date)
     case alarmMissed(alarmId: UUID, time: Date)
     
-    enum DismissMethod: String, Codable {
+    enum DismissMethod: String, Codable, Equatable {
         case voice = "voice"
         case button = "button"
         case notification = "notification"
@@ -128,6 +129,11 @@ struct EnhancedUserStats: Codable, Equatable {
     var thisMonthSuccesses: Int = 0
     var thisMonthMisses: Int = 0
     var lastMonthStart: Date?
+    
+    // Analytics view specific properties
+    var streakHistory: [StreakDataPoint] = []
+    var wakeUpPatterns: [WakeUpPattern] = []
+    var insights: [AnalyticsInsight] = []
     
     // MARK: - Computed Properties
     var successRate: Double {
@@ -194,6 +200,58 @@ struct EnhancedUserStats: Codable, Equatable {
     }
 }
 
+// MARK: - Analytics Support Types
+struct StreakDataPoint: Codable, Equatable, Identifiable {
+    let id: UUID
+    let date: Date
+    let streakLength: Int
+    
+    init(date: Date, streakLength: Int) {
+        self.id = UUID()
+        self.date = date
+        self.streakLength = streakLength
+    }
+}
+
+struct WakeUpPattern: Codable, Equatable {
+    let hour: Int
+    let frequency: Int
+    let dayOfWeek: Int?
+}
+
+struct AnalyticsInsight: Codable, Equatable {
+    let id: UUID
+    let title: String
+    let description: String
+    let type: InsightType
+    let priority: Int
+    
+    enum InsightType: String, Codable, CaseIterable {
+        case streak = "streak"
+        case pattern = "pattern"
+        case improvement = "improvement"
+        case achievement = "achievement"
+        
+        var color: Color {
+            switch self {
+            case .streak: return .orange
+            case .pattern: return .blue  
+            case .improvement: return .yellow
+            case .achievement: return .green
+            }
+        }
+        
+        var iconName: String {
+            switch self {
+            case .streak: return "flame.fill"
+            case .pattern: return "chart.line.uptrend.xyaxis"
+            case .improvement: return "lightbulb.fill"
+            case .achievement: return "trophy.fill"
+            }
+        }
+    }
+}
+
 // MARK: - Streak Tracking Service Protocol
 protocol StreakTrackingServiceProtocol {
     var enhancedStats: AnyPublisher<EnhancedUserStats, Never> { get }
@@ -210,7 +268,7 @@ protocol StreakTrackingServiceProtocol {
 
 // MARK: - Streak Tracking Service Implementation
 @MainActor
-class StreakTrackingService: ObservableObject, StreakTrackingServiceProtocol {
+class StreakTrackingService: ObservableObject, @preconcurrency StreakTrackingServiceProtocol {
     @Published private var _enhancedStats = EnhancedUserStats()
     @Published private var _newAchievements: [StreakAchievement] = []
     
@@ -228,7 +286,7 @@ class StreakTrackingService: ObservableObject, StreakTrackingServiceProtocol {
     }
     
     // MARK: - Initialization
-    init(storage: LocalStorageProtocol = LocalStorage.shared) {
+    init(storage: LocalStorageProtocol = UserDefaultsStorage()) {
         self.storage = storage
         Task {
             await loadStats()
@@ -295,7 +353,7 @@ class StreakTrackingService: ObservableObject, StreakTrackingServiceProtocol {
     }
     
     func loadStats() async {
-        if let data = await storage.load(EnhancedUserStats.self, forKey: storageKey) {
+        if let data = try? storage.load(EnhancedUserStats.self, forKey: storageKey) {
             _enhancedStats = data
         }
     }
@@ -370,10 +428,12 @@ class StreakTrackingService: ObservableObject, StreakTrackingServiceProtocol {
     private func updateAverageWakeUpTime(for date: Date) async {
         let calendar = Calendar.current
         let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: date)
+        let hours = timeComponents.hour ?? 0
+        let minutes = timeComponents.minute ?? 0
+        let seconds = timeComponents.second ?? 0
+        
         let secondsSinceMidnight = TimeInterval(
-            (timeComponents.hour ?? 0) * 3600 +
-            (timeComponents.minute ?? 0) * 60 +
-            (timeComponents.second ?? 0)
+            hours * 3600 + minutes * 60 + seconds
         )
         
         if let currentAverage = _enhancedStats.averageWakeUpTime {
@@ -469,7 +529,7 @@ class StreakTrackingService: ObservableObject, StreakTrackingServiceProtocol {
     }
     
     private func saveStats() async {
-        await storage.save(_enhancedStats, forKey: storageKey)
+        try? storage.save(_enhancedStats, forKey: storageKey)
     }
 }
 

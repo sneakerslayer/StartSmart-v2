@@ -206,7 +206,7 @@ struct AlarmRowView: View {
         }
         
         let hours = Int(timeInterval) / 3600
-        let minutes = Int(timeInterval % 3600) / 60
+        let minutes = Int(timeInterval.truncatingRemainder(dividingBy: 3600)) / 60
         
         if hours > 24 {
             let days = hours / 24

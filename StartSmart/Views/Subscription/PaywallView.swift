@@ -335,7 +335,7 @@ struct PaywallView: View {
                     // Update monthly plan price
                 }
             case SubscriptionPlan.annualProductId:
-                if let index = SubscriptionPlan.allPlans.firstIndex(where: { $0.id == SubscriptionPlan.annualProductId }) {
+                if SubscriptionPlan.allPlans.firstIndex(where: { $0.id == SubscriptionPlan.annualProductId }) != nil {
                     // Update annual plan price
                 }
             default:
@@ -364,7 +364,7 @@ struct PaywallView: View {
             }
             
             // Make the purchase
-            let customerInfo = try await subscriptionService.purchasePackage(package)
+            let _ = try await subscriptionService.purchasePackage(package)
             
             // Success
             showSuccessMessage = true
@@ -374,7 +374,7 @@ struct PaywallView: View {
             
         } catch SubscriptionError.userCancelled {
             // User cancelled, no error needed
-            break
+            return
         } catch {
             showErrorMessage(error.localizedDescription)
         }

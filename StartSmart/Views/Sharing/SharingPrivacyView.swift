@@ -3,7 +3,7 @@ import Combine
 
 // MARK: - Sharing Privacy View
 struct SharingPrivacyView: View {
-    @StateObject private var socialService = DependencyContainer.shared.resolve(SocialSharingServiceProtocol.self) as! SocialSharingService
+    @StateObject private var socialService = DependencyContainer.shared.socialSharingService as! SocialSharingService
     @State private var privacySettings = SharingPrivacySettings()
     @Environment(\.presentationMode) var presentationMode
     
@@ -145,7 +145,7 @@ struct ShareContentPickerView: View {
     let stats: EnhancedUserStats
     let onShareSelected: (ShareCardData, SocialPlatform) -> Void
     @Environment(\.presentationMode) var presentationMode
-    @StateObject private var socialService = DependencyContainer.shared.resolve(SocialSharingServiceProtocol.self) as! SocialSharingService
+    @StateObject private var socialService = DependencyContainer.shared.socialSharingService as! SocialSharingService
     
     var body: some View {
         NavigationView {
@@ -172,11 +172,11 @@ struct ShareContentPickerView: View {
                             ShareTypeCard(
                                 type: .achievement,
                                 title: "Latest Achievement",
-                                description: stats.unlockedAchievements.last?.title ?? "",
+                                description: Array(stats.unlockedAchievements).last?.title ?? "",
                                 icon: "trophy.fill",
                                 gradient: [.yellow, .orange]
                             ) {
-                                if let achievement = stats.unlockedAchievements.last {
+                                if let achievement = Array(stats.unlockedAchievements).last {
                                     let shareData = socialService.createAchievementShareCard(
                                         achievement: achievement,
                                         stats: stats

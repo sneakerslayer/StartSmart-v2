@@ -3,6 +3,79 @@ import RevenueCat
 
 // MARK: - Enhanced Subscription Models
 
+// MARK: - Subscription Feature
+enum StartSmartFeature: String, CaseIterable, Codable {
+    case unlimitedAlarms = "unlimited_alarms"
+    case allVoices = "all_voices"
+    case advancedAnalytics = "advanced_analytics"
+    case earlyAccess = "early_access"
+    case prioritySupport = "priority_support"
+    case customTones = "custom_tones"
+    case socialSharing = "social_sharing"
+    
+    var displayName: String {
+        switch self {
+        case .unlimitedAlarms: return "Unlimited Alarms"
+        case .allVoices: return "All AI Voices"
+        case .advancedAnalytics: return "Advanced Analytics"
+        case .earlyAccess: return "Early Access"
+        case .prioritySupport: return "Priority Support"
+        case .customTones: return "Custom Tones"
+        case .socialSharing: return "Social Sharing"
+        }
+    }
+    
+    static let freeFeatures: [StartSmartFeature] = [.socialSharing]
+    static let proFeatures: [StartSmartFeature] = [.unlimitedAlarms, .allVoices, .advancedAnalytics, .customTones, .socialSharing]
+    
+    var isPremiumOnly: Bool {
+        switch self {
+        case .socialSharing: return false
+        default: return true
+        }
+    }
+}
+
+// MARK: - Subscription Status
+enum StartSmartSubscriptionStatus: String, CaseIterable, Codable {
+    case free = "free"
+    case proWeekly = "pro_weekly"
+    case proMonthly = "pro_monthly"
+    case proAnnual = "pro_annual"
+    
+    var displayName: String {
+        switch self {
+        case .free: return "Free"
+        case .proWeekly: return "Pro Weekly"
+        case .proMonthly: return "Pro Monthly"
+        case .proAnnual: return "Pro Annual"
+        }
+    }
+    
+    var isPremium: Bool {
+        self != .free
+    }
+    
+    var monthlyAlarmLimit: Int? {
+        switch self {
+        case .free: return 15
+        case .proWeekly, .proMonthly, .proAnnual: return nil // Unlimited
+        }
+    }
+    
+    var hasAdvancedAnalytics: Bool {
+        isPremium
+    }
+    
+    var hasAllVoices: Bool {
+        isPremium
+    }
+    
+    var hasEarlyAccess: Bool {
+        self == .proAnnual
+    }
+}
+
 // MARK: - Subscription Plan
 struct SubscriptionPlan: Identifiable, Codable, Equatable {
     let id: String
@@ -10,7 +83,7 @@ struct SubscriptionPlan: Identifiable, Codable, Equatable {
     let description: String
     let price: String
     let period: SubscriptionPeriod
-    let features: [SubscriptionFeature]
+    let features: [StartSmartFeature]
     let isPopular: Bool
     let trialDays: Int?
     let discountPercentage: Int?
@@ -27,7 +100,7 @@ struct SubscriptionPlan: Identifiable, Codable, Equatable {
         description: "Perfect for trying out premium features",
         price: "$2.99",
         period: .weekly,
-        features: SubscriptionFeature.proFeatures,
+        features: StartSmartFeature.proFeatures,
         isPopular: false,
         trialDays: 3,
         discountPercentage: nil
@@ -39,7 +112,7 @@ struct SubscriptionPlan: Identifiable, Codable, Equatable {
         description: "Great for regular users",
         price: "$9.99",
         period: .monthly,
-        features: SubscriptionFeature.proFeatures,
+        features: StartSmartFeature.proFeatures,
         isPopular: true,
         trialDays: 7,
         discountPercentage: nil
@@ -51,7 +124,7 @@ struct SubscriptionPlan: Identifiable, Codable, Equatable {
         description: "Best value with exclusive perks",
         price: "$79.99",
         period: .annual,
-        features: SubscriptionFeature.proFeatures + [.earlyAccess, .prioritySupport],
+        features: StartSmartFeature.proFeatures + [.earlyAccess, .prioritySupport],
         isPopular: false,
         trialDays: 7,
         discountPercentage: 33
@@ -90,6 +163,11 @@ struct SubscriptionFeature: Identifiable, Codable, Equatable {
     let description: String
     let iconName: String
     let isPremiumOnly: Bool
+    
+    // MARK: - Conversion Methods
+    var startSmartFeature: StartSmartFeature? {
+        return StartSmartFeature(rawValue: id)
+    }
     
     // MARK: - Feature Definitions
     static let unlimitedAlarms = SubscriptionFeature(
@@ -192,7 +270,7 @@ struct SubscriptionFeature: Identifiable, Codable, Equatable {
 }
 
 // MARK: - Enhanced Subscription Status
-extension SubscriptionStatus {
+extension StartSmartSubscriptionStatus {
     var plan: SubscriptionPlan? {
         switch self {
         case .free:
@@ -206,18 +284,18 @@ extension SubscriptionStatus {
         }
     }
     
-    var features: [SubscriptionFeature] {
+    var features: [StartSmartFeature] {
         switch self {
         case .free:
-            return SubscriptionFeature.freeFeatures
+            return StartSmartFeature.freeFeatures
         case .proWeekly, .proMonthly:
-            return SubscriptionFeature.proFeatures
+            return StartSmartFeature.proFeatures
         case .proAnnual:
-            return SubscriptionFeature.proFeatures + [.earlyAccess, .prioritySupport]
+            return StartSmartFeature.proFeatures + [.earlyAccess, .prioritySupport]
         }
     }
     
-    var hasFeature(_ feature: SubscriptionFeature) -> Bool {
+    func hasFeature(_ feature: StartSmartFeature) -> Bool {
         return features.contains(feature)
     }
     
@@ -364,11 +442,11 @@ struct FeatureGate {
         return subscriptionStatus.isPremium
     }
     
-    func requiresPremium(_ feature: SubscriptionFeature) -> Bool {
+    func requiresPremium(_ feature: StartSmartFeature) -> Bool {
         return feature.isPremiumOnly && !subscriptionStatus.isPremium
     }
     
-    func getUpgradeMessage(for feature: SubscriptionFeature) -> String {
-        return "Upgrade to Pro to access \(feature.name)"
+    func getUpgradeMessage(for feature: StartSmartFeature) -> String {
+        return "Upgrade to Pro to access \(feature.displayName)"
     }
 }

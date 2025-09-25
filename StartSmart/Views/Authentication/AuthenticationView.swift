@@ -38,7 +38,7 @@ struct AuthenticationView: View {
                 .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: authService.authenticationState)
+        .animation(.easeInOut(duration: 0.3), value: authService.isAuthenticated)
     }
 }
 
@@ -90,7 +90,7 @@ struct SignedInView: View {
                         .foregroundColor(.primary)
                     
                     if let user = authService.currentUser {
-                        Text("Hello, \(user.displayName)")
+                        Text("Hello, \(user.displayName ?? "User")")
                             .font(.system(size: 18))
                             .foregroundColor(.secondary)
                     }

@@ -7,6 +7,70 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0E41DCB12E74F96100358D55 /* Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0E41DC732E74F96000358D55 /* Config.plist */; };
+		0E41DCB22E74F96100358D55 /* Config-template.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0E41DC742E74F96000358D55 /* Config-template.plist */; };
+		0E41DCB32E74F96100358D55 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0E41DC752E74F96000358D55 /* GoogleService-Info.plist */; };
+		0E41DCB42E74F96100358D55 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0E41DC712E74F96000358D55 /* Preview Assets.xcassets */; };
+		0E41DCB52E74F96100358D55 /* AudioPipelineService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC7B2E74F96000358D55 /* AudioPipelineService.swift */; };
+		0E41DCB62E74F96100358D55 /* AnalyticsDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC9C2E74F96000358D55 /* AnalyticsDashboardView.swift */; };
+		0E41DCB72E74F96100358D55 /* SharingPrivacyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCA72E74F96000358D55 /* SharingPrivacyView.swift */; };
+		0E41DCB82E74F96100358D55 /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8E2E74F96000358D55 /* DependencyContainer.swift */; };
+		0E41DCB92E74F96100358D55 /* ContentGenerationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC7E2E74F96000358D55 /* ContentGenerationManager.swift */; };
+		0E41DCBA2E74F96100358D55 /* AlarmListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC982E74F96000358D55 /* AlarmListView.swift */; };
+		0E41DCBB2E74F96100358D55 /* AuthenticationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC7D2E74F96000358D55 /* AuthenticationService.swift */; };
+		0E41DCBC2E74F96100358D55 /* Grok4Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC812E74F96000358D55 /* Grok4Service.swift */; };
+		0E41DCBD2E74F96100358D55 /* IntentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC932E74F96000358D55 /* IntentViewModel.swift */; };
+		0E41DCBE2E74F96100358D55 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCA52E74F96000358D55 /* SettingsView.swift */; };
+		0E41DCBF2E74F96100358D55 /* AlarmRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC782E74F96000358D55 /* AlarmRepository.swift */; };
+		0E41DCC02E74F96100358D55 /* AssetOptimizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8D2E74F96000358D55 /* AssetOptimizer.swift */; };
+		0E41DCC12E74F96100358D55 /* FeatureGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCAC2E74F96000358D55 /* FeatureGateView.swift */; };
+		0E41DCC22E74F96100358D55 /* FirebaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC802E74F96000358D55 /* FirebaseService.swift */; };
+		0E41DCC32E74F96100358D55 /* AuthenticationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCA02E74F96000358D55 /* AuthenticationView.swift */; };
+		0E41DCC42E74F96100358D55 /* AlarmFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC972E74F96000358D55 /* AlarmFormView.swift */; };
+		0E41DCC52E74F96100358D55 /* IntentRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC822E74F96000358D55 /* IntentRepository.swift */; };
+		0E41DCC62E74F96100358D55 /* AlarmAudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC772E74F96000358D55 /* AlarmAudioService.swift */; };
+		0E41DCC72E74F96100358D55 /* StreakView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCAA2E74F96000358D55 /* StreakView.swift */; };
+		0E41DCC82E74F96100358D55 /* NotificationPermissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCAF2E74F96000358D55 /* NotificationPermissionView.swift */; };
+		0E41DCC92E74F96100358D55 /* AlarmRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC992E74F96000358D55 /* AlarmRowView.swift */; };
+		0E41DCCA2E74F96100358D55 /* AlarmSchedulingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC792E74F96000358D55 /* AlarmSchedulingService.swift */; };
+		0E41DCCB2E74F96100358D55 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCA12E74F96000358D55 /* OnboardingView.swift */; };
+		0E41DCCC2E74F96100358D55 /* AlarmViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC922E74F96000358D55 /* AlarmViewModel.swift */; };
+		0E41DCCD2E74F96100358D55 /* LocalStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8F2E74F96000358D55 /* LocalStorage.swift */; };
+		0E41DCCE2E74F96100358D55 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC892E74F96000358D55 /* SubscriptionManager.swift */; };
+		0E41DCD02E74F96100358D55 /* SubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8A2E74F96000358D55 /* SubscriptionService.swift */; };
+		0E41DCD12E74F96100358D55 /* NotificationCategoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC832E74F96000358D55 /* NotificationCategoryService.swift */; };
+		0E41DCD22E74F96100358D55 /* AuthenticationLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC9F2E74F96000358D55 /* AuthenticationLoadingView.swift */; };
+		0E41DCD32E74F96100358D55 /* AlarmDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC962E74F96000358D55 /* AlarmDetailView.swift */; };
+		0E41DCD42E74F96100358D55 /* AudioCacheService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC7A2E74F96000358D55 /* AudioCacheService.swift */; };
+		0E41DCD52E74F96100358D55 /* ElevenLabsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC7F2E74F96000358D55 /* ElevenLabsService.swift */; };
+		0E41DCD72E74F96100358D55 /* UserViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC942E74F96000358D55 /* UserViewModel.swift */; };
+		0E41DCD82E74F96100358D55 /* Alarm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC6C2E74F96000358D55 /* Alarm.swift */; };
+		0E41DCD92E74F96100358D55 /* StreakTrackingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC882E74F96000358D55 /* StreakTrackingService.swift */; };
+		0E41DCDA2E74F96100358D55 /* Subscription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC6E2E74F96000358D55 /* Subscription.swift */; };
+		0E41DCDB2E74F96100358D55 /* AlarmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC9A2E74F96000358D55 /* AlarmView.swift */; };
+		0E41DCDC2E74F96100358D55 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC842E74F96000358D55 /* NotificationService.swift */; };
+		0E41DCDD2E74F96100358D55 /* PerformanceOptimizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC902E74F96000358D55 /* PerformanceOptimizer.swift */; };
+		0E41DCDE2E74F96100358D55 /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC6D2E74F96000358D55 /* Intent.swift */; };
+		0E41DCDF2E74F96100358D55 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC6F2E74F96000358D55 /* User.swift */; };
+		0E41DCE02E74F96100358D55 /* AudioPlaybackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC7C2E74F96000358D55 /* AudioPlaybackService.swift */; };
+		0E41DCE12E74F96100358D55 /* SpeechRecognitionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC872E74F96000358D55 /* SpeechRecognitionService.swift */; };
+		0E41DCE22E74F96100358D55 /* IntentInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCA32E74F96000358D55 /* IntentInputView.swift */; };
+		0E41DCE32E74F96100358D55 /* ServiceConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC852E74F96000358D55 /* ServiceConfiguration.swift */; };
+		0E41DCE42E74F96100358D55 /* SocialSharingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCA82E74F96000358D55 /* SocialSharingView.swift */; };
+		0E41DCE52E74F96100358D55 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCAD2E74F96000358D55 /* PaywallView.swift */; };
+		0E41DCE72E74F96100358D55 /* SocialSharingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC862E74F96000358D55 /* SocialSharingService.swift */; };
+		0E41DCE92E75026500358D55 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 0E41DCE82E75026500358D55 /* RevenueCat */; };
+		0EF353F52E74A76500B66B53 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F42E74A76500B66B53 /* FirebaseAnalytics */; };
+		0EF353F72E74A76500B66B53 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F62E74A76500B66B53 /* FirebaseAuth */; };
+		0EF353F92E74A76500B66B53 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F82E74A76500B66B53 /* FirebaseCore */; };
+		0EF353FB2E74A76500B66B53 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353FA2E74A76500B66B53 /* FirebaseFirestore */; };
+		0EF353FD2E74A76500B66B53 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353FC2E74A76500B66B53 /* FirebaseStorage */; };
+		0EF354002E74AA4600B66B53 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353FF2E74AA4600B66B53 /* GoogleSignIn */; };
+		0EF354022E74AA4600B66B53 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF354012E74AA4600B66B53 /* GoogleSignInSwift */; };
+		0EF354062E74AD6500B66B53 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF354052E74AD6500B66B53 /* Alamofire */; };
+		0EF354092E74AE0F00B66B53 /* AudioKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF354082E74AE0F00B66B53 /* AudioKit */; };
+		0EF3540C2E74AF1900B66B53 /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF3540B2E74AF1900B66B53 /* KeychainSwift */; };
+		0EF3540F2E74AFA800B66B53 /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF3540E2E74AFA800B66B53 /* ComposableArchitecture */; };
 		D0000001000000000000000A /* StartSmartApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000000B /* StartSmartApp.swift */; };
 		D0000001000000000000000C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000000D /* ContentView.swift */; };
 		D0000001000000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000000F /* Assets.xcassets */; };
@@ -25,24 +89,69 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		D0000001000000000000003C /* StartSmart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StartSmart.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0E41DC6C2E74F96000358D55 /* Alarm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alarm.swift; sourceTree = "<group>"; };
+		0E41DC6D2E74F96000358D55 /* Intent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intent.swift; sourceTree = "<group>"; };
+		0E41DC6E2E74F96000358D55 /* Subscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subscription.swift; sourceTree = "<group>"; };
+		0E41DC6F2E74F96000358D55 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		0E41DC712E74F96000358D55 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		0E41DC732E74F96000358D55 /* Config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Config.plist; sourceTree = "<group>"; };
+		0E41DC742E74F96000358D55 /* Config-template.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Config-template.plist"; sourceTree = "<group>"; };
+		0E41DC752E74F96000358D55 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		0E41DC772E74F96000358D55 /* AlarmAudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmAudioService.swift; sourceTree = "<group>"; };
+		0E41DC782E74F96000358D55 /* AlarmRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmRepository.swift; sourceTree = "<group>"; };
+		0E41DC792E74F96000358D55 /* AlarmSchedulingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmSchedulingService.swift; sourceTree = "<group>"; };
+		0E41DC7A2E74F96000358D55 /* AudioCacheService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCacheService.swift; sourceTree = "<group>"; };
+		0E41DC7B2E74F96000358D55 /* AudioPipelineService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPipelineService.swift; sourceTree = "<group>"; };
+		0E41DC7C2E74F96000358D55 /* AudioPlaybackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackService.swift; sourceTree = "<group>"; };
+		0E41DC7D2E74F96000358D55 /* AuthenticationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationService.swift; sourceTree = "<group>"; };
+		0E41DC7E2E74F96000358D55 /* ContentGenerationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentGenerationManager.swift; sourceTree = "<group>"; };
+		0E41DC7F2E74F96000358D55 /* ElevenLabsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsService.swift; sourceTree = "<group>"; };
+		0E41DC802E74F96000358D55 /* FirebaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseService.swift; sourceTree = "<group>"; };
+		0E41DC812E74F96000358D55 /* Grok4Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grok4Service.swift; sourceTree = "<group>"; };
+		0E41DC822E74F96000358D55 /* IntentRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentRepository.swift; sourceTree = "<group>"; };
+		0E41DC832E74F96000358D55 /* NotificationCategoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCategoryService.swift; sourceTree = "<group>"; };
+		0E41DC842E74F96000358D55 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		0E41DC852E74F96000358D55 /* ServiceConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceConfiguration.swift; sourceTree = "<group>"; };
+		0E41DC862E74F96000358D55 /* SocialSharingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialSharingService.swift; sourceTree = "<group>"; };
+		0E41DC872E74F96000358D55 /* SpeechRecognitionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognitionService.swift; sourceTree = "<group>"; };
+		0E41DC882E74F96000358D55 /* StreakTrackingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakTrackingService.swift; sourceTree = "<group>"; };
+		0E41DC892E74F96000358D55 /* SubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
+		0E41DC8A2E74F96000358D55 /* SubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionService.swift; sourceTree = "<group>"; };
+		0E41DC8D2E74F96000358D55 /* AssetOptimizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetOptimizer.swift; sourceTree = "<group>"; };
+		0E41DC8E2E74F96000358D55 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
+		0E41DC8F2E74F96000358D55 /* LocalStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStorage.swift; sourceTree = "<group>"; };
+		0E41DC902E74F96000358D55 /* PerformanceOptimizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceOptimizer.swift; sourceTree = "<group>"; };
+		0E41DC922E74F96000358D55 /* AlarmViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmViewModel.swift; sourceTree = "<group>"; };
+		0E41DC932E74F96000358D55 /* IntentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentViewModel.swift; sourceTree = "<group>"; };
+		0E41DC942E74F96000358D55 /* UserViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserViewModel.swift; sourceTree = "<group>"; };
+		0E41DC962E74F96000358D55 /* AlarmDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmDetailView.swift; sourceTree = "<group>"; };
+		0E41DC972E74F96000358D55 /* AlarmFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmFormView.swift; sourceTree = "<group>"; };
+		0E41DC982E74F96000358D55 /* AlarmListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmListView.swift; sourceTree = "<group>"; };
+		0E41DC992E74F96000358D55 /* AlarmRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmRowView.swift; sourceTree = "<group>"; };
+		0E41DC9A2E74F96000358D55 /* AlarmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmView.swift; sourceTree = "<group>"; };
+		0E41DC9C2E74F96000358D55 /* AnalyticsDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsDashboardView.swift; sourceTree = "<group>"; };
+		0E41DC9F2E74F96000358D55 /* AuthenticationLoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationLoadingView.swift; sourceTree = "<group>"; };
+		0E41DCA02E74F96000358D55 /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationView.swift; sourceTree = "<group>"; };
+		0E41DCA12E74F96000358D55 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		0E41DCA32E74F96000358D55 /* IntentInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentInputView.swift; sourceTree = "<group>"; };
+		0E41DCA52E74F96000358D55 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		0E41DCA72E74F96000358D55 /* SharingPrivacyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharingPrivacyView.swift; sourceTree = "<group>"; };
+		0E41DCA82E74F96000358D55 /* SocialSharingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialSharingView.swift; sourceTree = "<group>"; };
+		0E41DCAA2E74F96000358D55 /* StreakView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakView.swift; sourceTree = "<group>"; };
+		0E41DCAC2E74F96000358D55 /* FeatureGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureGateView.swift; sourceTree = "<group>"; };
+		0E41DCAD2E74F96000358D55 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		0E41DCAF2E74F96000358D55 /* NotificationPermissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPermissionView.swift; sourceTree = "<group>"; };
 		D0000001000000000000000B /* StartSmartApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmartApp.swift; sourceTree = "<group>"; };
 		D0000001000000000000000D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D0000001000000000000000F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D0000001000000000000001B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		D0000001000000000000002D /* StartSmartTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StartSmartTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0000001000000000000002B /* StartSmartTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmartTests.swift; sourceTree = "<group>"; };
+		D0000001000000000000002D /* StartSmartTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StartSmartTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0000001000000000000003C /* StartSmart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StartSmart.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0000001000000000000004A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		D0000001000000000000003D /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		D0000001000000000000002E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -50,25 +159,198 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D0000001000000000000003D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0EF353F52E74A76500B66B53 /* FirebaseAnalytics in Frameworks */,
+				0EF354062E74AD6500B66B53 /* Alamofire in Frameworks */,
+				0EF3540F2E74AFA800B66B53 /* ComposableArchitecture in Frameworks */,
+				0EF3540C2E74AF1900B66B53 /* KeychainSwift in Frameworks */,
+				0EF353FB2E74A76500B66B53 /* FirebaseFirestore in Frameworks */,
+				0EF354092E74AE0F00B66B53 /* AudioKit in Frameworks */,
+				0EF354022E74AA4600B66B53 /* GoogleSignInSwift in Frameworks */,
+				0EF353F92E74A76500B66B53 /* FirebaseCore in Frameworks */,
+				0E41DCE92E75026500358D55 /* RevenueCat in Frameworks */,
+				0EF353FD2E74A76500B66B53 /* FirebaseStorage in Frameworks */,
+				0EF353F72E74A76500B66B53 /* FirebaseAuth in Frameworks */,
+				0EF354002E74AA4600B66B53 /* GoogleSignIn in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		D0000001000000000000003E /* StartSmart */ = {
+		0E41DC702E74F96000358D55 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				D0000001000000000000004A /* Info.plist */,
-				D0000001000000000000000B /* StartSmartApp.swift */,
-				D0000001000000000000000D /* ContentView.swift */,
-				D0000001000000000000005A /* Models */,
-				D0000001000000000000005B /* Views */,
-				D0000001000000000000005C /* ViewModels */,
-				D0000001000000000000005D /* Services */,
-				D0000001000000000000005E /* Utils */,
-				D0000001000000000000005F /* Resources */,
-				D0000001000000000000000F /* Assets.xcassets */,
-				D0000001000000000000001C /* Preview Content */,
+				0E41DC6C2E74F96000358D55 /* Alarm.swift */,
+				0E41DC6D2E74F96000358D55 /* Intent.swift */,
+				0E41DC6E2E74F96000358D55 /* Subscription.swift */,
+				0E41DC6F2E74F96000358D55 /* User.swift */,
 			);
-			path = StartSmart;
+			path = Models;
+			sourceTree = "<group>";
+		};
+		0E41DC722E74F96000358D55 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DC712E74F96000358D55 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		0E41DC762E74F96000358D55 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DC732E74F96000358D55 /* Config.plist */,
+				0E41DC742E74F96000358D55 /* Config-template.plist */,
+				0E41DC752E74F96000358D55 /* GoogleService-Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		0E41DC8B2E74F96000358D55 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DC772E74F96000358D55 /* AlarmAudioService.swift */,
+				0E41DC782E74F96000358D55 /* AlarmRepository.swift */,
+				0E41DC792E74F96000358D55 /* AlarmSchedulingService.swift */,
+				0E41DC7A2E74F96000358D55 /* AudioCacheService.swift */,
+				0E41DC7B2E74F96000358D55 /* AudioPipelineService.swift */,
+				0E41DC7C2E74F96000358D55 /* AudioPlaybackService.swift */,
+				0E41DC7D2E74F96000358D55 /* AuthenticationService.swift */,
+				0E41DC7E2E74F96000358D55 /* ContentGenerationManager.swift */,
+				0E41DC7F2E74F96000358D55 /* ElevenLabsService.swift */,
+				0E41DC802E74F96000358D55 /* FirebaseService.swift */,
+				0E41DC812E74F96000358D55 /* Grok4Service.swift */,
+				0E41DC822E74F96000358D55 /* IntentRepository.swift */,
+				0E41DC832E74F96000358D55 /* NotificationCategoryService.swift */,
+				0E41DC842E74F96000358D55 /* NotificationService.swift */,
+				0E41DC852E74F96000358D55 /* ServiceConfiguration.swift */,
+				0E41DC862E74F96000358D55 /* SocialSharingService.swift */,
+				0E41DC872E74F96000358D55 /* SpeechRecognitionService.swift */,
+				0E41DC882E74F96000358D55 /* StreakTrackingService.swift */,
+				0E41DC892E74F96000358D55 /* SubscriptionManager.swift */,
+				0E41DC8A2E74F96000358D55 /* SubscriptionService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		0E41DC8C2E74F96000358D55 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		0E41DC912E74F96000358D55 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DC8D2E74F96000358D55 /* AssetOptimizer.swift */,
+				0E41DC8E2E74F96000358D55 /* DependencyContainer.swift */,
+				0E41DC8F2E74F96000358D55 /* LocalStorage.swift */,
+				0E41DC902E74F96000358D55 /* PerformanceOptimizer.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		0E41DC952E74F96000358D55 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DC922E74F96000358D55 /* AlarmViewModel.swift */,
+				0E41DC932E74F96000358D55 /* IntentViewModel.swift */,
+				0E41DC942E74F96000358D55 /* UserViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		0E41DC9B2E74F96000358D55 /* Alarms */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DC962E74F96000358D55 /* AlarmDetailView.swift */,
+				0E41DC972E74F96000358D55 /* AlarmFormView.swift */,
+				0E41DC982E74F96000358D55 /* AlarmListView.swift */,
+				0E41DC992E74F96000358D55 /* AlarmRowView.swift */,
+				0E41DC9A2E74F96000358D55 /* AlarmView.swift */,
+			);
+			path = Alarms;
+			sourceTree = "<group>";
+		};
+		0E41DC9E2E74F96000358D55 /* Analytics */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DC9C2E74F96000358D55 /* AnalyticsDashboardView.swift */,
+			);
+			path = Analytics;
+			sourceTree = "<group>";
+		};
+		0E41DCA22E74F96000358D55 /* Authentication */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DC9F2E74F96000358D55 /* AuthenticationLoadingView.swift */,
+				0E41DCA02E74F96000358D55 /* AuthenticationView.swift */,
+				0E41DCA12E74F96000358D55 /* OnboardingView.swift */,
+			);
+			path = Authentication;
+			sourceTree = "<group>";
+		};
+		0E41DCA42E74F96000358D55 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DCA32E74F96000358D55 /* IntentInputView.swift */,
+			);
+			path = Intents;
+			sourceTree = "<group>";
+		};
+		0E41DCA62E74F96000358D55 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DCA52E74F96000358D55 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		0E41DCA92E74F96000358D55 /* Sharing */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DCA72E74F96000358D55 /* SharingPrivacyView.swift */,
+				0E41DCA82E74F96000358D55 /* SocialSharingView.swift */,
+			);
+			path = Sharing;
+			sourceTree = "<group>";
+		};
+		0E41DCAB2E74F96000358D55 /* Streaks */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DCAA2E74F96000358D55 /* StreakView.swift */,
+			);
+			path = Streaks;
+			sourceTree = "<group>";
+		};
+		0E41DCAE2E74F96000358D55 /* Subscription */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DCAC2E74F96000358D55 /* FeatureGateView.swift */,
+				0E41DCAD2E74F96000358D55 /* PaywallView.swift */,
+			);
+			path = Subscription;
+			sourceTree = "<group>";
+		};
+		0E41DCB02E74F96000358D55 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DC9B2E74F96000358D55 /* Alarms */,
+				0E41DC9E2E74F96000358D55 /* Analytics */,
+				0E41DCA22E74F96000358D55 /* Authentication */,
+				0E41DCA42E74F96000358D55 /* Intents */,
+				0E41DCA62E74F96000358D55 /* Settings */,
+				0E41DCA92E74F96000358D55 /* Sharing */,
+				0E41DCAB2E74F96000358D55 /* Streaks */,
+				0E41DCAE2E74F96000358D55 /* Subscription */,
+				0E41DCAF2E74F96000358D55 /* NotificationPermissionView.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 		D0000001000000000000001C /* Preview Content */ = {
@@ -85,6 +367,50 @@
 				D0000001000000000000002B /* StartSmartTests.swift */,
 			);
 			path = StartSmartTests;
+			sourceTree = "<group>";
+		};
+		D0000001000000000000003E /* StartSmart */ = {
+			isa = PBXGroup;
+			children = (
+				0E41DC702E74F96000358D55 /* Models */,
+				0E41DC722E74F96000358D55 /* Preview Content */,
+				0E41DC762E74F96000358D55 /* Resources */,
+				0E41DC8B2E74F96000358D55 /* Services */,
+				0E41DC8C2E74F96000358D55 /* Tests */,
+				0E41DC912E74F96000358D55 /* Utils */,
+				0E41DC952E74F96000358D55 /* ViewModels */,
+				0E41DCB02E74F96000358D55 /* Views */,
+				D0000001000000000000004A /* Info.plist */,
+				D0000001000000000000000B /* StartSmartApp.swift */,
+				D0000001000000000000000D /* ContentView.swift */,
+				D0000001000000000000005A /* Models */,
+				D0000001000000000000005B /* Views */,
+				D0000001000000000000005C /* ViewModels */,
+				D0000001000000000000005D /* Services */,
+				D0000001000000000000005E /* Utils */,
+				D0000001000000000000005F /* Resources */,
+				D0000001000000000000000F /* Assets.xcassets */,
+				D0000001000000000000001C /* Preview Content */,
+			);
+			path = StartSmart;
+			sourceTree = "<group>";
+		};
+		D0000001000000000000003F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D0000001000000000000003C /* StartSmart.app */,
+				D0000001000000000000002D /* StartSmartTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D0000001000000000000004B = {
+			isa = PBXGroup;
+			children = (
+				D0000001000000000000003E /* StartSmart */,
+				D0000001000000000000002F /* StartSmartTests */,
+				D0000001000000000000003F /* Products */,
+			);
 			sourceTree = "<group>";
 		};
 		D0000001000000000000005A /* Models */ = {
@@ -129,24 +455,6 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		D0000001000000000000003F /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				D0000001000000000000003C /* StartSmart.app */,
-				D0000001000000000000002D /* StartSmartTests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		D0000001000000000000004B = {
-			isa = PBXGroup;
-			children = (
-				D0000001000000000000003E /* StartSmart */,
-				D0000001000000000000002F /* StartSmartTests */,
-				D0000001000000000000003F /* Products */,
-			);
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -164,6 +472,18 @@
 			);
 			name = StartSmart;
 			packageProductDependencies = (
+				0EF353F42E74A76500B66B53 /* FirebaseAnalytics */,
+				0EF353F62E74A76500B66B53 /* FirebaseAuth */,
+				0EF353F82E74A76500B66B53 /* FirebaseCore */,
+				0EF353FA2E74A76500B66B53 /* FirebaseFirestore */,
+				0EF353FC2E74A76500B66B53 /* FirebaseStorage */,
+				0EF353FF2E74AA4600B66B53 /* GoogleSignIn */,
+				0EF354012E74AA4600B66B53 /* GoogleSignInSwift */,
+				0EF354052E74AD6500B66B53 /* Alamofire */,
+				0EF354082E74AE0F00B66B53 /* AudioKit */,
+				0EF3540B2E74AF1900B66B53 /* KeychainSwift */,
+				0EF3540E2E74AFA800B66B53 /* ComposableArchitecture */,
+				0E41DCE82E75026500358D55 /* RevenueCat */,
 			);
 			productName = StartSmart;
 			productReference = D0000001000000000000003C /* StartSmart.app */;
@@ -195,7 +515,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1500;
-				LastUpgradeCheck = 1500;
+				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					D0000001000000000000003B = {
 						CreatedOnToolsVersion = 15.0;
@@ -216,6 +536,13 @@
 			);
 			mainGroup = D0000001000000000000004B;
 			packageReferences = (
+				0EF353F32E74A76500B66B53 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				0EF353FE2E74AA4600B66B53 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				0EF354032E74AAEF00B66B53 /* XCRemoteSwiftPackageReference "purchases-ios" */,
+				0EF354042E74AD6500B66B53 /* XCRemoteSwiftPackageReference "Alamofire" */,
+				0EF354072E74AE0F00B66B53 /* XCRemoteSwiftPackageReference "AudioKit" */,
+				0EF3540A2E74AF1900B66B53 /* XCRemoteSwiftPackageReference "keychain-swift" */,
+				0EF3540D2E74AFA800B66B53 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */,
 			);
 			productRefGroup = D0000001000000000000003F /* Products */;
 			projectDirPath = "";
@@ -232,6 +559,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0E41DCB12E74F96100358D55 /* Config.plist in Resources */,
+				0E41DCB22E74F96100358D55 /* Config-template.plist in Resources */,
+				0E41DCB32E74F96100358D55 /* GoogleService-Info.plist in Resources */,
+				0E41DCB42E74F96100358D55 /* Preview Assets.xcassets in Resources */,
 				D0000001000000000000001A /* Preview Assets.xcassets in Resources */,
 				D0000001000000000000000E /* Assets.xcassets in Resources */,
 			);
@@ -252,6 +583,54 @@
 			buildActionMask = 2147483647;
 			files = (
 				D0000001000000000000000C /* ContentView.swift in Sources */,
+				0E41DCB52E74F96100358D55 /* AudioPipelineService.swift in Sources */,
+				0E41DCB62E74F96100358D55 /* AnalyticsDashboardView.swift in Sources */,
+				0E41DCB72E74F96100358D55 /* SharingPrivacyView.swift in Sources */,
+				0E41DCB82E74F96100358D55 /* DependencyContainer.swift in Sources */,
+				0E41DCB92E74F96100358D55 /* ContentGenerationManager.swift in Sources */,
+				0E41DCBA2E74F96100358D55 /* AlarmListView.swift in Sources */,
+				0E41DCBB2E74F96100358D55 /* AuthenticationService.swift in Sources */,
+				0E41DCBC2E74F96100358D55 /* Grok4Service.swift in Sources */,
+				0E41DCBD2E74F96100358D55 /* IntentViewModel.swift in Sources */,
+				0E41DCBE2E74F96100358D55 /* SettingsView.swift in Sources */,
+				0E41DCBF2E74F96100358D55 /* AlarmRepository.swift in Sources */,
+				0E41DCC02E74F96100358D55 /* AssetOptimizer.swift in Sources */,
+				0E41DCC12E74F96100358D55 /* FeatureGateView.swift in Sources */,
+				0E41DCC22E74F96100358D55 /* FirebaseService.swift in Sources */,
+				0E41DCC32E74F96100358D55 /* AuthenticationView.swift in Sources */,
+				0E41DCC42E74F96100358D55 /* AlarmFormView.swift in Sources */,
+				0E41DCC52E74F96100358D55 /* IntentRepository.swift in Sources */,
+				0E41DCC62E74F96100358D55 /* AlarmAudioService.swift in Sources */,
+				0E41DCC72E74F96100358D55 /* StreakView.swift in Sources */,
+				0E41DCC82E74F96100358D55 /* NotificationPermissionView.swift in Sources */,
+				0E41DCC92E74F96100358D55 /* AlarmRowView.swift in Sources */,
+				0E41DCCA2E74F96100358D55 /* AlarmSchedulingService.swift in Sources */,
+				0E41DCCB2E74F96100358D55 /* OnboardingView.swift in Sources */,
+				0E41DCCC2E74F96100358D55 /* AlarmViewModel.swift in Sources */,
+				0E41DCCD2E74F96100358D55 /* LocalStorage.swift in Sources */,
+				0E41DCCE2E74F96100358D55 /* SubscriptionManager.swift in Sources */,
+				0E41DCD02E74F96100358D55 /* SubscriptionService.swift in Sources */,
+				0E41DCD12E74F96100358D55 /* NotificationCategoryService.swift in Sources */,
+				0E41DCD22E74F96100358D55 /* AuthenticationLoadingView.swift in Sources */,
+				0E41DCD32E74F96100358D55 /* AlarmDetailView.swift in Sources */,
+				0E41DCD42E74F96100358D55 /* AudioCacheService.swift in Sources */,
+				0E41DCD52E74F96100358D55 /* ElevenLabsService.swift in Sources */,
+				0E41DCD72E74F96100358D55 /* UserViewModel.swift in Sources */,
+				0E41DCD82E74F96100358D55 /* Alarm.swift in Sources */,
+				0E41DCD92E74F96100358D55 /* StreakTrackingService.swift in Sources */,
+				0E41DCDA2E74F96100358D55 /* Subscription.swift in Sources */,
+				0E41DCDB2E74F96100358D55 /* AlarmView.swift in Sources */,
+				0E41DCDC2E74F96100358D55 /* NotificationService.swift in Sources */,
+				0E41DCDD2E74F96100358D55 /* PerformanceOptimizer.swift in Sources */,
+				0E41DCDE2E74F96100358D55 /* Intent.swift in Sources */,
+				0E41DCDF2E74F96100358D55 /* User.swift in Sources */,
+				0E41DCE02E74F96100358D55 /* AudioPlaybackService.swift in Sources */,
+				0E41DCE12E74F96100358D55 /* SpeechRecognitionService.swift in Sources */,
+				0E41DCE22E74F96100358D55 /* IntentInputView.swift in Sources */,
+				0E41DCE32E74F96100358D55 /* ServiceConfiguration.swift in Sources */,
+				0E41DCE42E74F96100358D55 /* SocialSharingView.swift in Sources */,
+				0E41DCE52E74F96100358D55 /* PaywallView.swift in Sources */,
+				0E41DCE72E74F96100358D55 /* SocialSharingService.swift in Sources */,
 				D0000001000000000000000A /* StartSmartApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -402,7 +781,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"StartSmart/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = G8QMUDCDLU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = StartSmart/Info.plist;
@@ -435,7 +814,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"StartSmart/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = G8QMUDCDLU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = StartSmart/Info.plist;
@@ -463,7 +842,6 @@
 		D0000001000000000000005P /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -483,7 +861,6 @@
 		D0000001000000000000005Q /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -531,6 +908,128 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0EF353F32E74A76500B66B53 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.2.0;
+			};
+		};
+		0EF353FE2E74AA4600B66B53 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
+		0EF354032E74AAEF00B66B53 /* XCRemoteSwiftPackageReference "purchases-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.39.0;
+			};
+		};
+		0EF354042E74AD6500B66B53 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.10.2;
+			};
+		};
+		0EF354072E74AE0F00B66B53 /* XCRemoteSwiftPackageReference "AudioKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AudioKit/AudioKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.6.5;
+			};
+		};
+		0EF3540A2E74AF1900B66B53 /* XCRemoteSwiftPackageReference "keychain-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/evgenyneu/keychain-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 24.0.0;
+			};
+		};
+		0EF3540D2E74AFA800B66B53 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-composable-architecture";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.22.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0E41DCE82E75026500358D55 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0EF354032E74AAEF00B66B53 /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			productName = RevenueCat;
+		};
+		0EF353F42E74A76500B66B53 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0EF353F32E74A76500B66B53 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		0EF353F62E74A76500B66B53 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0EF353F32E74A76500B66B53 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		0EF353F82E74A76500B66B53 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0EF353F32E74A76500B66B53 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		0EF353FA2E74A76500B66B53 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0EF353F32E74A76500B66B53 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		0EF353FC2E74A76500B66B53 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0EF353F32E74A76500B66B53 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+		0EF353FF2E74AA4600B66B53 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0EF353FE2E74AA4600B66B53 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		0EF354012E74AA4600B66B53 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0EF353FE2E74AA4600B66B53 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+		0EF354052E74AD6500B66B53 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0EF354042E74AD6500B66B53 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
+		0EF354082E74AE0F00B66B53 /* AudioKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0EF354072E74AE0F00B66B53 /* XCRemoteSwiftPackageReference "AudioKit" */;
+			productName = AudioKit;
+		};
+		0EF3540B2E74AF1900B66B53 /* KeychainSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0EF3540A2E74AF1900B66B53 /* XCRemoteSwiftPackageReference "keychain-swift" */;
+			productName = KeychainSwift;
+		};
+		0EF3540E2E74AFA800B66B53 /* ComposableArchitecture */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0EF3540D2E74AFA800B66B53 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = ComposableArchitecture;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D0000001000000000000003A /* Project object */;
 }

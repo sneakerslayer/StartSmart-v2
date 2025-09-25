@@ -16,10 +16,16 @@ class AlarmViewModel: ObservableObject {
     @Injected private var userViewModel: UserViewModel
     @Injected private var streakService: StreakTrackingServiceProtocol
     
-    init(alarmRepository: AlarmRepositoryProtocol = AlarmRepository()) {
+    init(alarmRepository: AlarmRepositoryProtocol) {
         self.alarmRepository = alarmRepository
-        setupSubscriptions()
-        loadAlarms()
+        Task { @MainActor in
+            setupSubscriptions()
+            loadAlarms()
+        }
+    }
+    
+    convenience init() {
+        self.init(alarmRepository: AlarmRepository())
     }
     
     // MARK: - Setup
@@ -208,11 +214,11 @@ class AlarmViewModel: ObservableObject {
     
     var nextAlarm: Alarm? {
         enabledAlarms
-            .compactMap { alarm in
+            .compactMap { alarm -> (Alarm, Date)? in
                 guard let nextTrigger = alarm.nextTriggerDate else { return nil }
                 return (alarm, nextTrigger)
             }
-            .min { $0.1 < $1.1 }?
+            .min(by: { $0.1 < $1.1 })?
             .0
     }
     

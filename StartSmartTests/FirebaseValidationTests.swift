@@ -7,7 +7,7 @@
 
 import XCTest
 @testable import StartSmart
-import Firebase
+import FirebaseCore
 import FirebaseAuth
 import FirebaseFirestore
 import FirebaseStorage

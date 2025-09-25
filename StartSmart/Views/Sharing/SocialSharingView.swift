@@ -3,8 +3,8 @@ import Combine
 
 // MARK: - Social Sharing View
 struct SocialSharingView: View {
-    @StateObject private var socialService = DependencyContainer.shared.resolve(SocialSharingServiceProtocol.self) as! SocialSharingService
-    @StateObject private var streakService = DependencyContainer.shared.resolve(StreakTrackingServiceProtocol.self) as! StreakTrackingService
+    @StateObject private var socialService = DependencyContainer.shared.socialSharingService as! SocialSharingService
+    @StateObject private var streakService = DependencyContainer.shared.streakTrackingService as! StreakTrackingService
     
     @State private var stats = EnhancedUserStats()
     @State private var privacySettings = SharingPrivacySettings()
@@ -191,7 +191,7 @@ struct PrivacyDisabledView: View {
 struct QuickShareSection: View {
     let stats: EnhancedUserStats
     let onShare: (ShareCardData, SocialPlatform) -> Void
-    @StateObject private var socialService = DependencyContainer.shared.resolve(SocialSharingServiceProtocol.self) as! SocialSharingService
+    @StateObject private var socialService = DependencyContainer.shared.socialSharingService as! SocialSharingService
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -215,7 +215,7 @@ struct QuickShareSection: View {
                     }
                     
                     // Latest achievement
-                    if let latestAchievement = stats.unlockedAchievements.last {
+                    if let latestAchievement = Array(stats.unlockedAchievements).last {
                         QuickShareCard(
                             title: "Achievement",
                             value: latestAchievement.title,
@@ -304,7 +304,7 @@ struct QuickShareCard: View {
 struct RecentMomentsSection: View {
     let stats: EnhancedUserStats
     let onShare: (ShareCardData, SocialPlatform) -> Void
-    @StateObject private var socialService = DependencyContainer.shared.resolve(SocialSharingServiceProtocol.self) as! SocialSharingService
+    @StateObject private var socialService = DependencyContainer.shared.socialSharingService as! SocialSharingService
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -328,7 +328,7 @@ struct RecentMomentsSection: View {
                 }
                 
                 // Recent achievements
-                for achievement in Array(stats.unlockedAchievements.suffix(2)) {
+                ForEach(Array(stats.unlockedAchievements.suffix(2)), id: \.self) { achievement in
                     MomentCard(
                         title: "Achievement Unlocked!",
                         description: achievement.title,

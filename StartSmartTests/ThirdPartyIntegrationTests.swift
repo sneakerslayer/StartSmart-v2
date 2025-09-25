@@ -2,7 +2,7 @@ import XCTest
 @testable import StartSmart
 import RevenueCat
 import UserNotifications
-import Firebase
+import FirebaseCore
 import FirebaseAuth
 import Combine
 

@@ -7,7 +7,7 @@ struct User: Identifiable, Codable, Equatable {
     var displayName: String?
     var profileImageURL: String?
     var preferences: UserPreferences
-    var subscription: SubscriptionStatus
+    var subscription: StartSmartSubscriptionStatus
     var stats: UserStats
     var createdAt: Date
     var updatedAt: Date
@@ -20,7 +20,7 @@ struct User: Identifiable, Codable, Equatable {
         displayName: String? = nil,
         profileImageURL: String? = nil,
         preferences: UserPreferences = UserPreferences(),
-        subscription: SubscriptionStatus = .free
+        subscription: StartSmartSubscriptionStatus = .free
     ) {
         self.id = id
         self.email = email
@@ -59,7 +59,7 @@ struct User: Identifiable, Codable, Equatable {
         self.updatedAt = Date()
     }
     
-    mutating func updateSubscription(_ newSubscription: SubscriptionStatus) {
+    mutating func updateSubscription(_ newSubscription: StartSmartSubscriptionStatus) {
         self.subscription = newSubscription
         self.updatedAt = Date()
     }
@@ -83,6 +83,21 @@ struct User: Identifiable, Codable, Equatable {
     mutating func recordSnooze() {
         stats.totalSnoozes += 1
         updatedAt = Date()
+    }
+    
+    // MARK: - Firebase Integration
+    func toDictionary() throws -> [String: Any] {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let data = try encoder.encode(self)
+        return try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
+    }
+    
+    static func fromDictionary(_ data: [String: Any]) throws -> User {
+        let jsonData = try JSONSerialization.data(withJSONObject: data)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try decoder.decode(User.self, from: jsonData)
     }
 }
 
@@ -250,10 +265,12 @@ struct UserStats: Codable, Equatable {
     private mutating func updateAverageWakeUpTime(for date: Date) {
         let calendar = Calendar.current
         let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: date)
+        let hours = timeComponents.hour ?? 0
+        let minutes = timeComponents.minute ?? 0
+        let seconds = timeComponents.second ?? 0
+        
         let secondsSinceMidnight = TimeInterval(
-            (timeComponents.hour ?? 0) * 3600 +
-            (timeComponents.minute ?? 0) * 60 +
-            (timeComponents.second ?? 0)
+            hours * 3600 + minutes * 60 + seconds
         )
         
         if let currentAverage = averageWakeUpTime {

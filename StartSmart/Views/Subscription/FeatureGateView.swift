@@ -24,7 +24,8 @@ struct FeatureGateView<Content: View>: View {
     
     var body: some View {
         Group {
-            if subscriptionManager.canAccessFeature(feature) {
+            if let startSmartFeature = feature.startSmartFeature,
+               subscriptionManager.canAccessFeature(startSmartFeature) {
                 content
             } else {
                 premiumFeatureOverlay
@@ -58,7 +59,8 @@ struct FeatureGateView<Content: View>: View {
             
             // Upgrade Button
             Button {
-                if subscriptionManager.presentPaywallIfNeeded(for: feature, source: source) {
+                if let startSmartFeature = feature.startSmartFeature,
+                   subscriptionManager.presentPaywallIfNeeded(for: startSmartFeature, source: source) {
                     showPaywall = true
                     onUpgrade?()
                 }
@@ -133,7 +135,8 @@ struct InlineFeatureGate: View {
             
             // Upgrade Button
             Button {
-                if subscriptionManager.presentPaywallIfNeeded(for: feature, source: source) {
+                if let startSmartFeature = feature.startSmartFeature,
+                   subscriptionManager.presentPaywallIfNeeded(for: startSmartFeature, source: source) {
                     showPaywall = true
                     onUpgrade?()
                 }
@@ -194,7 +197,7 @@ struct FeatureToggle: View {
                         .font(.body)
                         .fontWeight(.medium)
                     
-                    if feature.isPremiumOnly && !subscriptionManager.canAccessFeature(feature) {
+                    if feature.isPremiumOnly && !subscriptionManager.canAccessFeature(feature.startSmartFeature ?? .unlimitedAlarms) {
                         Image(systemName: "crown.fill")
                             .foregroundColor(.yellow)
                             .font(.caption)
@@ -208,14 +211,15 @@ struct FeatureToggle: View {
             
             Spacer()
             
-            if subscriptionManager.canAccessFeature(feature) {
+            if subscriptionManager.canAccessFeature(feature.startSmartFeature ?? .unlimitedAlarms) {
                 Toggle("", isOn: Binding(
                     get: { isEnabled },
                     set: onToggle
                 ))
             } else {
                 Button {
-                    if subscriptionManager.presentPaywallIfNeeded(for: feature, source: source) {
+                    if let startSmartFeature = feature.startSmartFeature,
+                       subscriptionManager.presentPaywallIfNeeded(for: startSmartFeature, source: source) {
                         showPaywall = true
                     }
                 } label: {
@@ -329,85 +333,100 @@ struct VoiceSelectionGate: View {
     
     private func voiceOptionButton(_ tone: AlarmTone) -> some View {
         let isSelected = selectedVoice == tone
-        let isLocked = tone != .energetic && !subscriptionManager.canAccessFeature(.allVoices)
+        let hasAllVoicesAccess = subscriptionManager.canAccessFeature(.allVoices)
+        let isLocked = tone != .energetic && !hasAllVoicesAccess
         
-        return Button {
+        return Button(action: {
             if isLocked {
                 showPaywall = true
             } else {
                 onVoiceChange(tone)
             }
-        } label: {
-            VStack(spacing: 8) {
-                HStack {
-                    Image(systemName: tone.iconName)
-                        .font(.title2)
-                        .foregroundColor(isSelected ? .white : (isLocked ? .gray : .primary))
-                    
-                    if isLocked {
-                        Spacer()
-                        Image(systemName: "lock.fill")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                }
-                
-                Text(tone.displayName)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(isSelected ? .white : (isLocked ? .gray : .primary))
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 60)
-            .padding(.horizontal, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        isSelected ? Color.blue : (isLocked ? Color.gray.opacity(0.1) : Color.gray.opacity(0.05))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                isSelected ? Color.blue : (isLocked ? Color.gray.opacity(0.3) : Color.gray.opacity(0.2)),
-                                lineWidth: isSelected ? 2 : 1
-                            )
-                    )
-            )
-        }
+        }, label: {
+            voiceButtonContent(tone: tone, isSelected: isSelected, isLocked: isLocked)
+        })
         .buttonStyle(PlainButtonStyle())
-        .disabled(isLocked && !subscriptionManager.canAccessFeature(.allVoices))
+        .disabled(isLocked && !hasAllVoicesAccess)
     }
-}
-
-// MARK: - AlarmTone Extension for Display
-extension AlarmTone {
-    var iconName: String {
-        switch self {
-        case .gentle:
-            return "leaf.fill"
-        case .energetic:
-            return "bolt.fill"
-        case .toughLove:
-            return "flame.fill"
-        case .storyteller:
-            return "book.fill"
+    
+    @ViewBuilder
+    private func voiceButtonContent(tone: AlarmTone, isSelected: Bool, isLocked: Bool) -> some View {
+        VStack(spacing: 8) {
+            voiceButtonHeader(tone: tone, isSelected: isSelected, isLocked: isLocked)
+            voiceButtonText(tone: tone, isSelected: isSelected, isLocked: isLocked)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 60)
+        .padding(.horizontal, 8)
+        .background(voiceButtonBackground(isSelected: isSelected, isLocked: isLocked))
+    }
+    
+    @ViewBuilder
+    private func voiceButtonHeader(tone: AlarmTone, isSelected: Bool, isLocked: Bool) -> some View {
+        HStack {
+            Image(systemName: tone.iconName)
+                .font(.title2)
+                .foregroundColor(voiceButtonIconColor(isSelected: isSelected, isLocked: isLocked))
+            
+            if isLocked {
+                Spacer()
+                Image(systemName: "lock.fill")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
         }
     }
     
-    var displayName: String {
-        switch self {
-        case .gentle:
-            return "Gentle"
-        case .energetic:
-            return "Energetic"
-        case .toughLove:
-            return "Tough Love"
-        case .storyteller:
-            return "Storyteller"
-        }
+    @ViewBuilder
+    private func voiceButtonText(tone: AlarmTone, isSelected: Bool, isLocked: Bool) -> some View {
+        Text(tone.displayName)
+            .font(.caption)
+            .fontWeight(.medium)
+            .foregroundColor(voiceButtonTextColor(isSelected: isSelected, isLocked: isLocked))
+            .multilineTextAlignment(.center)
+    }
+    
+    private func voiceButtonIconColor(isSelected: Bool, isLocked: Bool) -> Color {
+        if isSelected { return .white }
+        if isLocked { return .gray }
+        return .primary
+    }
+    
+    private func voiceButtonTextColor(isSelected: Bool, isLocked: Bool) -> Color {
+        if isSelected { return .white }
+        if isLocked { return .gray }
+        return .primary
+    }
+    
+    @ViewBuilder
+    private func voiceButtonBackground(isSelected: Bool, isLocked: Bool) -> some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(voiceButtonFillColor(isSelected: isSelected, isLocked: isLocked))
+            .overlay(voiceButtonStroke(isSelected: isSelected, isLocked: isLocked))
+    }
+    
+    private func voiceButtonFillColor(isSelected: Bool, isLocked: Bool) -> Color {
+        if isSelected { return Color.blue }
+        if isLocked { return Color.gray.opacity(0.1) }
+        return Color.gray.opacity(0.05)
+    }
+    
+    @ViewBuilder
+    private func voiceButtonStroke(isSelected: Bool, isLocked: Bool) -> some View {
+        RoundedRectangle(cornerRadius: 12)
+            .stroke(
+                voiceButtonStrokeColor(isSelected: isSelected, isLocked: isLocked),
+                lineWidth: isSelected ? 2 : 1
+            )
+    }
+    
+    private func voiceButtonStrokeColor(isSelected: Bool, isLocked: Bool) -> Color {
+        if isSelected { return Color.blue }
+        if isLocked { return Color.gray.opacity(0.3) }
+        return Color.gray.opacity(0.2)
     }
 }
+
 
 // MARK: - Preview
 struct FeatureGateView_Previews: PreviewProvider {

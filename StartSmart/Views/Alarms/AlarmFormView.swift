@@ -339,49 +339,6 @@ struct WeekDayButton: View {
 }
 
 // MARK: - Tone Selection Row
-struct ToneSelectionRow: View {
-    let tone: AlarmTone
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                // Selection Indicator
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundColor(isSelected ? .blue : .gray)
-                
-                // Tone Info
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(tone.displayName)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    Text(tone.description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
-                }
-                
-                Spacer()
-                
-                // Play Button
-                Button(action: {
-                    // TODO: Implement tone preview
-                }) {
-                    Image(systemName: "play.circle")
-                        .font(.title2)
-                        .foregroundColor(.blue)
-                }
-                .buttonStyle(ScaleButtonStyle())
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
 
 // MARK: - Custom Text Field Style
 struct CustomTextFieldStyle: TextFieldStyle {

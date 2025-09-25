@@ -359,7 +359,7 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
             repeats: false
         )
         
-        let request = UNNotificationRequest(
+        _ = UNNotificationRequest(
             identifier: alarm.id.uuidString,
             content: content,
             trigger: trigger
@@ -402,7 +402,7 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
             )
             
             let identifier = "\(alarm.id.uuidString)-\(repeatDay.rawValue)"
-            let request = UNNotificationRequest(
+            _ = UNNotificationRequest(
                 identifier: identifier,
                 content: content,
                 trigger: trigger

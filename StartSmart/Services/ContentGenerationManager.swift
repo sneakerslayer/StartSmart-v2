@@ -71,7 +71,7 @@ class ContentGenerationManager: ObservableObject {
             let generatedContent = try await contentService.generateContentForIntent(intent)
             
             // Save generated content to repository
-            try await intentRepository.setGeneratedContent(for: intent.id, content: generatedContent)
+            try await intentRepository.setGeneratedContent(for: intent.id, content: generatedContent.textContent)
             
             // Update completion state
             await updateGenerationState(isGenerating: false, intentId: nil, progress: 1.0)

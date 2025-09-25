@@ -54,7 +54,7 @@ enum SpeechRecognitionError: LocalizedError {
 
 // MARK: - Speech Recognition Service Implementation
 @MainActor
-class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol, ObservableObject {
+class SpeechRecognitionService: NSObject, @preconcurrency SpeechRecognitionServiceProtocol, ObservableObject {
     
     // MARK: - Published Properties
     @Published private(set) var isListening = false
@@ -348,7 +348,7 @@ class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol, Obse
 }
 
 // MARK: - SFSpeechRecognizerDelegate
-extension SpeechRecognitionService: SFSpeechRecognizerDelegate {
+extension SpeechRecognitionService: @preconcurrency SFSpeechRecognizerDelegate {
     func speechRecognizer(_ speechRecognizer: SFSpeechRecognizer, availabilityDidChange available: Bool) {
         DispatchQueue.main.async {
             if !available && self.isListening {

@@ -75,7 +75,7 @@ enum AudioSessionConfiguration {
 
 // MARK: - Audio Playback Service Implementation
 @MainActor
-class AudioPlaybackService: NSObject, AudioPlaybackServiceProtocol, ObservableObject {
+class AudioPlaybackService: NSObject, @preconcurrency AudioPlaybackServiceProtocol, ObservableObject {
     
     // MARK: - Published Properties
     @Published var playbackState: AudioPlaybackState = .idle
@@ -109,14 +109,16 @@ class AudioPlaybackService: NSObject, AudioPlaybackServiceProtocol, ObservableOb
     deinit {
         audioPlayer?.stop()
         audioPlayer = nil
-        stopPlaybackTimer()
+        Task { @MainActor [weak self] in
+            self?.stopPlaybackTimer()
+        }
         cancellables.removeAll()
     }
     
     // MARK: - Public Interface
     
     func play(from url: URL) async throws {
-        await stopCurrentPlayback()
+        stopCurrentPlayback()
         
         do {
             playbackState = .loading
@@ -151,7 +153,7 @@ class AudioPlaybackService: NSObject, AudioPlaybackServiceProtocol, ObservableOb
     }
     
     func play(data: Data) async throws {
-        await stopCurrentPlayback()
+        stopCurrentPlayback()
         
         do {
             playbackState = .loading
@@ -274,10 +276,10 @@ class AudioPlaybackService: NSObject, AudioPlaybackServiceProtocol, ObservableOb
         stopPlaybackTimer()
         
         playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            guard let self = self, let player = self.audioPlayer else { return }
+            guard let self = self else { return }
             
             Task { @MainActor in
-                self.currentTime = player.currentTime
+                self.currentTime = self.audioPlayer?.currentTime ?? 0
             }
         }
     }
@@ -335,7 +337,7 @@ class AudioPlaybackService: NSObject, AudioPlaybackServiceProtocol, ObservableOb
 // MARK: - AVAudioPlayerDelegate
 extension AudioPlaybackService: AVAudioPlayerDelegate {
     
-    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         Task { @MainActor in
             if flag {
                 self.playbackState = .idle
@@ -348,7 +350,7 @@ extension AudioPlaybackService: AVAudioPlayerDelegate {
         }
     }
     
-    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+    nonisolated func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
         Task { @MainActor in
             let errorMessage = error?.localizedDescription ?? "Unknown decode error"
             self.playbackState = .error(errorMessage)

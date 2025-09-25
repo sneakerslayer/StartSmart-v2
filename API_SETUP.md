@@ -30,6 +30,21 @@ This guide will help you configure the necessary API keys for the StartSmart app
 
 **Free tier:** ElevenLabs offers a free tier with limited monthly characters
 
+### 3. RevenueCat API Key (Subscription Management)
+
+**What it's for:** Managing in-app subscriptions and premium features
+
+**How to get it:**
+1. Visit [RevenueCat Dashboard](https://app.revenuecat.com)
+2. Create a new account or log in
+3. Create a new project for your app
+4. Navigate to API Keys section
+5. Copy your **Public API Key** (starts with `appl_`)
+
+**Expected format:** String token starting with `appl_`
+
+**Note:** RevenueCat requires additional setup in App Store Connect. See `SUBSCRIPTION_SETUP_GUIDE.md` for complete instructions.
+
 ## Configuration Steps
 
 ### Option 1: Using Config.plist (Recommended for Development)
@@ -45,12 +60,11 @@ This guide will help you configure the necessary API keys for the StartSmart app
    <string>your_actual_grok4_api_key_here</string>
    <key>ELEVENLABS_API_KEY</key>
    <string>your_actual_elevenlabs_api_key_here</string>
+   <key>REVENUECAT_API_KEY</key>
+   <string>your_actual_revenuecat_api_key_here</string>
    ```
 
-3. **Important:** Add `Config.plist` to `.gitignore` to keep your keys secure:
-   ```bash
-   echo "StartSmart/Resources/Config.plist" >> .gitignore
-   ```
+3. **Important:** `Config.plist` is already added to `.gitignore` to keep your keys secure.
 
 ### Option 2: Using Environment Variables
 
@@ -59,6 +73,7 @@ Set environment variables in your development environment:
 ```bash
 export GROK4_API_KEY="your_grok4_api_key"
 export ELEVENLABS_API_KEY="your_elevenlabs_api_key"
+export REVENUECAT_API_KEY="your_revenuecat_api_key"
 ```
 
 ### Option 3: Using Xcode Scheme Environment Variables
@@ -69,6 +84,7 @@ export ELEVENLABS_API_KEY="your_elevenlabs_api_key"
 4. Add environment variables:
    - `GROK4_API_KEY` = your API key
    - `ELEVENLABS_API_KEY` = your API key
+   - `REVENUECAT_API_KEY` = your API key
 
 ## Validation
 

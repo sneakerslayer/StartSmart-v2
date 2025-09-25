@@ -91,7 +91,20 @@ class UserViewModel: ObservableObject {
     func updateSubscription(_ subscription: SubscriptionStatus) {
         guard var user = currentUser else { return }
         
-        user.updateSubscription(subscription)
+        // Convert SubscriptionStatus to StartSmartSubscriptionStatus
+        let startSmartSubscription: StartSmartSubscriptionStatus
+        switch subscription {
+        case .free:
+            startSmartSubscription = .free
+        case .proWeekly:
+            startSmartSubscription = .proWeekly
+        case .proMonthly:
+            startSmartSubscription = .proMonthly
+        case .proAnnual:
+            startSmartSubscription = .proAnnual
+        }
+        
+        user.subscription = startSmartSubscription
         currentUser = user
         saveCurrentUser()
     }
@@ -170,7 +183,19 @@ class UserViewModel: ObservableObject {
     }
     
     var subscriptionStatus: SubscriptionStatus {
-        currentUser?.subscription ?? .free
+        guard let userSubscription = currentUser?.subscription else { return .free }
+        
+        // Convert StartSmartSubscriptionStatus to SubscriptionStatus
+        switch userSubscription {
+        case .free:
+            return .free
+        case .proWeekly:
+            return .proWeekly
+        case .proMonthly:
+            return .proMonthly
+        case .proAnnual:
+            return .proAnnual
+        }
     }
     
     var isAnonymous: Bool {
@@ -201,6 +226,13 @@ class UserViewModel: ObservableObject {
         currentUser = nil
         isAuthenticated = false
         preferences = UserPreferences()
+    }
+    
+    // MARK: - User Update Methods
+    func updateUser(_ user: User) {
+        currentUser = user
+        preferences = user.preferences
+        saveCurrentUser()
     }
     
     // MARK: - Private Methods

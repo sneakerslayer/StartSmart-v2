@@ -128,7 +128,7 @@ protocol SocialSharingServiceProtocol {
 
 // MARK: - Social Sharing Service Implementation
 @MainActor
-class SocialSharingService: ObservableObject, SocialSharingServiceProtocol {
+class SocialSharingService: ObservableObject, @preconcurrency SocialSharingServiceProtocol {
     @Published private var _privacySettings = SharingPrivacySettings()
     
     private let storage: LocalStorageProtocol
@@ -140,7 +140,7 @@ class SocialSharingService: ObservableObject, SocialSharingServiceProtocol {
     }
     
     // MARK: - Initialization
-    init(storage: LocalStorageProtocol = LocalStorage.shared) {
+    init(storage: LocalStorageProtocol = UserDefaultsStorage()) {
         self.storage = storage
         Task {
             await loadPrivacySettings()
@@ -252,7 +252,7 @@ class SocialSharingService: ObservableObject, SocialSharingServiceProtocol {
     // MARK: - Privacy & Settings
     func updatePrivacySettings(_ settings: SharingPrivacySettings) async {
         _privacySettings = settings
-        await storage.save(settings, forKey: privacyKey)
+        try? await storage.save(settings, forKey: privacyKey)
     }
     
     func canShare() -> Bool {
@@ -261,7 +261,7 @@ class SocialSharingService: ObservableObject, SocialSharingServiceProtocol {
     
     // MARK: - Private Methods
     private func loadPrivacySettings() async {
-        if let settings = await storage.load(SharingPrivacySettings.self, forKey: privacyKey) {
+        if let settings = try? await storage.load(SharingPrivacySettings.self, forKey: privacyKey) {
             _privacySettings = settings
         }
     }

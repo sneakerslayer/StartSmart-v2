@@ -2,6 +2,7 @@ import Foundation
 import Combine
 
 // MARK: - Alarm Repository Protocol
+@MainActor
 protocol AlarmRepositoryProtocol {
     var alarms: Published<[Alarm]>.Publisher { get }
     var alarmsValue: [Alarm] { get }
@@ -189,14 +190,12 @@ final class AlarmRepository: AlarmRepositoryProtocol, ObservableObject {
     
     func getNextAlarm() async -> Alarm? {
         let enabledAlarms = await getEnabledAlarms()
-        
-        return enabledAlarms
-            .compactMap { alarm in
-                guard let nextTrigger = alarm.nextTriggerDate else { return nil }
-                return (alarm, nextTrigger)
-            }
-            .min { $0.1 < $1.1 }?
-            .0
+        let alarmDates: [(Alarm, Date)] = enabledAlarms.compactMap { alarm in
+            guard let nextTrigger = alarm.nextTriggerDate else { return nil }
+            return (alarm, nextTrigger)
+        }
+        let sortedAlarms: [(Alarm, Date)] = alarmDates.sorted(by: { $0.1 < $1.1 })
+        return sortedAlarms.first?.0
     }
     
     func toggleAlarm(withId id: UUID) async throws {
@@ -317,13 +316,13 @@ final class AlarmRepository: AlarmRepositoryProtocol, ObservableObject {
         let disabledCount = _alarms.count - enabledCount
         let repeatingCount = _alarms.filter { $0.isRepeating }.count
         let oneTimeCount = _alarms.count - repeatingCount
-        
+
         let toneDistribution = Dictionary(grouping: _alarms, by: { $0.tone })
             .mapValues { $0.count }
-        
-        let avgSnoozeCount = _alarms.compactMap { $0.lastTriggered != nil ? $0.currentSnoozeCount : nil }
-            .reduce(0, +) / max(_alarms.count, 1)
-        
+
+        let snoozeCounts = _alarms.compactMap { $0.lastTriggered != nil ? $0.currentSnoozeCount : nil }
+        let avgSnoozeCount: Int = snoozeCounts.isEmpty ? 0 : snoozeCounts.reduce(0, +) / snoozeCounts.count
+
         return AlarmStatistics(
             totalAlarms: _alarms.count,
             enabledAlarms: enabledCount,
@@ -404,11 +403,14 @@ struct AlarmStatistics: Codable {
     }
     
     var mostPopularTone: AlarmTone? {
-        return toneDistribution.max { $0.value < $1.value }?.key
+        guard !toneDistribution.isEmpty else { return nil }
+        let sorted: [(key: AlarmTone, value: Int)] = toneDistribution.sorted { $0.value > $1.value }
+        return sorted.first?.key
     }
 }
 
 // MARK: - Mock Alarm Repository
+@MainActor
 class MockAlarmRepository: AlarmRepositoryProtocol, ObservableObject {
     @Published private var _alarms: [Alarm] = []
     @Published var shouldThrowError = false
@@ -483,21 +485,29 @@ class MockAlarmRepository: AlarmRepositoryProtocol, ObservableObject {
         }
     }
     
+    func dismissAlarm(withId id: UUID) async throws {
+        // Mock implementation: just mark as triggered and reset snooze
+        if let index = _alarms.firstIndex(where: { $0.id == id }) {
+            _alarms[index].markTriggered()
+            _alarms[index].resetSnooze()
+        }
+    }
+    
     private func createMockAlarms() -> [Alarm] {
         let calendar = Calendar.current
         let now = Date()
-        
         return [
             Alarm(
                 time: calendar.date(byAdding: .hour, value: 1, to: now)!,
                 label: "Morning Workout",
-                tone: .energetic,
-                repeatDays: [.monday, .wednesday, .friday]
+                repeatDays: [.monday, .wednesday, .friday],
+                tone: .energetic
             ),
             Alarm(
                 time: calendar.date(byAdding: .hour, value: 8, to: now)!,
                 label: "Work Meeting",
                 isEnabled: false,
+                repeatDays: [],
                 tone: .gentle
             )
         ]

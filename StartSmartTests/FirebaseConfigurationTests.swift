@@ -7,7 +7,7 @@
 
 import XCTest
 @testable import StartSmart
-import Firebase
+import FirebaseCore
 
 /// Tests for Firebase configuration and integration
 final class FirebaseConfigurationTests: XCTestCase {

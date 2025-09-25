@@ -274,4 +274,13 @@ enum AlarmTone: String, CaseIterable, Codable {
     var voiceId: String {
         return self.rawValue
     }
+    
+    var iconName: String {
+        switch self {
+        case .gentle: return "heart.fill"
+        case .energetic: return "bolt.fill"
+        case .toughLove: return "shield.fill"
+        case .storyteller: return "book.fill"
+        }
+    }
 }

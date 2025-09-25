@@ -4,7 +4,7 @@ import Combine
 
 // MARK: - Analytics Dashboard View
 struct AnalyticsDashboardView: View {
-    @StateObject private var streakService = DependencyContainer.shared.resolve(StreakTrackingServiceProtocol.self) as! StreakTrackingService
+    @StateObject private var streakService = DependencyContainer.shared.streakTrackingService as! StreakTrackingService
     @State private var stats = EnhancedUserStats()
     @State private var selectedTimeRange: TimeRange = .week
     @State private var showingDetailView = false
@@ -313,11 +313,6 @@ struct StreakProgressChart: View {
     }
 }
 
-// MARK: - Streak Data Point
-struct StreakDataPoint {
-    let date: Date
-    let streakLength: Int
-}
 
 // MARK: - Streak Progress Fallback View (iOS < 16)
 struct StreakProgressFallbackView: View {
@@ -534,52 +529,52 @@ struct PerformanceInsightsSection: View {
         // Success rate insights
         if stats.successRate >= 0.9 {
             insights.append(AnalyticsInsight(
-                id: "high_success",
+                id: UUID(),
                 title: "Excellent Performance! 🎉",
                 description: "You're maintaining a \(Int(stats.successRate * 100))% success rate. Keep up the great work!",
-                type: .positive,
-                actionTitle: "Share Achievement"
+                type: .achievement,
+                priority: 1
             ))
         } else if stats.successRate < 0.5 {
             insights.append(AnalyticsInsight(
-                id: "low_success",
+                id: UUID(),
                 title: "Room for Improvement",
                 description: "Your current success rate is \(Int(stats.successRate * 100))%. Try setting earlier bedtimes or adjusting your alarm tone.",
                 type: .improvement,
-                actionTitle: "Get Tips"
+                priority: 2
             ))
         }
         
         // Streak insights
         if stats.currentStreak >= 7 {
             insights.append(AnalyticsInsight(
-                id: "week_streak",
+                id: UUID(),
                 title: "Week Streak Achievement! 🔥",
                 description: "You've maintained a \(stats.currentStreak)-day streak. You're building a strong habit!",
-                type: .positive,
-                actionTitle: "Share Streak"
+                type: .streak,
+                priority: 1
             ))
         }
         
         // Early bird insights
         if stats.earlyBirdDays >= 3 {
             insights.append(AnalyticsInsight(
-                id: "early_bird",
+                id: UUID(),
                 title: "Early Bird Pattern Detected 🌅",
                 description: "You've been waking up early \(stats.earlyBirdDays) times recently. This can improve your productivity!",
-                type: .positive,
-                actionTitle: "Learn More"
+                type: .pattern,
+                priority: 2
             ))
         }
         
         // Snooze insights
         if stats.snoozeRate > 0.5 {
             insights.append(AnalyticsInsight(
-                id: "snooze_habit",
+                id: UUID(),
                 title: "Frequent Snoozing Detected",
                 description: "You're snoozing \(Int(stats.snoozeRate * 100))% of the time. Try going to bed 30 minutes earlier.",
                 type: .improvement,
-                actionTitle: "Sleep Tips"
+                priority: 3
             ))
         }
         
@@ -587,34 +582,7 @@ struct PerformanceInsightsSection: View {
     }
 }
 
-// MARK: - Analytics Insight Model
-struct AnalyticsInsight {
-    let id: String
-    let title: String
-    let description: String
-    let type: InsightType
-    let actionTitle: String
-    
-    enum InsightType {
-        case positive, improvement, warning
-        
-        var color: Color {
-            switch self {
-            case .positive: return .green
-            case .improvement: return .blue
-            case .warning: return .orange
-            }
-        }
-        
-        var iconName: String {
-            switch self {
-            case .positive: return "checkmark.circle.fill"
-            case .improvement: return "lightbulb.fill"
-            case .warning: return "exclamationmark.triangle.fill"
-            }
-        }
-    }
-}
+// MARK: - Analytics Insight Model (defined in StreakTrackingService.swift)
 
 // MARK: - Insight Card
 struct InsightCard: View {
@@ -641,7 +609,7 @@ struct InsightCard: View {
             
             Spacer()
             
-            Button(insight.actionTitle) {
+            Button("Learn More") {
                 action()
             }
             .font(.caption.bold())
@@ -888,10 +856,10 @@ struct TipItem: View {
 
 #Preview("Insight Detail") {
     InsightDetailView(insight: AnalyticsInsight(
-        id: "test",
+        id: UUID(),
         title: "Great Performance!",
         description: "You're doing amazing with your wake-up routine.",
-        type: .positive,
-        actionTitle: "Share"
+        type: .streak,
+        priority: 1
     ))
 }
