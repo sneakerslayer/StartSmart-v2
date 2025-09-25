@@ -1,7 +1,34 @@
 import SwiftUI
 import AVFoundation
 import AudioToolbox
-import Foundation // <-- Add this line to ensure Foundation types are available
+
+// MARK: - Color Extension for Hex Colors
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue:  Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
+}
 
 struct ContentView: View {
     @State private var authService: AuthenticationService?
@@ -618,7 +645,8 @@ struct CreateAlarmView: View {
     @State private var intentText = ""
     @State private var selectedTime = Date()
     @State private var alarmName = "Morning Motivation"
-    @State private var selectedVoice = "Energetic Emma"
+    @State private var selectedVoice = PersonaManager.Persona.girlBestie.rawValue
+    @State private var selectedPersona = PersonaManager.Persona.girlBestie
     @State private var toneSlider: Double = 0.5
     @State private var isGeneratingContent = false
     @State private var generatedScript = ""
@@ -627,7 +655,7 @@ struct CreateAlarmView: View {
     @State private var showingSuccess = false
     @State private var alarmsList: [AlarmItem] = []
     
-    private let voices = ["Gentle Grace", "Energetic Emma", "Coach Marcus", "Wise Sarah", "Motivator Mike"]
+    private let personas = PersonaManager.shared.getAllPersonas()
     
     var body: some View {
         NavigationView {
@@ -687,8 +715,8 @@ struct CreateAlarmView: View {
                                 
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 12) {
-                                        ForEach(voices, id: \.self) { voice in
-                                            voiceCard(voice: voice)
+                                        ForEach(personas, id: \.self) { persona in
+                                            personaCard(persona: persona)
                                         }
                                     }
                                     .padding(.horizontal, 20)
@@ -811,31 +839,47 @@ struct CreateAlarmView: View {
             .navigationBarTitleDisplayMode(.large)
         }
         .sheet(isPresented: $showingPreview) {
-            VoicePreviewView(script: generatedScript, voice: selectedVoice)
+            VoicePreviewView(script: generatedScript, voice: PersonaManager.shared.getPersonaCard(for: selectedPersona).voiceMapping)
         }
         .sheet(isPresented: $showingAlarmSequence) {
-            AlarmSequenceView(script: generatedScript, voice: selectedVoice)
+            AlarmSequenceView(script: generatedScript, voice: PersonaManager.shared.getPersonaCard(for: selectedPersona).voiceMapping)
         }
     }
     
-    private func voiceCard(voice: String) -> some View {
-        Button(action: { selectedVoice = voice }) {
-            VStack(spacing: 8) {
-                Image(systemName: selectedVoice == voice ? "waveform.circle.fill" : "waveform.circle")
-                    .font(.system(size: 24))
-                    .foregroundColor(selectedVoice == voice ? .blue : .gray)
+    private func personaCard(persona: PersonaManager.Persona) -> some View {
+        let personaManager = PersonaManager.shared
+        let card = personaManager.getPersonaCard(for: persona)
+        let isSelected = selectedPersona == persona
+        
+        return Button(action: { 
+            selectedPersona = persona
+            selectedVoice = persona.rawValue
+        }) {
+            VStack(spacing: 6) {
+                // Persona Icon with color
+                Image(systemName: card.icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(isSelected ? .white : Color(hex: card.color))
+                    .frame(width: 28, height: 28)
+                    .background(
+                        Circle()
+                            .fill(isSelected ? Color(hex: card.color) : Color(hex: card.color).opacity(0.2))
+                    )
                 
-                Text(voice)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(selectedVoice == voice ? .blue : .primary)
+                // Persona Name (short version)
+                Text(persona.shortName)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(isSelected ? Color(hex: card.color) : .primary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
-            .background(selectedVoice == voice ? Color.blue.opacity(0.1) : Color(.secondarySystemBackground))
+            .background(isSelected ? Color(hex: card.color).opacity(0.1) : Color(.secondarySystemBackground))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(selectedVoice == voice ? Color.blue : Color.clear, lineWidth: 2)
+                    .stroke(isSelected ? Color(hex: card.color) : Color.clear, lineWidth: 2)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -847,61 +891,67 @@ struct CreateAlarmView: View {
         // Play generation start sound
         AudioServicesPlaySystemSound(1103) // Begin sound
         
-        // Enhanced AI script generation with realistic timing
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-            let currentHour = Calendar.current.component(.hour, from: selectedTime)
-            let timeOfDay = currentHour < 12 ? "morning" : currentHour < 17 ? "afternoon" : "evening"
-            
-            let toneStyle: (greeting: String, approach: String, closing: String)
-            
-            if toneSlider < 0.3 {
-                // Gentle & Nurturing
-                toneStyle = (
-                    greeting: "Good \(timeOfDay), beautiful soul ✨",
-                    approach: "I believe in you completely. Today feels like the perfect day to gently",
-                    closing: "Take a moment to breathe deeply and know that you're exactly where you need to be. You've got this, and I'm cheering you on every step of the way! 💙"
+        // ✨ PRODUCTION PERSONA-BASED AI GENERATION ✨
+        Task {
+            do {
+                // Create script context with user goals and current context
+                let currentHour = Calendar.current.component(.hour, from: selectedTime)
+                let timeOfDay = currentHour < 12 ? "morning" : currentHour < 17 ? "afternoon" : "evening"
+                let dayOfWeek = DateFormatter().weekdaySymbols[Calendar.current.component(.weekday, from: Date()) - 1]
+                
+                let context = ScriptContext(
+                    userGoals: intentText,
+                    timeOfDay: timeOfDay,
+                    dayOfWeek: dayOfWeek,
+                    weather: "Clear and energizing", // Could be enhanced with real weather API
+                    location: nil, // Could be enhanced with user location
+                    calendarEvents: nil // Could be enhanced with calendar integration
                 )
-            } else if toneSlider > 0.7 {
-                // Tough Love & Direct  
-                toneStyle = (
-                    greeting: "Wake up, champion! ⚡",
-                    approach: "No excuses today. You said you wanted to",
-                    closing: "Stop thinking, start doing. Your future self will thank you for the action you take RIGHT NOW. Let's go! 🔥"
+                
+                // Generate script using production persona system
+                let grokService = Grok4Service(apiKey: "demo-key") // In production, get from secure storage
+                let script = try await grokService.generatePersonalizedScript(
+                    persona: selectedPersona,
+                    toneLevel: toneSlider,
+                    context: context
                 )
-            } else {
-                // Balanced & Encouraging
-                toneStyle = (
-                    greeting: "Good \(timeOfDay), superstar! 🌟",
-                    approach: "Today is your opportunity to",
-                    closing: "Remember, you've overcome challenges before and today is no different. Ready to rise and shine? Let's make this \(timeOfDay) count! 🚀"
-                )
+                
+                // Update UI on main thread
+                await MainActor.run {
+                    generatedScript = script
+                    isGeneratingContent = false
+                    
+                    // Play completion sound
+                    AudioServicesPlaySystemSound(1016) // Success sound
+                    
+                    print("✅ Generated script for \(selectedPersona.rawValue) with tone level \(toneSlider)")
+                    print("📝 Script: \(script.prefix(100))...")
+                }
+                
+            } catch {
+                // Handle errors gracefully with fallback to demo content
+                await MainActor.run {
+                    print("⚠️ AI Generation failed, using fallback: \(error)")
+                    
+                    // Fallback to persona preview for demo purposes
+                    let personaManager = PersonaManager.shared
+                    let toneLevel = PersonaManager.ToneLevel.fromSliderValue(toneSlider)
+                    let fallbackScript = personaManager.getPersonaPreview(for: selectedPersona, toneLevel: toneLevel)
+                    
+                    generatedScript = """
+                    \(fallbackScript)
+                    
+                    Your goal for today: \(intentText)
+                    
+                    Remember, you're capable of incredible things! This is just the beginning of what you can accomplish. Take a deep breath, feel that energy within you, and let's make today extraordinary! 🌟
+                    """
+                    
+                    isGeneratingContent = false
+                    
+                    // Play completion sound
+                    AudioServicesPlaySystemSound(1016) // Success sound
+                }
             }
-            
-            let weatherContext = ["The sun is shining for you", "Perfect energy in the air", "The universe is aligned", "Conditions are optimal"].randomElement() ?? "Everything is set up for success"
-            
-            let motivationalQuotes = [
-                "Success is not final, failure is not fatal: it is the courage to continue that counts.",
-                "The future belongs to those who believe in the beauty of their dreams.",
-                "Your limitation—it's only your imagination.",
-                "Great things never come from comfort zones."
-            ]
-            
-            generatedScript = """
-            \(toneStyle.greeting)
-            
-            \(toneStyle.approach) \(intentText.lowercased()). \(weatherContext), and your energy is building strong.
-            
-            Here's something to remember: "\(motivationalQuotes.randomElement() ?? "You are capable of amazing things.")"
-            
-            Take three deep breaths, feel that power within you, and let's show the world what you're made of. Your future self is counting on the choices you make in the next few hours.
-            
-            \(toneStyle.closing)
-            """
-            
-            isGeneratingContent = false
-            
-            // Play completion sound
-            AudioServicesPlaySystemSound(1016) // Success sound
         }
     }
     
@@ -924,7 +974,8 @@ struct CreateAlarmView: View {
         UserDefaults.standard.set(newAlarm.time, forKey: "alarm_\(newAlarm.id)_time")
         UserDefaults.standard.set(newAlarm.name, forKey: "alarm_\(newAlarm.id)_name")
         UserDefaults.standard.set(generatedScript, forKey: "alarm_\(newAlarm.id)_script")
-        UserDefaults.standard.set(selectedVoice, forKey: "alarm_\(newAlarm.id)_voice")
+        UserDefaults.standard.set(selectedPersona.rawValue, forKey: "alarm_\(newAlarm.id)_voice")
+        UserDefaults.standard.set(PersonaManager.shared.getPersonaCard(for: selectedPersona).voiceMapping, forKey: "alarm_\(newAlarm.id)_voice_mapping")
         UserDefaults.standard.set(toneSlider, forKey: "alarm_\(newAlarm.id)_tone")
         UserDefaults.standard.set(intentText, forKey: "alarm_\(newAlarm.id)_intent")
         
@@ -976,7 +1027,8 @@ struct CreateAlarmView: View {
         intentText = ""
         generatedScript = ""
         alarmName = "Morning Motivation"
-        selectedVoice = "Energetic Emma"
+        selectedPersona = PersonaManager.Persona.girlBestie
+        selectedVoice = selectedPersona.rawValue
         toneSlider = 0.5
         showingSuccess = false
         selectedTime = Date()
@@ -1332,13 +1384,60 @@ struct AlarmSequenceView: View {
 }
 
 // MARK: - Audio Manager
+// MARK: - Script Segment Types
+struct ScriptSegment {
+    let text: String
+    let type: SegmentType
+    
+    enum SegmentType {
+        case speech
+        case pause
+    }
+}
+
+// MARK: - Speech Delegate for Sequential Playback
+class SpeechDelegate: NSObject, AVSpeechSynthesizerDelegate {
+    private let onComplete: () -> Void
+    
+    init(onComplete: @escaping () -> Void) {
+        self.onComplete = onComplete
+    }
+    
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        onComplete()
+    }
+}
+
+// MARK: - Audio Player Delegate for ElevenLabs Playback
+class AudioPlayerDelegate: NSObject, AVAudioPlayerDelegate {
+    private let onComplete: () -> Void
+    
+    init(onComplete: @escaping () -> Void) {
+        self.onComplete = onComplete
+    }
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        print("🎵 ElevenLabs audio playback completed (success: \(flag))")
+        onComplete()
+    }
+    
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+        print("⚠️ Audio decode error: \(error?.localizedDescription ?? "Unknown")")
+        onComplete() // Continue sequence even on error
+    }
+}
+
 class AudioManager: ObservableObject {
-    private var speechSynthesizer = AVSpeechSynthesizer()
+    private var speechSynthesizer = AVSpeechSynthesizer() // Fallback for iOS TTS
     private var audioPlayer: AVAudioPlayer?
     @Published var isPlaying = false
     @Published var playbackProgress: Double = 0.0
+    private var currentDelegate: SpeechDelegate? // Strong reference to prevent deallocation
+    private let elevenLabsService: ElevenLabsService
     
-    init() {
+    init(elevenLabsApiKey: String = "demo-key") {
+        // Initialize ElevenLabs service with API key (in production, get from secure storage)
+        self.elevenLabsService = ElevenLabsService(apiKey: elevenLabsApiKey)
         configureAudioSession()
     }
     
@@ -1355,52 +1454,214 @@ class AudioManager: ObservableObject {
         AudioServicesPlaySystemSound(soundID)
     }
     
-    func speakText(_ text: String, voice: String = "Energetic Emma") {
+    // MARK: - Enhanced Speech with ElevenLabs + Pause Parsing
+    func speakText(_ text: String, voice: String = "uYXf8XasLslADfZ2MB4u") {
         guard !isPlaying else { return }
         
-        speechSynthesizer.stopSpeaking(at: .immediate)
+        stopSpeaking() // Stop any current playback
         
-        let utterance = AVSpeechUtterance(string: text)
-        
-        // Map our voice names to iOS voices
-        switch voice {
-        case "Gentle Grace":
-            utterance.voice = AVSpeechSynthesisVoice(language: "en-US") // Samantha
-        case "Energetic Emma":
-            utterance.voice = AVSpeechSynthesisVoice(language: "en-GB") // Kate
-        case "Coach Marcus":
-            utterance.voice = AVSpeechSynthesisVoice(language: "en-AU") // Lee
-        case "Wise Sarah":
-            utterance.voice = AVSpeechSynthesisVoice(language: "en-CA") // Alex
-        case "Motivator Mike":
-            utterance.voice = AVSpeechSynthesisVoice(language: "en-US") // Aaron
-        default:
-            utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-        }
-        
-        utterance.rate = 0.5
-        utterance.pitchMultiplier = voice.contains("Coach") ? 0.8 : 1.0
-        utterance.volume = 0.8
+        // 🎯 Parse script with pause optimization
+        let optimizedScript = optimizeScriptTiming(text)
+        let segments = parseScriptSegments(optimizedScript)
         
         isPlaying = true
-        speechSynthesizer.speak(utterance)
+        print("🎙️ Starting ElevenLabs speech generation for \(segments.count) segments")
         
-        // Estimate speech duration and update progress
-        let estimatedDuration = Double(text.count) * 0.05 // ~50ms per character
+        // Use ElevenLabs for high-quality voice synthesis
+        speakSegmentsWithElevenLabs(segments, voiceId: voice, currentIndex: 0)
+    }
+    
+    // MARK: - Script Timing Optimization (45-60 seconds)
+    private func optimizeScriptTiming(_ text: String) -> String {
+        let wordsPerMinute: Double = 150 // Average speaking rate
+        let wordsPerSecond = wordsPerMinute / 60
         
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-            if self.speechSynthesizer.isSpeaking {
-                self.playbackProgress = min(self.playbackProgress + (0.1 / estimatedDuration), 1.0)
-            } else {
-                timer.invalidate()
-                self.isPlaying = false
-                self.playbackProgress = 0.0
+        let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        let estimatedDuration = Double(words.count) / wordsPerSecond
+        
+        var optimizedText = text
+        
+        if estimatedDuration < 45 {
+            // Script too short - add strategic pauses
+            optimizedText = addStrategicPauses(text, targetIncrease: 45 - estimatedDuration)
+        } else if estimatedDuration > 60 {
+            // Script too long - condense while preserving meaning
+            optimizedText = condenseScript(text, targetDecrease: estimatedDuration - 60)
+        }
+        
+        return optimizedText
+    }
+    
+    private func addStrategicPauses(_ text: String, targetIncrease: Double) -> String {
+        let pausesNeeded = Int(targetIncrease / 0.8) // Each pause adds ~0.8 seconds
+        var result = text
+        
+        // Add pauses after key phrases
+        let pausePoints = ["Good morning", "Today", "Remember", "You've got this", "Let's go"]
+        var addedPauses = 0
+        
+        for point in pausePoints {
+            if addedPauses >= pausesNeeded { break }
+            result = result.replacingOccurrences(of: point, with: "\(point) [short pause]")
+            addedPauses += 1
+        }
+        
+        return result
+    }
+    
+    private func condenseScript(_ text: String, targetDecrease: Double) -> String {
+        // Smart condensation while preserving persona voice
+        let result = text
+            .replacingOccurrences(of: " and ", with: " & ")
+            .replacingOccurrences(of: " because ", with: " 'cause ")
+            .replacingOccurrences(of: " you are ", with: " you're ")
+            .replacingOccurrences(of: " cannot ", with: " can't ")
+        
+        return result
+    }
+    
+    // MARK: - Pause Parsing System
+    private func parseScriptSegments(_ text: String) -> [ScriptSegment] {
+        let components = text.components(separatedBy: "[short pause]")
+        var segments: [ScriptSegment] = []
+        
+        for (index, component) in components.enumerated() {
+            let trimmed = component.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                segments.append(ScriptSegment(text: trimmed, type: .speech))
+            }
+            
+            // Add pause after each segment (except the last one)
+            if index < components.count - 1 {
+                segments.append(ScriptSegment(text: "", type: .pause))
+            }
+        }
+        
+        return segments
+    }
+    
+    // MARK: - ElevenLabs Sequential Speech with Natural Pauses
+    private func speakSegmentsWithElevenLabs(_ segments: [ScriptSegment], voiceId: String, currentIndex: Int) {
+        guard currentIndex < segments.count else {
+            isPlaying = false
+            print("🎙️ ElevenLabs speech sequence completed!")
+            return
+        }
+        
+        let segment = segments[currentIndex]
+        
+        if segment.type == .pause {
+            // Natural pause timing
+            let pauseDuration = 0.8 // 0.8 seconds for natural flow
+            print("⏸️ Playing natural pause (\(pauseDuration)s)")
+            DispatchQueue.main.asyncAfter(deadline: .now() + pauseDuration) {
+                self.speakSegmentsWithElevenLabs(segments, voiceId: voiceId, currentIndex: currentIndex + 1)
+            }
+        } else {
+            // Generate and play speech with ElevenLabs
+            print("🎙️ Generating speech for segment \(currentIndex + 1): '\(segment.text.prefix(50))...'")
+            
+            Task {
+                do {
+                    // Generate high-quality audio with ElevenLabs
+                    let audioData = try await elevenLabsService.generateSpeech(
+                        text: segment.text,
+                        voiceId: voiceId
+                    )
+                    
+                    // Play generated audio on main thread
+                    await MainActor.run {
+                        playAudioData(audioData) {
+                            // Continue to next segment when audio finishes
+                            self.speakSegmentsWithElevenLabs(segments, voiceId: voiceId, currentIndex: currentIndex + 1)
+                        }
+                    }
+                    
+                } catch {
+                    print("⚠️ ElevenLabs generation failed: \(error)")
+                    
+                    // Fallback to iOS TTS for this segment
+                    await MainActor.run {
+                        self.speakSegmentWithFallback(segment.text, voiceId: voiceId) {
+                            self.speakSegmentsWithElevenLabs(segments, voiceId: voiceId, currentIndex: currentIndex + 1)
+                        }
+                    }
+                }
             }
         }
     }
     
+    // MARK: - Audio Data Playback
+    private func playAudioData(_ data: Data, completion: @escaping () -> Void) {
+        do {
+            audioPlayer = try AVAudioPlayer(data: data)
+            audioPlayer?.delegate = AudioPlayerDelegate(onComplete: completion)
+            audioPlayer?.prepareToPlay()
+            audioPlayer?.play()
+            
+            print("▶️ Playing ElevenLabs audio (\(data.count) bytes)")
+            
+        } catch {
+            print("⚠️ Audio playback error: \(error)")
+            completion() // Continue sequence even if playback fails
+        }
+    }
+    
+    // MARK: - iOS TTS Fallback
+    private func speakSegmentWithFallback(_ text: String, voiceId: String, completion: @escaping () -> Void) {
+        print("🔄 Using iOS TTS fallback for: '\(text.prefix(30))...'")
+        
+        let utterance = createUtterance(text, voice: voiceId)
+        
+        currentDelegate = SpeechDelegate(onComplete: completion)
+        speechSynthesizer.delegate = currentDelegate
+        speechSynthesizer.speak(utterance)
+    }
+    
+    private func createUtterance(_ text: String, voice: String) -> AVSpeechUtterance {
+        let utterance = AVSpeechUtterance(string: text)
+        
+        // Enhanced voice mapping with persona support
+        if let voiceId = getVoiceMapping(voice) {
+            utterance.voice = AVSpeechSynthesisVoice(identifier: voiceId) ?? 
+                             AVSpeechSynthesisVoice(language: "en-US")
+        } else {
+            utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        }
+        
+        utterance.rate = 0.52 // Slightly faster for better engagement
+        utterance.pitchMultiplier = getPitchForVoice(voice)
+        utterance.volume = 0.85
+        
+        return utterance
+    }
+    
+    private func getVoiceMapping(_ voice: String) -> String? {
+        // Map persona voice identifiers to iOS TTS voices
+        let voiceMap: [String: String] = [
+            "com.apple.ttsbundle.Samantha-compact": "com.apple.ttsbundle.Samantha-compact", // Gentle Grace
+            "com.apple.ttsbundle.siri_female_en-US_compact": "com.apple.ttsbundle.siri_female_en-US_compact", // Girl Bestie  
+            "com.apple.ttsbundle.Karen-compact": "com.apple.ttsbundle.Karen-compact", // Mrs. Walker
+            "com.apple.ttsbundle.Aaron-compact": "com.apple.ttsbundle.Aaron-compact", // Motivational Mike
+            "com.apple.ttsbundle.Alex": "com.apple.ttsbundle.Alex", // Calm Kyle
+            "com.apple.ttsbundle.siri_male_en-US_compact": "com.apple.ttsbundle.siri_male_en-US_compact" // Angry Allen
+        ]
+        
+        return voiceMap[voice] ?? "com.apple.ttsbundle.Samantha-compact"
+    }
+    
+    private func getPitchForVoice(_ voice: String) -> Float {
+        // Adjust pitch based on persona characteristics
+        if voice.contains("Aaron") || voice.contains("Allen") { return 0.85 } // Deeper for authority
+        if voice.contains("Samantha") || voice.contains("Karen") { return 1.1 } // Higher for warmth
+        return 1.0 // Default
+    }
+    
+    // MARK: - Stop Speech
     func stopSpeaking() {
         speechSynthesizer.stopSpeaking(at: .immediate)
+        speechSynthesizer.delegate = nil
+        currentDelegate = nil
         isPlaying = false
         playbackProgress = 0.0
     }
@@ -1573,11 +1834,34 @@ struct VoicePreviewView: View {
             // Play a simple button sound first
             audioManager.playSystemSound(1104) // Click sound
             
-            // Then speak the script with the selected voice
+            // Then speak the script with ElevenLabs voice
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                audioManager.speakText(script, voice: voice)
+                // Convert persona voice to ElevenLabs voice ID
+                let elevenLabsVoiceId = getElevenLabsVoiceId(for: voice)
+                audioManager.speakText(script, voice: elevenLabsVoiceId)
             }
         }
+    }
+    
+    // MARK: - Voice ID Mapping Helper
+    private func getElevenLabsVoiceId(for personaVoice: String) -> String {
+        // Map persona voice identifiers to ElevenLabs voice IDs
+        let voiceMapping: [String: String] = [
+            "com.apple.ttsbundle.Samantha-compact": "DGzg6RaUqxGRTHSBjfgF", // Drill Sergeant Drew
+            "com.apple.ttsbundle.siri_female_en-US_compact": "uYXf8XasLslADfZ2MB4u", // Girl Bestie
+            "com.apple.ttsbundle.Karen-compact": "DLsHlh26Ugcm6ELvS0qi", // Mrs. Walker
+            "com.apple.ttsbundle.Aaron-compact": "84Fal4DSXWfp7nJ8emqQ", // Motivational Mike
+            "com.apple.ttsbundle.Alex": "MpZY6e8MW2zHVi4Vtxrn", // Calm Kyle
+            "com.apple.ttsbundle.siri_male_en-US_compact": "KLZOWyG48RjZkAAjuM89" // Angry Allen
+        ]
+        
+        // If it's already an ElevenLabs voice ID (starts with letters and numbers), return as-is
+        if personaVoice.count == 20 && personaVoice.range(of: "^[A-Za-z0-9]+$", options: .regularExpression) != nil {
+            return personaVoice
+        }
+        
+        // Otherwise, try to map from the old voice system
+        return voiceMapping[personaVoice] ?? "uYXf8XasLslADfZ2MB4u" // Default to Girl Bestie
     }
 }
 
@@ -1666,16 +1950,11 @@ struct SimpleAlarmRowView: View {
 
 // MARK: - Voices View  
 struct VoicesView: View {
-    @State private var selectedVoice = "Energetic Emma"
+    @State private var selectedPersona = PersonaManager.Persona.girlBestie
     @State private var isPlaying = false
+    @State private var toneSlider: Double = 0.5
     
-    private let voiceLibrary = [
-        VoiceOption(name: "Gentle Grace", description: "Warm and nurturing", isPremium: false, accent: "American"),
-        VoiceOption(name: "Energetic Emma", description: "Upbeat and motivating", isPremium: false, accent: "British"),
-        VoiceOption(name: "Coach Marcus", description: "Strong and encouraging", isPremium: true, accent: "Australian"),
-        VoiceOption(name: "Wise Sarah", description: "Calm and thoughtful", isPremium: true, accent: "Canadian"),
-        VoiceOption(name: "Motivator Mike", description: "Dynamic and inspiring", isPremium: true, accent: "American")
-    ]
+    private let personas = PersonaManager.shared.getAllPersonas()
     
     var body: some View {
         NavigationView {
@@ -1689,10 +1968,10 @@ struct VoicesView: View {
                         
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(selectedVoice)
+                                Text(selectedPersona.rawValue)
                                     .font(.system(size: 18, weight: .medium))
                                 
-                                Text(voiceLibrary.first { $0.name == selectedVoice }?.description ?? "")
+                                Text(PersonaManager.shared.getPersonaCard(for: selectedPersona).description)
                                     .font(.system(size: 14))
                                     .foregroundColor(.secondary)
                             }
@@ -1717,9 +1996,9 @@ struct VoicesView: View {
                             .font(.system(size: 20, weight: .semibold))
                             .padding(.horizontal, 20)
                         
-                        LazyVStack(spacing: 12) {
-                            ForEach(voiceLibrary, id: \.name) { voice in
-                                voiceLibraryRow(voice: voice)
+                        LazyVStack(spacing: 16) {
+                            ForEach(personas, id: \.self) { persona in
+                                personaLibraryRow(persona: persona)
                             }
                         }
                         .padding(.horizontal, 20)
@@ -1732,65 +2011,77 @@ struct VoicesView: View {
         }
     }
     
-    private func voiceLibraryRow(voice: VoiceOption) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(voice.name)
-                        .font(.system(size: 16, weight: .medium))
+    // MARK: - Persona Library Row
+    private func personaLibraryRow(persona: PersonaManager.Persona) -> some View {
+        let personaManager = PersonaManager.shared
+        let card = personaManager.getPersonaCard(for: persona)
+        let toneLevel = PersonaManager.ToneLevel.balanced // Use balanced tone for library preview
+        let preview = personaManager.getPersonaPreview(for: persona, toneLevel: toneLevel)
+        let isSelected = selectedPersona == persona
+        
+        return Button(action: { selectedPersona = persona }) {
+            HStack(spacing: 16) {
+                // Persona Icon
+                Image(systemName: card.icon)
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 40, height: 40)
+                    .background(
+                        Circle()
+                            .fill(Color(hex: card.color))
+                    )
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    // Persona Name
+                    Text(persona.rawValue)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
                     
-                    if voice.isPremium {
-                        Image(systemName: "crown.fill")
-                            .font(.system(size: 12))
-                            .foregroundColor(.orange)
+                    // Description
+                    Text(card.description)
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                    
+                    // Tone Preview
+                    Text("Preview: \"\(preview)\"")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(Color(hex: card.color))
+                        .italic()
+                        .lineLimit(2)
+                }
+                
+                Spacer()
+                
+                // Selection indicator & Play button
+                VStack {
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(Color(hex: card.color))
                     }
+                    
+                    Spacer()
+                    
+                    Button("Preview") {
+                        // Future: Add voice preview functionality
+                    }
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(Color(hex: card.color))
                 }
-                
-                Text(voice.description)
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
-                
-                Text(voice.accent)
-                    .font(.system(size: 12))
-                    .foregroundColor(.blue)
             }
-            
-            Spacer()
-            
-            HStack(spacing: 12) {
-                Button(action: {}) {
-                    Image(systemName: "play.circle")
-                        .font(.system(size: 24))
-                        .foregroundColor(.gray)
-                }
-                
-                Button(action: { selectedVoice = voice.name }) {
-                    Text(selectedVoice == voice.name ? "Selected" : "Select")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(selectedVoice == voice.name ? .white : .blue)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(selectedVoice == voice.name ? Color.blue : Color.clear)
-                        .cornerRadius(20)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.blue, lineWidth: 1)
-                        )
-                }
-                .disabled(voice.isPremium && selectedVoice != voice.name)
-            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isSelected ? Color(hex: card.color).opacity(0.1) : Color(.secondarySystemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isSelected ? Color(hex: card.color) : Color.clear, lineWidth: 2)
+            )
         }
-        .padding(16)
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .buttonStyle(PlainButtonStyle())
     }
-}
-
-struct VoiceOption {
-    let name: String
-    let description: String
-    let isPremium: Bool
-    let accent: String
 }
 
 // MARK: - Analytics View
@@ -1969,6 +2260,305 @@ struct SimpleAlarmSetupView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Temporary PersonaManager (to be extracted later)
+// MARK: - Persona Card Structure
+struct PersonaCard {
+    let name: String
+    let description: String
+    let characteristics: [String]
+    let samplePhrase: String
+    let voiceMapping: String // iOS TTS voice identifier
+    let icon: String // SF Symbol icon name
+    let color: String // Hex color for UI theming
+}
+
+// MARK: - Persona Manager
+class PersonaManager {
+    
+    // MARK: - Persona Enum
+    enum Persona: String, CaseIterable {
+        case drillSergeantDrew = "Drill Sergeant Drew"
+        case girlBestie = "Girl Bestie"
+        case mrsWalker = "Mrs. Walker"
+        case motivationalMike = "Motivational Mike"
+        case calmKyle = "Calm Kyle"
+        case angryAllen = "Angry Allen"
+        
+        var id: String { return self.rawValue }
+        
+        var shortName: String {
+            switch self {
+            case .drillSergeantDrew: return "Drew"
+            case .girlBestie: return "Bestie"
+            case .mrsWalker: return "Mrs. Walker"
+            case .motivationalMike: return "Mike"
+            case .calmKyle: return "Kyle"
+            case .angryAllen: return "Allen"
+            }
+        }
+    }
+    
+    // MARK: - Tone Level Enum
+    enum ToneLevel {
+        case gentle      // 0.0 - 0.3
+        case balanced    // 0.3 - 0.7
+        case toughLove   // 0.7 - 1.0
+        
+        static func fromSliderValue(_ value: Double) -> ToneLevel {
+            if value <= 0.3 {
+                return .gentle
+            } else if value <= 0.7 {
+                return .balanced
+            } else {
+                return .toughLove
+            }
+        }
+    }
+    
+    // MARK: - Singleton
+    static let shared = PersonaManager()
+    private init() {}
+    
+    // MARK: - Persona Cards
+    func getPersonaCard(for persona: Persona) -> PersonaCard {
+        switch persona {
+        case .drillSergeantDrew:
+            return PersonaCard(
+                name: "🎖️ Drill Sergeant Drew",
+                description: "A tough but caring military drill instructor who believes discipline equals success. Drew pushes you to your limits because he knows you're capable of greatness.",
+                characteristics: [
+                    "Direct and commanding",
+                    "Uses military terminology",
+                    "Tough love approach",
+                    "Believes in discipline",
+                    "Results-oriented"
+                ],
+                samplePhrase: "Listen up! Do you think that goal is going to achieve itself? Time to move out and conquer your day! THAT'S AN ORDER!",
+                voiceMapping: "en-US",
+                icon: "star.fill",
+                color: "#4A5D23"
+            )
+            
+        case .girlBestie:
+            return PersonaCard(
+                name: "✨ Girl Bestie",
+                description: "Your supportive best friend who's always got your back. She's enthusiastic, caring, and knows exactly what to say to pump you up for success.",
+                characteristics: [
+                    "Enthusiastic and supportive",
+                    "Uses modern slang",
+                    "Encouraging and uplifting",
+                    "Celebrates your wins",
+                    "Like talking to your BFF"
+                ],
+                samplePhrase: "Heyyy gorgeous! Today is literally going to be amazing and you're going to absolutely crush it! Let's goooo bestie!",
+                voiceMapping: "en-US",
+                icon: "heart.fill",
+                color: "#FF6B9D"
+            )
+            
+        case .mrsWalker:
+            return PersonaCard(
+                name: "🏡 Mrs. Walker",
+                description: "A warm, caring Southern mom who believes in you completely. She offers gentle wisdom, unconditional support, and that special motherly encouragement.",
+                characteristics: [
+                    "Warm and nurturing",
+                    "Southern charm and wisdom",
+                    "Believes in you completely",
+                    "Gentle but firm guidance",
+                    "Motherly love and support"
+                ],
+                samplePhrase: "Rise and shine, darlin'. I just know you're going to do wonderfully today. Mama believes in you, sweetheart.",
+                voiceMapping: "en-US",
+                icon: "house.fill",
+                color: "#8B4513"
+            )
+            
+        case .motivationalMike:
+            return PersonaCard(
+                name: "🚀 Motivational Mike",
+                description: "A high-energy motivational speaker who sees unlimited potential in everyone. Mike transforms challenges into opportunities and turns dreams into actionable plans.",
+                characteristics: [
+                    "High-energy and inspiring",
+                    "Sees unlimited potential",
+                    "Transforms challenges to opportunities",
+                    "Future-focused mindset",
+                    "Champion mentality"
+                ],
+                samplePhrase: "RISE AND SHINE, CHAMPION! Today is not just another day—it's your opportunity to become the person you're destined to be!",
+                voiceMapping: "en-US",
+                icon: "flame.fill",
+                color: "#FF4500"
+            )
+            
+        case .calmKyle:
+            return PersonaCard(
+                name: "🧘 Calm Kyle",
+                description: "A mindful, zen-like guide who approaches life with peaceful wisdom. Kyle helps you find inner strength and clarity through gentle, thoughtful guidance.",
+                characteristics: [
+                    "Peaceful and mindful",
+                    "Zen-like wisdom",
+                    "Gentle guidance",
+                    "Present-moment awareness",
+                    "Inner strength focus"
+                ],
+                samplePhrase: "Good morning. As the light enters the room, gently awaken your mind. The path to your goals begins with this single, mindful step.",
+                voiceMapping: "en-US",
+                icon: "leaf.fill",
+                color: "#20B2AA"
+            )
+            
+        case .angryAllen:
+            return PersonaCard(
+                name: "😡 Angry Allen",
+                description: "A brutally honest, no-nonsense coach who's frustrated by wasted potential. Allen's tough approach comes from genuine care about your success.",
+                characteristics: [
+                    "Brutally honest",
+                    "No-nonsense approach",
+                    "Frustrated by wasted potential",
+                    "Sarcastic but caring",
+                    "Pushes through excuses"
+                ],
+                samplePhrase: "Are you KIDDING me? Still sleeping while your dreams are waiting? I'm more stressed about your success than you are! GET UP!",
+                voiceMapping: "en-US",
+                icon: "bolt.fill",
+                color: "#DC143C"
+            )
+        }
+    }
+    
+    // MARK: - Tone Modifier Generation
+    func getToneModifier(for toneLevel: ToneLevel) -> String {
+        switch toneLevel {
+        case .gentle:
+            return """
+            [TONE MODIFIER]
+            **Instruction:** The user has selected a "Gentle & Nurturing" tone. You must emphasize the most supportive, kind, and encouraging aspects of your persona. Soften your delivery and reduce any harshness or aggressive language.
+            """
+            
+        case .balanced:
+            return "" // No modifier for balanced - uses persona's default style
+            
+        case .toughLove:
+            return """
+            [TONE MODIFIER]
+            **Instruction:** The user has selected a "Tough Love & Direct" tone. You must amplify the most intense, direct, and no-nonsense aspects of your persona. Be as firm and challenging as your character allows.
+            """
+        }
+    }
+    
+    // MARK: - Full Persona Description for AI
+    func getFullPersonaDescription(for persona: Persona) -> String {
+        let card = getPersonaCard(for: persona)
+        
+        let characteristicsText = card.characteristics
+            .map { "- \($0)" }
+            .joined(separator: "\n")
+        
+        return """
+        **Character:** \(card.name)
+        
+        **Background:** \(card.description)
+        
+        **Speaking Style & Characteristics:**
+        \(characteristicsText)
+        
+        **Example of your voice:** "\(card.samplePhrase)"
+        
+        **Important:** Stay completely in character throughout the entire script. Your personality should be evident in every sentence.
+        """
+    }
+    
+    // MARK: - Voice Mapping for TTS
+    func getVoiceMapping(for persona: Persona) -> String {
+        // Map personas to specific iOS voices for better character representation
+        switch persona {
+        case .drillSergeantDrew:
+            return "en-US" // Aaron - deeper, more authoritative
+        case .girlBestie:
+            return "en-GB" // Kate - energetic British accent
+        case .mrsWalker:
+            return "en-US" // Samantha - warm American voice
+        case .motivationalMike:
+            return "en-AU" // Lee - enthusiastic Australian accent
+        case .calmKyle:
+            return "en-CA" // Alex - calm Canadian voice
+        case .angryAllen:
+            return "en-US" // Aaron - intense American voice
+        }
+    }
+    
+    // MARK: - UI Helper Methods
+    func getAllPersonas() -> [Persona] {
+        return Persona.allCases
+    }
+    
+    func getPersonaIcon(for persona: Persona) -> String {
+        return getPersonaCard(for: persona).icon
+    }
+    
+    func getPersonaColor(for persona: Persona) -> String {
+        return getPersonaCard(for: persona).color
+    }
+    
+    func getPersonaPreview(for persona: Persona, toneLevel: ToneLevel) -> String {
+        // Generate a brief preview based on persona and tone
+        switch (persona, toneLevel) {
+        case (.drillSergeantDrew, .gentle):
+            return "Alright soldier, time to rise. Today's mission awaits, and I know you're ready."
+        case (.drillSergeantDrew, .balanced):
+            return "Listen up! Your objectives won't complete themselves. Time to move out and dominate!"
+        case (.drillSergeantDrew, .toughLove):
+            return "GET UP NOW! No excuses, no delays! Your mission starts THIS INSTANT!"
+            
+        case (.girlBestie, .gentle):
+            return "Hey hun, it's time to start your amazing day. You've got this, I believe in you!"
+        case (.girlBestie, .balanced):
+            return "Wake up bestie! Today is going to be incredible and you're going to slay it!"
+        case (.girlBestie, .toughLove):
+            return "Girl, get UP! We are NOT wasting this day. Time to show the world what you're made of!"
+            
+        case (.mrsWalker, .gentle):
+            return "Rise and shine, darlin'. Mama's here to help you start this beautiful day right."
+        case (.mrsWalker, .balanced):
+            return "Come on now, sweetheart. The day is calling and you're going to answer beautifully."
+        case (.mrsWalker, .toughLove):
+            return "Now listen here. I didn't raise someone to stay in bed when there's work to be done!"
+            
+        case (.motivationalMike, .gentle):
+            return "Good morning, champion. Today holds incredible possibilities for your growth."
+        case (.motivationalMike, .balanced):
+            return "RISE AND SHINE! Today is your stage, and you're the star performer!"
+        case (.motivationalMike, .toughLove):
+            return "LEGENDS DON'T SLEEP WHILE DESTINY CALLS! YOUR GREATNESS STARTS NOW!"
+            
+        case (.calmKyle, .gentle):
+            return "Gently welcome the morning light. Let peace guide your awakening to purposeful action."
+        case (.calmKyle, .balanced):
+            return "The day begins with awareness. Rise mindfully and embrace your intentions."
+        case (.calmKyle, .toughLove):
+            return "Recognize the resistance. Now choose growth over comfort. Rise with purpose."
+            
+        case (.angryAllen, .gentle):
+            return "Look, you have things to do today. Maybe consider getting started... eventually."
+        case (.angryAllen, .balanced):
+            return "Are you serious right now? The day is wasting away while you're sleeping!"
+        case (.angryAllen, .toughLove):
+            return "WHAT IS WRONG WITH YOU?! GET OUT OF BED THIS INSTANT! STOP WASTING MY TIME!"
+        }
+    }
+}
+
+// MARK: - Extensions for Convenience
+extension PersonaManager.Persona: Identifiable {
+    // id is already defined in the enum
+}
+
+extension PersonaManager.Persona {
+    var displayName: String {
+        return self.rawValue
     }
 }
 

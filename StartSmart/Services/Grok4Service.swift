@@ -1,5 +1,24 @@
 import Foundation
 
+// MARK: - Script Generation Context
+struct ScriptContext {
+    let userGoals: String
+    let timeOfDay: String
+    let dayOfWeek: String
+    let weather: String?
+    let location: String?
+    let calendarEvents: [String]?
+    
+    init(userGoals: String, timeOfDay: String = "morning", dayOfWeek: String = "", weather: String? = nil, location: String? = nil, calendarEvents: [String]? = nil) {
+        self.userGoals = userGoals
+        self.timeOfDay = timeOfDay
+        self.dayOfWeek = dayOfWeek
+        self.weather = weather
+        self.location = location
+        self.calendarEvents = calendarEvents
+    }
+}
+
 // MARK: - Grok4 API Models
 struct Grok4Request: Codable {
     let prompt: String
@@ -100,6 +119,37 @@ class Grok4Service: Grok4ServiceProtocol {
         return choice.message.content.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
+    // MARK: - Production Persona-Based Script Generation
+    func generatePersonalizedScript(
+        persona: PersonaManager.Persona,
+        toneLevel: Double,
+        context: ScriptContext
+    ) async throws -> String {
+        let prompt = buildPersonaPrompt(
+            persona: persona,
+            toneLevel: toneLevel,
+            context: context
+        )
+        
+        let request = Grok4Request(
+            prompt: prompt,
+            maxTokens: 250, // Slightly more for persona-based scripts
+            temperature: 0.8, // Higher creativity for personality
+            model: "grok-beta"
+        )
+        
+        let response = try await sendRequest(request)
+        
+        guard let choice = response.choices.first else {
+            throw Grok4Error.noResponse
+        }
+        
+        let script = choice.message.content.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        
+        // Post-process script to ensure it meets timing requirements
+        return optimizeScriptTiming(script)
+    }
+    
     // MARK: - Enhanced Content Generation for Intent Model
     func generateContentForIntent(_ intent: Intent) async throws -> String {
         var retryCount = 0
@@ -188,6 +238,93 @@ class Grok4Service: Grok4ServiceProtocol {
             characterCount: content.count,
             issues: issues
         )
+    }
+    
+    // MARK: - Production Persona Prompt Building
+    private func buildPersonaPrompt(
+        persona: PersonaManager.Persona,
+        toneLevel: Double,
+        context: ScriptContext
+    ) -> String {
+        let personaManager = PersonaManager.shared
+        let toneModifier = personaManager.getToneModifier(for: PersonaManager.ToneLevel.fromSliderValue(toneLevel))
+        let personaDescription = personaManager.getFullPersonaDescription(for: persona)
+        
+        // Build context string
+        var contextString = "Time: \(context.timeOfDay)"
+        if !context.dayOfWeek.isEmpty {
+            contextString += ", \(context.dayOfWeek)"
+        }
+        if let weather = context.weather {
+            contextString += "\nWeather: \(weather)"
+        }
+        if let location = context.location {
+            contextString += "\nLocation: \(location)"
+        }
+        if let events = context.calendarEvents, !events.isEmpty {
+            contextString += "\nUpcoming: \(events.joined(separator: ", "))"
+        }
+        
+        return """
+        You are an expert AI scriptwriter for an alarm clock app called StartSmart. Your mission is to generate a short, motivational audio script (approximately 45-60 seconds) to wake a user up and inspire them to tackle their day.
+
+        You must follow these rules STRICTLY:
+        1. **Embody the Persona:** Fully adopt the persona described in the [PERSONA] section.
+        2. **Apply Tone Modifier:** Adjust your performance based on the instructions in the [TONE MODIFIER] section. This is a critical instruction that fine-tunes the persona's intensity.
+        3. **Integrate User Goals:** The script MUST be centered around the user's specific goals for the day, listed in the [GOALS] section.
+        4. **Start with Waking Up:** The script must begin by directly addressing a person who is currently asleep or just waking up.
+        5. **Clear Call to Action:** The script must end with a powerful and direct command to get out of bed.
+        6. **Output Format:** The output must be a plain text script. Use `[short pause]` for timing. Do not include any other commentary.
+
+        ---
+        [PERSONA]
+        \(personaDescription)
+        ---
+        \(toneModifier)
+        ---
+        [CONTEXT]
+        \(contextString)
+        ---
+        [GOALS]
+        \(context.userGoals)
+        ---
+
+        **CRITICAL FORMATTING REQUIREMENTS:**
+        1. Use [short pause] markers for natural speech timing (3-5 per script)
+        2. Target 45-60 seconds when spoken aloud
+        3. Place pauses after key phrases for maximum impact
+        4. Use plain text format only - no markdown, bullets, or formatting
+        
+        Generate the script now. Keep it engaging, authentic to the persona, and naturally paced with strategic pauses.
+        """
+    }
+    
+    private func optimizeScriptTiming(_ script: String) -> String {
+        // Ensure script meets 45-60 second timing requirements
+        let words = script.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        let estimatedSeconds = Double(words.count) * 0.4 // ~150 words per minute average speaking rate
+        
+        // If script is too long (>70 seconds), truncate smartly
+        if estimatedSeconds > 70 {
+            let targetWords = Int(60 / 0.4) // Target 60 seconds
+            let truncatedWords = Array(words.prefix(targetWords))
+            let truncatedScript = truncatedWords.joined(separator: " ")
+            
+            // Ensure it ends with a call to action
+            if !truncatedScript.lowercased().contains("get up") &&
+               !truncatedScript.lowercased().contains("rise") &&
+               !truncatedScript.lowercased().contains("move") {
+                return truncatedScript + " [short pause] Now get up and make it happen!"
+            }
+            return truncatedScript
+        }
+        
+        // If script is too short (<30 seconds), it's still acceptable but note it
+        if estimatedSeconds < 30 {
+            print("⚠️ Generated script is shorter than ideal: \(estimatedSeconds) seconds")
+        }
+        
+        return script
     }
     
     private func buildPrompt(userIntent: String, tone: String, context: [String: String]) -> String {
