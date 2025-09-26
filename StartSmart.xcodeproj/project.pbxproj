@@ -67,10 +67,6 @@
 		0EF353FD2E74A76500B66B53 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353FC2E74A76500B66B53 /* FirebaseStorage */; };
 		0EF354002E74AA4600B66B53 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353FF2E74AA4600B66B53 /* GoogleSignIn */; };
 		0EF354022E74AA4600B66B53 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF354012E74AA4600B66B53 /* GoogleSignInSwift */; };
-		0EF354062E74AD6500B66B53 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF354052E74AD6500B66B53 /* Alamofire */; };
-		0EF354092E74AE0F00B66B53 /* AudioKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF354082E74AE0F00B66B53 /* AudioKit */; };
-		0EF3540C2E74AF1900B66B53 /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF3540B2E74AF1900B66B53 /* KeychainSwift */; };
-		0EF3540F2E74AFA800B66B53 /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF3540E2E74AFA800B66B53 /* ComposableArchitecture */; };
 		D0000001000000000000000A /* StartSmartApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000000B /* StartSmartApp.swift */; };
 		D0000001000000000000000C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000000D /* ContentView.swift */; };
 		D0000001000000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000000F /* Assets.xcassets */; };
@@ -185,11 +181,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0EF353F52E74A76500B66B53 /* FirebaseAnalytics in Frameworks */,
-				0EF354062E74AD6500B66B53 /* Alamofire in Frameworks */,
-				0EF3540F2E74AFA800B66B53 /* ComposableArchitecture in Frameworks */,
-				0EF3540C2E74AF1900B66B53 /* KeychainSwift in Frameworks */,
 				0EF353FB2E74A76500B66B53 /* FirebaseFirestore in Frameworks */,
-				0EF354092E74AE0F00B66B53 /* AudioKit in Frameworks */,
 				0EF354022E74AA4600B66B53 /* GoogleSignInSwift in Frameworks */,
 				0EF353F92E74A76500B66B53 /* FirebaseCore in Frameworks */,
 				0E41DCE92E75026500358D55 /* RevenueCat in Frameworks */,
@@ -500,10 +492,6 @@
 				0EF353FC2E74A76500B66B53 /* FirebaseStorage */,
 				0EF353FF2E74AA4600B66B53 /* GoogleSignIn */,
 				0EF354012E74AA4600B66B53 /* GoogleSignInSwift */,
-				0EF354052E74AD6500B66B53 /* Alamofire */,
-				0EF354082E74AE0F00B66B53 /* AudioKit */,
-				0EF3540B2E74AF1900B66B53 /* KeychainSwift */,
-				0EF3540E2E74AFA800B66B53 /* ComposableArchitecture */,
 				0E41DCE82E75026500358D55 /* RevenueCat */,
 			);
 			productName = StartSmart;
@@ -560,10 +548,6 @@
 				0EF353F32E74A76500B66B53 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				0EF353FE2E74AA4600B66B53 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				0EF354032E74AAEF00B66B53 /* XCRemoteSwiftPackageReference "purchases-ios" */,
-				0EF354042E74AD6500B66B53 /* XCRemoteSwiftPackageReference "Alamofire" */,
-				0EF354072E74AE0F00B66B53 /* XCRemoteSwiftPackageReference "AudioKit" */,
-				0EF3540A2E74AF1900B66B53 /* XCRemoteSwiftPackageReference "keychain-swift" */,
-				0EF3540D2E74AFA800B66B53 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */,
 			);
 			productRefGroup = D0000001000000000000003F /* Products */;
 			projectDirPath = "";
@@ -975,38 +959,6 @@
 				minimumVersion = 5.39.0;
 			};
 		};
-		0EF354042E74AD6500B66B53 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Alamofire/Alamofire";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.10.2;
-			};
-		};
-		0EF354072E74AE0F00B66B53 /* XCRemoteSwiftPackageReference "AudioKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/AudioKit/AudioKit";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.6.5;
-			};
-		};
-		0EF3540A2E74AF1900B66B53 /* XCRemoteSwiftPackageReference "keychain-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/evgenyneu/keychain-swift";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 24.0.0;
-			};
-		};
-		0EF3540D2E74AFA800B66B53 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/pointfreeco/swift-composable-architecture";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.22.2;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1049,26 +1001,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 0EF353FE2E74AA4600B66B53 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignInSwift;
-		};
-		0EF354052E74AD6500B66B53 /* Alamofire */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 0EF354042E74AD6500B66B53 /* XCRemoteSwiftPackageReference "Alamofire" */;
-			productName = Alamofire;
-		};
-		0EF354082E74AE0F00B66B53 /* AudioKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 0EF354072E74AE0F00B66B53 /* XCRemoteSwiftPackageReference "AudioKit" */;
-			productName = AudioKit;
-		};
-		0EF3540B2E74AF1900B66B53 /* KeychainSwift */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 0EF3540A2E74AF1900B66B53 /* XCRemoteSwiftPackageReference "keychain-swift" */;
-			productName = KeychainSwift;
-		};
-		0EF3540E2E74AFA800B66B53 /* ComposableArchitecture */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 0EF3540D2E74AFA800B66B53 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
-			productName = ComposableArchitecture;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
