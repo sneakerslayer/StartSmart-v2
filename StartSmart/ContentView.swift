@@ -85,8 +85,8 @@ struct ContentView: View {
                     // Main app content (only if authenticated)
                     MainAppView(authService: authService)
                 } else {
-                    // Show simple authentication flow (no services)
-                    SimpleAuthView()
+                    // Show enhanced onboarding flow
+                    OnboardingFlowView()
                 }
             }
         }

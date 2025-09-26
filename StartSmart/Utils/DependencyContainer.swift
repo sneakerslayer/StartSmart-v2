@@ -45,6 +45,10 @@ class DependencyContainer: DependencyContainerProtocol {
         resolve()
     }
     
+    var onboardingDemoService: OnboardingDemoServiceProtocol {
+        resolve()
+    }
+    
     private init() {
         print("🔥 DEBUG: DependencyContainer init() called")
         // Initialize dependencies asynchronously on background thread to avoid blocking UI
@@ -133,6 +137,17 @@ class DependencyContainer: DependencyContainerProtocol {
         } catch {
             print("DEBUG: ERROR in Stage 4 - ElevenLabs: \(error)")
             // updateProgress(4, stage: "Voice Service Error - Using Fallback...")
+        }
+        
+        do {
+            // Stage 4.5: Onboarding Demo Service
+            print("DEBUG: Creating OnboardingDemoService...")
+            let onboardingDemoService = OnboardingDemoService()
+            register(onboardingDemoService, for: OnboardingDemoServiceProtocol.self)
+            print("DEBUG: Successfully registered OnboardingDemoService")
+            
+        } catch {
+            print("DEBUG: ERROR in Stage 4.5 - OnboardingDemo: \(error)")
         }
         
         do {
