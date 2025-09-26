@@ -65,7 +65,7 @@ struct EnhancedWelcomeView: View {
                 Image(systemName: "sunrise.fill")
                     .font(.system(size: 50, weight: .light))
                     .foregroundColor(.white)
-                    .symbolEffect(.pulse.byLayer, options: .repeating, value: animateElements)
+                    .modifier(PulseAnimationModifier(animate: animateElements))
             }
             
             // Refined App Title
@@ -334,6 +334,22 @@ struct EnhancedFeatureRow: View {
             Spacer()
         }
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Pulse Animation Modifier
+
+struct PulseAnimationModifier: ViewModifier {
+    let animate: Bool
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(animate ? 1.1 : 1.0)
+            .opacity(animate ? 0.8 : 1.0)
+            .animation(
+                .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
+                value: animate
+            )
     }
 }
 

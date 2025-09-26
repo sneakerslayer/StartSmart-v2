@@ -101,7 +101,10 @@ class OnboardingDemoService: OnboardingDemoServiceProtocol {
             // Race between generation and timeout
             let result = try await withThrowingTaskGroup(of: GeneratedContent.self) { group in
                 group.addTask { try await generationTask.value }
-                group.addTask { try await timeoutTask.value }
+                group.addTask {
+                    try await timeoutTask.value
+                    throw DemoGenerationError.generationTimeout
+                }
                 
                 // Return the first result (hopefully the generation, not the timeout)
                 guard let result = try await group.next() else {
@@ -150,7 +153,7 @@ class OnboardingDemoService: OnboardingDemoServiceProtocol {
                 
                 // Generate text content
                 let startTime = Date()
-                let textContent = try await grok4Service.generateContent(for: intent)
+                let textContent = try await grok4Service.generateContentForIntent(intent)
                 let generationTime = Date().timeIntervalSince(startTime)
                 
                 print("📝 Generated text in \(String(format: "%.2f", generationTime))s: \(textContent.prefix(50))...")

@@ -71,7 +71,7 @@ struct DemoGenerationView: View {
                 Image(systemName: "wand.and.stars")
                     .font(.system(size: 28, weight: .medium))
                     .foregroundColor(.white)
-                    .symbolEffect(.pulse.byLayer, options: .repeating, value: animateElements)
+                    .modifier(PulseAnimationModifier(animate: animateElements))
             }
             
             // Title
@@ -165,7 +165,7 @@ struct DemoGenerationView: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 60, weight: .medium))
                     .foregroundColor(.green)
-                    .symbolEffect(.bounce, value: showContent)
+                    .modifier(BounceAnimationModifier(animate: showContent))
             }
             .scaleEffect(showContent ? 1.0 : 0.5)
             .animation(.spring(response: 0.6, dampingFraction: 0.6), value: showContent)

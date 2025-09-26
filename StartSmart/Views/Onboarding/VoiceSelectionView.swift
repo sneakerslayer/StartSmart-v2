@@ -211,7 +211,7 @@ struct VoicePersonaCard: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.white.opacity(0.7))
                     
-                    Text(""\(voice.sampleText)"")
+                    Text("\"\(voice.sampleText)\"")
                         .font(.system(size: 13, weight: .regular, design: .rounded))
                         .foregroundColor(.white.opacity(0.9))
                         .italic()
@@ -354,64 +354,6 @@ struct AudioWaveformView: View {
             return CGFloat.random(in: baseHeight...maxHeight)
         } else {
             return baseHeight
-        }
-    }
-}
-
-// MARK: - Voice Preview Audio Service Extension
-
-extension OnboardingViewModel {
-    func playVoicePreview(for voice: VoicePersona) {
-        guard !isAudioPlaying else {
-            stopAudio()
-            return
-        }
-        
-        isAudioPlaying = true
-        audioError = nil
-        
-        // In a real implementation, this would use ElevenLabsService
-        // For now, we'll use iOS built-in TTS for preview
-        playBuiltInVoicePreview(text: voice.sampleText, for: voice.tone)
-        
-        print("🔊 Playing voice preview for: \(voice.name)")
-    }
-    
-    private func playBuiltInVoicePreview(text: String, for tone: AlarmTone) {
-        let synthesizer = AVSpeechSynthesizer()
-        let utterance = AVSpeechUtterance(string: text)
-        
-        // Configure utterance based on tone
-        switch tone {
-        case .gentle:
-            utterance.rate = 0.4
-            utterance.pitchMultiplier = 1.1
-            utterance.volume = 0.8
-        case .energetic:
-            utterance.rate = 0.6
-            utterance.pitchMultiplier = 1.2
-            utterance.volume = 1.0
-        case .toughLove:
-            utterance.rate = 0.5
-            utterance.pitchMultiplier = 0.9
-            utterance.volume = 1.0
-        case .storyteller:
-            utterance.rate = 0.45
-            utterance.pitchMultiplier = 1.0
-            utterance.volume = 0.9
-        }
-        
-        // Set voice if available
-        if let voice = AVSpeechSynthesisVoice(language: "en-US") {
-            utterance.voice = voice
-        }
-        
-        synthesizer.speak(utterance)
-        
-        // Stop audio after utterance duration (estimated)
-        let estimatedDuration = Double(text.count) / 10.0 // Rough estimate
-        DispatchQueue.main.asyncAfter(deadline: .now() + estimatedDuration + 1.0) {
-            self.isAudioPlaying = false
         }
     }
 }

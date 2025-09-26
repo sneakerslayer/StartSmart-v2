@@ -75,17 +75,6 @@
 		D0000001000000000000000C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000000D /* ContentView.swift */; };
 		D0000001000000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000000F /* Assets.xcassets */; };
 		D0000001000000000000002A /* StartSmartTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000002B /* StartSmartTests.swift */; };
-		9DEABF64196242FD9F2F7A71 /* OnboardingState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2596752C91664F69939DBD57 /* OnboardingState.swift */; };
-		01BA08664E944A139C51913D /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD2D763377C74333BEF2B66F /* OnboardingFlowView.swift */; };
-		416D6397FB264B96B69D0B33 /* EnhancedWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C412C4D8A79419E896C64FC /* EnhancedWelcomeView.swift */; };
-		3F359AACBCED415997BA2464 /* MotivationSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C43AA2FAE90A40D9876DAD19 /* MotivationSelectionView.swift */; };
-		20913532AE484808923816E5 /* ToneSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3D5A457CED47FD9310D74F /* ToneSelectionView.swift */; };
-		44E4D0E960314946A3F718C0 /* VoiceSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02D52818D1B45DDA99CBFC4 /* VoiceSelectionView.swift */; };
-		78623D0B33E64EA1910CE12E /* DemoGenerationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB6CB892061746018A16BFCB /* DemoGenerationView.swift */; };
-		8F68888080944CE0A380058D /* PermissionPrimingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC5E2EAB9D44303B4B850DA /* PermissionPrimingView.swift */; };
-		D18AFF8EBD864888931C3442 /* AccountCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5991B1CBA7934AACA630BD23 /* AccountCreationView.swift */; };
-		CF5D655054BC48F7BD603B62 /* OnboardingDemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A422E3E1E70472089A511FF /* OnboardingDemoService.swift */; };
-		E05ED718CB114E329263DFD8 /* OnboardingDemoServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC94B8C01E9E436188E1FC88 /* OnboardingDemoServiceProtocol.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -159,17 +148,6 @@
 		D0000001000000000000002D /* StartSmartTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StartSmartTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0000001000000000000003C /* StartSmart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StartSmart.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0000001000000000000004A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		2596752C91664F69939DBD57 /* OnboardingState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Models/OnboardingState.swift; sourceTree = "<group>"; };
-		FD2D763377C74333BEF2B66F /* OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/OnboardingFlowView.swift; sourceTree = "<group>"; };
-		5C412C4D8A79419E896C64FC /* EnhancedWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/EnhancedWelcomeView.swift; sourceTree = "<group>"; };
-		C43AA2FAE90A40D9876DAD19 /* MotivationSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/MotivationSelectionView.swift; sourceTree = "<group>"; };
-		1F3D5A457CED47FD9310D74F /* ToneSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/ToneSelectionView.swift; sourceTree = "<group>"; };
-		D02D52818D1B45DDA99CBFC4 /* VoiceSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/VoiceSelectionView.swift; sourceTree = "<group>"; };
-		CB6CB892061746018A16BFCB /* DemoGenerationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/DemoGenerationView.swift; sourceTree = "<group>"; };
-		9DC5E2EAB9D44303B4B850DA /* PermissionPrimingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/PermissionPrimingView.swift; sourceTree = "<group>"; };
-		5991B1CBA7934AACA630BD23 /* AccountCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/AccountCreationView.swift; sourceTree = "<group>"; };
-		6A422E3E1E70472089A511FF /* OnboardingDemoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Services/OnboardingDemoService.swift; sourceTree = "<group>"; };
-		BC94B8C01E9E436188E1FC88 /* OnboardingDemoServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Services/OnboardingDemoServiceProtocol.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -652,18 +630,7 @@
 				0E41DCE52E74F96100358D55 /* PaywallView.swift in Sources */,
 				0E41DCE72E74F96100358D55 /* SocialSharingService.swift in Sources */,
 				D0000001000000000000000A /* StartSmartApp.swift in Sources */,
-							9DEABF64196242FD9F2F7A71 /* OnboardingState.swift in Sources */,
-				01BA08664E944A139C51913D /* OnboardingFlowView.swift in Sources */,
-				416D6397FB264B96B69D0B33 /* EnhancedWelcomeView.swift in Sources */,
-				3F359AACBCED415997BA2464 /* MotivationSelectionView.swift in Sources */,
-				20913532AE484808923816E5 /* ToneSelectionView.swift in Sources */,
-				44E4D0E960314946A3F718C0 /* VoiceSelectionView.swift in Sources */,
-				78623D0B33E64EA1910CE12E /* DemoGenerationView.swift in Sources */,
-				8F68888080944CE0A380058D /* PermissionPrimingView.swift in Sources */,
-				D18AFF8EBD864888931C3442 /* AccountCreationView.swift in Sources */,
-				CF5D655054BC48F7BD603B62 /* OnboardingDemoService.swift in Sources */,
-				E05ED718CB114E329263DFD8 /* OnboardingDemoServiceProtocol.swift in Sources */,
-);
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		D0000001000000000000005H /* Sources */ = {

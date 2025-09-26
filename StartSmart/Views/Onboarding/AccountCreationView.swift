@@ -70,7 +70,7 @@ struct AccountCreationView: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 40, weight: .medium))
                     .foregroundColor(.green)
-                    .symbolEffect(.bounce.byLayer, options: .repeating, value: animateElements)
+                    .modifier(BounceAnimationModifier(animate: animateElements))
             }
             
             // Title
@@ -444,4 +444,20 @@ struct AccountCreationView_Previews: PreviewProvider {
         .preferredColorScheme(.dark)
     }
 }
+
+// MARK: - Bounce Animation Modifier
+
+struct BounceAnimationModifier: ViewModifier {
+    let animate: Bool
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(animate ? 1.2 : 1.0)
+            .animation(
+                .spring(response: 0.6, dampingFraction: 0.6).repeatForever(autoreverses: true),
+                value: animate
+            )
+    }
+}
+
 #endif

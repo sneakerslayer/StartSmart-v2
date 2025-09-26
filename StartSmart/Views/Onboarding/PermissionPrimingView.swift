@@ -69,7 +69,7 @@ struct PermissionPrimingView: View {
                 Image(systemName: "bell.fill")
                     .font(.system(size: 36, weight: .medium))
                     .foregroundColor(.white)
-                    .symbolEffect(.bounce.byLayer, options: .repeating, value: animateElements)
+                    .modifier(BounceAnimationModifier(animate: animateElements))
             }
             
             // Title
@@ -406,4 +406,5 @@ struct PermissionPrimingView_Previews: PreviewProvider {
             .preferredColorScheme(.dark)
     }
 }
+
 #endif
