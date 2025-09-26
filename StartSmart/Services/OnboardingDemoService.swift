@@ -9,20 +9,7 @@
 import Foundation
 import Combine
 
-// MARK: - OnboardingDemoService Protocol
-
-protocol OnboardingDemoServiceProtocol {
-    func generateDemoContent(
-        motivation: MotivationCategory,
-        tone: AlarmTone,
-        voicePersona: VoicePersona
-    ) async throws -> GeneratedContent
-    
-    func getFallbackContent(
-        motivation: MotivationCategory,
-        tone: AlarmTone
-    ) -> GeneratedContent
-}
+// MARK: - OnboardingDemoService Implementation
 
 // MARK: - Demo Generation Error
 
