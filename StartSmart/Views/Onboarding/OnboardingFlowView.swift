@@ -12,7 +12,7 @@ import AuthenticationServices
 /// Main onboarding flow coordinator that manages all onboarding steps
 struct OnboardingFlowView: View {
     @StateObject private var onboardingViewModel = OnboardingViewModel()
-    @StateObject private var authService = DependencyContainer.shared.authenticationService as! AuthenticationService
+    @StateObject private var authService = AuthenticationService()
     @Environment(\.dismiss) private var dismiss
     
     // MARK: - State Management
