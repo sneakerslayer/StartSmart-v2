@@ -1,5 +1,17 @@
 import Foundation
 
+// MARK: - Dependency Container Errors
+enum DependencyContainerError: Error, LocalizedError {
+    case initializationFailed
+    
+    var errorDescription: String? {
+        switch self {
+        case .initializationFailed:
+            return "Failed to initialize application dependencies"
+        }
+    }
+}
+
 // MARK: - Dependency Container Protocol
 protocol DependencyContainerProtocol {
     func resolve<T>() -> T
@@ -7,7 +19,7 @@ protocol DependencyContainerProtocol {
 }
 
 // MARK: - Dependency Container Implementation
-class DependencyContainer: DependencyContainerProtocol {
+class DependencyContainer: DependencyContainerProtocol, ObservableObject {
     static let shared = DependencyContainer()
     
     private var dependencies: [String: Any] = [:]
@@ -81,6 +93,20 @@ class DependencyContainer: DependencyContainerProtocol {
         }
     }
     
+    // MARK: - Async Initialization for Production
+    func initializeAsync() async throws {
+        if isInitialized {
+            return // Already initialized
+        }
+        
+        await setupDefaultDependencies()
+        
+        // Verify initialization completed
+        if !isInitialized {
+            throw DependencyContainerError.initializationFailed
+        }
+    }
+    
     @MainActor
     private func setupDefaultDependencies() async {
         print("DEBUG: Starting dependency setup...")
@@ -139,16 +165,17 @@ class DependencyContainer: DependencyContainerProtocol {
             // updateProgress(4, stage: "Voice Service Error - Using Fallback...")
         }
         
+        #if DEBUG
         do {
-            // Stage 4.5: Onboarding Demo Service
+            // Stage 4.5: Onboarding Demo Service (DEBUG only)
             print("DEBUG: Creating OnboardingDemoService...")
             let onboardingDemoService = OnboardingDemoService()
             register(onboardingDemoService, for: OnboardingDemoServiceProtocol.self)
             print("DEBUG: Successfully registered OnboardingDemoService")
-            
         } catch {
             print("DEBUG: ERROR in Stage 4.5 - OnboardingDemo: \(error)")
         }
+        #endif
         
         do {
             // Register Content Generation Service (combines both)

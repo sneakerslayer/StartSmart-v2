@@ -103,7 +103,7 @@ final class ThirdPartyIntegrationTests: XCTestCase {
         XCTAssertEqual(status, .free, "Empty entitlements should map to free")
         
         // Test pro monthly mapping
-        let proEntitlement = createMockEntitlement(productId: "startsmart_pro_monthly")
+        let proEntitlement = createMockEntitlement(productId: "startsmart_pro_monthly_")
         let proCustomerInfo = createMockCustomerInfo(activeEntitlements: ["pro": proEntitlement])
         let proStatus = subscriptionService.mapToSubscriptionStatus(proCustomerInfo)
         XCTAssertEqual(proStatus, .proMonthly, "Pro monthly should map correctly")

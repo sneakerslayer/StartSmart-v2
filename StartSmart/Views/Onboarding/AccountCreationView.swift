@@ -12,7 +12,7 @@ import AuthenticationServices
 /// Enhanced account creation focused on saving onboarding preferences
 struct AccountCreationView: View {
     @ObservedObject var onboardingState: OnboardingState
-    let authService: AuthenticationService
+    let authService: SimpleAuthenticationService
     @Binding var isSigningIn: Bool
     let onAuthError: (String) -> Void
     let onComplete: () -> Void
@@ -21,31 +21,39 @@ struct AccountCreationView: View {
     @State private var showAuthOptions = false
     
     var body: some View {
-        VStack(spacing: 32) {
-            // Header section
-            headerSection
-                .opacity(animateElements ? 1 : 0)
-                .offset(y: animateElements ? 0 : -20)
-            
-            // Preference summary
-            preferenceSummary
-                .opacity(showAuthOptions ? 1 : 0)
-                .offset(y: showAuthOptions ? 0 : 20)
-            
-            // Authentication options
-            authenticationSection
-                .opacity(showAuthOptions ? 1 : 0)
-                .offset(y: showAuthOptions ? 0 : 30)
-            
-            Spacer()
-            
-            // Value proposition reminder
-            valueProposition
-                .opacity(showAuthOptions ? 1 : 0)
-                .offset(y: showAuthOptions ? 0 : 20)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Header section
+                    headerSection
+                        .opacity(animateElements ? 1 : 0)
+                        .offset(y: animateElements ? 0 : -20)
+                    
+                    // Preference summary
+                    preferenceSummary
+                        .opacity(showAuthOptions ? 1 : 0)
+                        .offset(y: showAuthOptions ? 0 : 20)
+                    
+                    // Authentication options
+                    authenticationSection
+                        .opacity(showAuthOptions ? 1 : 0)
+                        .offset(y: showAuthOptions ? 0 : 30)
+                    
+                    // Value proposition reminder
+                    valueProposition
+                        .opacity(showAuthOptions ? 1 : 0)
+                        .offset(y: showAuthOptions ? 0 : 20)
+                    
+                    // Add space for navigation buttons
+                    Spacer(minLength: 20) // Reduced to minimize dead space
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 10) // Reduced top padding to prevent cutoff
+                .padding(.bottom, 20) // Reduced bottom padding to minimize dead space
+                .frame(minHeight: geometry.size.height)
+            }
+            .scrollContentBackground(.hidden) // Hide default background for better bounce effect
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 40)
         .onAppear {
             startAnimations()
         }
@@ -54,7 +62,7 @@ struct AccountCreationView: View {
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             // Success checkmark with celebration
             ZStack {
                 Circle()
@@ -93,12 +101,12 @@ struct AccountCreationView: View {
     // MARK: - Preference Summary
     
     private var preferenceSummary: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             Text("Your Personalized Setup")
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.white)
             
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 // Motivation
                 if let motivation = onboardingState.selectedMotivation {
                     PreferenceSummaryRow(
@@ -159,12 +167,38 @@ struct AccountCreationView: View {
     // MARK: - Authentication Section
     
     private var authenticationSection: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 12) {
             Text("Choose your sign-in method")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.white.opacity(0.9))
             
-            VStack(spacing: 16) {
+            VStack(spacing: 12) {
+                // TEMPORARY: Skip sign-in button for testing
+                Button(action: {
+                    print("🚀 TEMPORARY: Skipping sign-in for paywall testing")
+                    saveOnboardingData()
+                    onComplete()
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.system(size: 20, weight: .medium))
+                        Text("Skip Sign-In (Testing)")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(
+                        LinearGradient(
+                            colors: [.orange, .red],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
+                .disabled(isSigningIn)
+                
                 // Sign in with Apple
                 SignInWithAppleButton(.signUp) { request in
                     // Configure request
@@ -187,8 +221,6 @@ struct AccountCreationView: View {
                         
                         Text("Continue with Google")
                             .font(.system(size: 18, weight: .semibold))
-                        
-                        Spacer()
                     }
                     .foregroundColor(.primary)
                     .frame(height: 56)
@@ -225,22 +257,47 @@ struct AccountCreationView: View {
             Text("Why create an account?")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.9))
+                .multilineTextAlignment(.center)
             
             VStack(spacing: 8) {
-                ValuePropositionRow(
-                    icon: "icloud.fill",
-                    text: "Sync your preferences across devices"
-                )
+                HStack {
+                    Image(systemName: "icloud.fill")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white.opacity(0.7))
+                        .frame(width: 16)
+                    
+                    Text("Sync your preferences across devices")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    Spacer()
+                }
                 
-                ValuePropositionRow(
-                    icon: "chart.line.uptrend.xyaxis",
-                    text: "Track your morning motivation progress"
-                )
+                HStack {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white.opacity(0.7))
+                        .frame(width: 16)
+                    
+                    Text("Track your morning motivation progress")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    Spacer()
+                }
                 
-                ValuePropositionRow(
-                    icon: "sparkles",
-                    text: "Get personalized content improvements"
-                )
+                HStack {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white.opacity(0.7))
+                        .frame(width: 16)
+                    
+                    Text("Get personalized content improvements")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    Spacer()
+                }
             }
             
             // Terms and privacy
@@ -248,6 +305,7 @@ struct AccountCreationView: View {
                 Text("By creating an account, you agree to our")
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
                 
                 HStack(spacing: 4) {
                     Button("Terms of Service") {
@@ -266,59 +324,83 @@ struct AccountCreationView: View {
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.white.opacity(0.8))
                 }
+                .frame(maxWidth: .infinity)
             }
             .padding(.top, 16)
+            .padding(.bottom, 20) // Reduced bottom padding to minimize dead space
         }
     }
     
     // MARK: - Authentication Handlers
     
-    private func handleAppleSignInResult(_ result: Result<ASAuthorization, Error>) {
-        isSigningIn = true
-        
-        Task {
-            do {
-                let user = try await authService.signInWithApple()
-                
-                await MainActor.run {
-                    // Save onboarding preferences to user
-                    updateUserWithOnboardingData(user)
-                    
-                    isSigningIn = false
-                    onComplete()
-                }
-                
-            } catch {
-                await MainActor.run {
-                    isSigningIn = false
-                    onAuthError(error.localizedDescription)
-                }
-            }
-        }
-    }
     
     private func handleGoogleSignIn() {
         isSigningIn = true
         
         Task {
-            do {
-                let user = try await authService.signInWithGoogle()
+            let success = await authService.signInWithGoogle()
+            
+            await MainActor.run {
+                isSigningIn = false
                 
-                await MainActor.run {
-                    // Save onboarding preferences to user
-                    updateUserWithOnboardingData(user)
+                if success {
+                    // Save onboarding preferences
+                    saveOnboardingData()
                     
-                    isSigningIn = false
-                    onComplete()
-                }
-                
-            } catch {
-                await MainActor.run {
-                    isSigningIn = false
-                    onAuthError(error.localizedDescription)
+                    // Add a small delay to ensure UI updates properly
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        onComplete()
+                    }
+                } else {
+                    onAuthError(authService.errorMessage ?? "Google Sign In failed")
                 }
             }
         }
+    }
+    
+    private func handleAppleSignInResult(_ result: Result<ASAuthorization, Error>) {
+        isSigningIn = true
+        
+        Task {
+            let success = await authService.signInWithApple()
+            
+            await MainActor.run {
+                isSigningIn = false
+                
+                if success {
+                    // Save onboarding preferences
+                    saveOnboardingData()
+                    
+                    // Add a small delay to ensure UI updates properly
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        onComplete()
+                    }
+                } else {
+                    onAuthError(authService.errorMessage ?? "Apple Sign In failed")
+                }
+            }
+        }
+    }
+    
+    private func saveOnboardingData() {
+        // Create user preferences from onboarding state
+        let preferences = onboardingState.createUserPreferences()
+        
+        // Save additional onboarding metadata
+        let onboardingData = OnboardingCompletionData(
+            motivation: onboardingState.selectedMotivation,
+            tonePosition: onboardingState.toneSliderPosition,
+            selectedVoice: onboardingState.selectedVoice,
+            preferences: preferences,
+            completedAt: Date()
+        )
+        
+        // Save to user defaults for immediate use
+        if let encoded = try? JSONEncoder().encode(onboardingData) {
+            UserDefaults.standard.set(encoded, forKey: "onboarding_completion_data")
+        }
+        
+        print("✅ Onboarding preferences saved successfully")
     }
     
     private func updateUserWithOnboardingData(_ user: User) {
@@ -425,7 +507,7 @@ struct AccountCreationView_Previews: PreviewProvider {
                 state.notificationPermissionGranted = true
                 return state
             }(),
-            authService: AuthenticationService(),
+            authService: SimpleAuthenticationService(),
             isSigningIn: .constant(false),
             onAuthError: { message in
                 print("Auth error: \(message)")

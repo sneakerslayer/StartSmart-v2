@@ -18,25 +18,23 @@ struct EnhancedWelcomeView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Header Section with refined messaging
-                    headerSection
-                        .frame(height: geometry.size.height * 0.5)
-                        .opacity(animateElements ? 1 : 0)
-                        .offset(y: animateElements ? 0 : -30)
-                    
-                    // Content Section with better CTAs
-                    contentSection
-                        .frame(minHeight: geometry.size.height * 0.5)
-                        .background(Color(.systemBackground))
-                        .clipShape(
-                            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        )
-                        .offset(y: -30)
-                        .opacity(showFeatures ? 1 : 0)
-                        .offset(y: showFeatures ? -30 : 0)
-                }
+            VStack(spacing: 0) {
+                // Header Section with refined messaging - increased height
+                headerSection
+                    .frame(height: geometry.size.height * 0.35)
+                    .opacity(animateElements ? 1 : 0)
+                    .offset(y: animateElements ? 0 : -30)
+                
+                // Content Section with better CTAs - adjusted space
+                contentSection
+                    .frame(maxHeight: geometry.size.height * 0.65)
+                    .background(Color(.systemBackground))
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 30, style: .continuous)
+                    )
+                    .offset(y: -20)
+                    .opacity(showFeatures ? 1 : 0)
+                    .offset(y: showFeatures ? -20 : 0)
             }
         }
         .onAppear {
@@ -47,80 +45,68 @@ struct EnhancedWelcomeView: View {
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(spacing: 24) {
-            Spacer()
-            
-            // App Icon with pulsing animation
+        VStack(spacing: 12) { // Standardized spacing
+            // App Icon - static, positioned higher
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.1))
-                    .frame(width: 120, height: 120)
-                    .scaleEffect(animateElements ? 1.1 : 1.0)
-                    .opacity(animateElements ? 0.3 : 0.7)
-                    .animation(
-                        .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
-                        value: animateElements
-                    )
+                    .fill(Color.white.opacity(0.2)) // Standardized opacity
+                    .frame(width: 50, height: 50) // Standardized size
                 
                 Image(systemName: "sunrise.fill")
-                    .font(.system(size: 50, weight: .light))
+                    .font(.system(size: 24, weight: .medium)) // Standardized weight
                     .foregroundColor(.white)
-                    .modifier(PulseAnimationModifier(animate: animateElements))
             }
             
-            // Refined App Title
-            VStack(spacing: 8) {
-                Text("StartSmart")
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    .tracking(-2)
-                
-                // Benefit-oriented tagline from vision statement
-                Text("Wake up with purpose.")
-                    .font(.system(size: 20, weight: .medium, design: .rounded))
-                    .foregroundColor(.white.opacity(0.95))
-                    .tracking(0.5)
-                    .multilineTextAlignment(.center)
-            }
+            // Refined App Title - right underneath with minimal spacing
+            Text("StartSmart")
+                .font(.system(size: 32, weight: .bold, design: .rounded)) // Increased from 28 to 32
+                .foregroundColor(.white)
+                .tracking(-1) // Standardized tracking
+                .multilineTextAlignment(.center)
             
-            // Value proposition
-            Text("Transform your mornings with AI-powered motivation\ntailored just for you")
-                .font(.system(size: 16, weight: .regular))
+            // Benefit-oriented tagline from vision statement
+            Text("Wake up with purpose.")
+                .font(.system(size: 18, weight: .medium)) // Increased by 10% from 16 to 18
+                .foregroundColor(.white.opacity(0.85)) // Standardized opacity
+                .multilineTextAlignment(.center)
+                .lineSpacing(2) // Standardized line spacing
+                .padding(.horizontal, 10) // Standardized padding
+            
+            // Value proposition - shortened
+            Text("Transform your mornings with AI-powered motivation")
+                .font(.system(size: 14, weight: .regular)) // Increased by 10% from 13 to 14
                 .foregroundColor(.white.opacity(0.85))
                 .multilineTextAlignment(.center)
-                .lineSpacing(4)
-                .padding(.horizontal, 20)
-            
-            Spacer()
+                .lineSpacing(1)
+                .padding(.horizontal, 10) // Standardized padding
         }
-        .padding(.horizontal, 40)
+        .padding(.top, -20) // Move header up further on screen
+        .padding(.horizontal, 24) // Standardized horizontal padding
     }
     
     // MARK: - Content Section
     
     private var contentSection: some View {
-        VStack(spacing: 32) {
-            VStack(spacing: 20) {
-                // Main heading
+        VStack(spacing: 16) {
+            VStack(spacing: 8) {
+                // Main heading - reduced size
                 Text("Your Personal Morning Coach")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
                     .multilineTextAlignment(.center)
                 
-                // Quick value props
-                Text("Every morning, wake up to a personalized motivational message created just for your goals and delivered in your preferred style.")
-                    .font(.system(size: 16, weight: .regular))
+                // Quick value props - shortened
+                Text("Personalized motivational messages created just for your goals.")
+                    .font(.system(size: 14, weight: .regular)) // Slightly increased body text size
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(4)
+                    .lineSpacing(1)
                     .padding(.horizontal, 16)
             }
-            .padding(.top, 40)
+            .padding(.top, 16)
             
             // Enhanced features with animations
             enhancedFeaturesSection
-            
-            Spacer(minLength: 32)
             
             // Enhanced CTA buttons
             enhancedCTAButtons
@@ -129,13 +115,13 @@ struct EnhancedWelcomeView: View {
             secondaryActionSection
         }
         .padding(.horizontal, 30)
-        .padding(.bottom, 40)
+        .padding(.bottom, 5)
     }
     
     // MARK: - Enhanced Features Section
     
     private var enhancedFeaturesSection: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 8) {
             ForEach(Array(enhancedFeatures.enumerated()), id: \.offset) { index, feature in
                 EnhancedFeatureRow(
                     icon: feature.icon,
@@ -182,7 +168,15 @@ struct EnhancedWelcomeView: View {
     private var enhancedCTAButtons: some View {
         VStack(spacing: 16) {
             // Primary CTA - more engaging language
-            Button(action: onPrimaryAction) {
+            Button(action: {
+                print("🔘 Primary button tapped")
+                // Add haptic feedback for better user experience
+                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                impactFeedback.impactOccurred()
+                
+                // Execute action immediately
+                onPrimaryAction()
+            }) {
                 HStack(spacing: 12) {
                     Image(systemName: "wand.and.stars")
                         .font(.system(size: 18, weight: .medium))
@@ -206,82 +200,64 @@ struct EnhancedWelcomeView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
             }
+            .buttonStyle(PlainButtonStyle()) // Ensure proper tap handling
+            .contentShape(Rectangle()) // Explicitly define tappable area
             .scaleEffect(animateElements ? 1.0 : 0.95)
             .animation(.spring(response: 0.8, dampingFraction: 0.6), value: animateElements)
             
-            // Alternative CTA for variety
-            Button(action: onPrimaryAction) {
-                HStack(spacing: 12) {
-                    Image(systemName: "lightbulb.fill")
-                        .font(.system(size: 18, weight: .medium))
-                    
-                    Text("Find My Motivation")
-                        .font(.system(size: 18, weight: .semibold))
-                    
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 16, weight: .medium))
-                }
-                .foregroundColor(.primary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.systemGray6))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color(.systemGray4), lineWidth: 1.5)
-                        )
-                )
-            }
-            .opacity(0.8)
             
             // Social proof hint
             HStack {
                 Image(systemName: "person.3.fill")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
                 
                 Text("Join thousands starting their days with purpose")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            .padding(.top, 8)
+            .padding(.top, 4)
         }
     }
     
     // MARK: - Secondary Action Section
     
     private var secondaryActionSection: some View {
-        VStack(spacing: 12) {
-            Button(action: onSecondaryAction) {
+        VStack(spacing: 8) {
+            Button(action: {
+                print("🔘 Sign in button tapped")
+                onSecondaryAction()
+            }) {
                 Text("Already have an account? Sign In")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.blue)
             }
+            .buttonStyle(PlainButtonStyle()) // Ensure proper tap handling
+            .contentShape(Rectangle()) // Explicitly define tappable area
             
             // Terms and privacy
-            VStack(spacing: 8) {
+            VStack(spacing: 4) {
                 Text("By continuing, you agree to our")
-                    .font(.system(size: 12))
+                    .font(.system(size: 10))
                     .foregroundColor(.secondary)
                 
-                HStack(spacing: 4) {
+                HStack(spacing: 2) {
                     Button("Terms of Service") {
                         // Handle terms of service
                     }
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 10, weight: .medium))
                     
                     Text("and")
-                        .font(.system(size: 12))
+                        .font(.system(size: 10))
                         .foregroundColor(.secondary)
                     
                     Button("Privacy Policy") {
                         // Handle privacy policy
                     }
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 10, weight: .medium))
                 }
             }
-            .padding(.top, 16)
+            .padding(.top, 8)
         }
     }
     
@@ -307,33 +283,33 @@ struct EnhancedFeatureRow: View {
     let color: Color
     
     var body: some View {
-        HStack(spacing: 16) {
-            // Icon with colored background
+        HStack(spacing: 10) {
+            // Icon with colored background - smaller
             ZStack {
                 Circle()
                     .fill(color.opacity(0.15))
-                    .frame(width: 48, height: 48)
+                    .frame(width: 32, height: 32)
                 
                 Image(systemName: icon)
-                    .font(.system(size: 22, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(color)
             }
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.primary)
                 
                 Text(description)
-                    .font(.system(size: 14))
+                    .font(.system(size: 11))
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .lineSpacing(2)
+                    .lineSpacing(1)
             }
             
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 1)
     }
 }
 

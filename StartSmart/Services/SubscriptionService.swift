@@ -175,9 +175,9 @@ class SubscriptionService: NSObject, SubscriptionServiceProtocol, ObservableObje
             switch entitlement.productIdentifier {
             case "startsmart_pro_weekly":
                 return .proWeekly
-            case "startsmart_pro_monthly":
+            case "startsmart_pro_monthly_":
                 return .proMonthly
-            case "startsmart_pro_annual":
+            case "startsmart_pro_yearly_":
                 return .proAnnual
             default:
                 continue

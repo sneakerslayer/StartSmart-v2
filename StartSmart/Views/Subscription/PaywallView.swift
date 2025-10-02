@@ -1,13 +1,10 @@
 import SwiftUI
 import RevenueCat
+import Combine
 
 struct PaywallView: View {
-    @StateObject private var subscriptionService = DependencyContainer.shared.resolve() as SubscriptionService
+    @StateObject private var subscriptionStateManager: SubscriptionStateManager
     @State private var selectedPlan: SubscriptionPlan = .monthly
-    @State private var isLoading = false
-    @State private var showError = false
-    @State private var errorMessage = ""
-    @State private var showSuccessMessage = false
     @Environment(\.dismiss) private var dismiss
     
     let configuration: PaywallConfiguration
@@ -16,106 +13,183 @@ struct PaywallView: View {
     init(configuration: PaywallConfiguration = .default, source: String = "unknown") {
         self.configuration = configuration
         self.source = source
+        
+        // TEMPORARY: Create a mock subscription service for testing
+        let mockSubscriptionService = MockSubscriptionService()
+        self._subscriptionStateManager = StateObject(wrappedValue: SubscriptionStateManager(
+            subscriptionService: mockSubscriptionService
+        ))
     }
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Header Section
-                    headerSection
-                    
-                    // Benefits Section
-                    benefitsSection
-                    
-                    // Subscription Plans
-                    subscriptionPlansSection
-                    
-                    // Purchase Button
-                    purchaseButtonSection
-                    
-                    // Restore Purchases
-                    restorePurchasesSection
-                    
-                    // Legal Text
-                    legalSection
-                }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 32)
-            }
-            .navigationTitle("StartSmart Pro")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
+            ZStack {
+                // StartSmart Branded Background
+                backgroundGradient
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // Header Section
+                        headerSection
+                        
+                        // Benefits Section
+                        benefitsSection
+                        
+                        // Subscription Plans
+                        subscriptionPlansSection
+                        
+                        // Purchase Button
+                        purchaseButtonSection
+                        
+                        // Restore Purchases
+                        restorePurchasesSection
+                        
+                        // Continue with Free Option
+                        continueWithFreeSection
+                        
+                        // Legal Text
+                        legalSection
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 16)
                 }
+                .scrollContentBackground(.hidden)
             }
+            .navigationBarHidden(true)
         }
-        .alert("Error", isPresented: $showError) {
+        .alert("Error", isPresented: $subscriptionStateManager.showErrorMessage) {
             Button("OK") { }
         } message: {
-            Text(errorMessage)
+            Text(subscriptionStateManager.errorMessage)
         }
-        .alert("Success!", isPresented: $showSuccessMessage) {
+        .alert("Success!", isPresented: $subscriptionStateManager.showSuccessMessage) {
             Button("Continue") {
+                // Mark paywall as seen
+                UserDefaults.standard.set(true, forKey: "has_seen_paywall")
                 dismiss()
             }
         } message: {
-            Text("Welcome to StartSmart Pro! You now have access to all premium features.")
+            Text(subscriptionStateManager.successMessage)
         }
         .task {
-            await loadOfferings()
+            await subscriptionStateManager.configure()
         }
+    }
+    
+    // MARK: - Background Gradient
+    private var backgroundGradient: some View {
+        LinearGradient(
+            colors: [.blue.opacity(0.8), .purple.opacity(0.6)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
     
     // MARK: - Header Section
     private var headerSection: some View {
         VStack(spacing: 16) {
-            // Pro Badge
+            // Animated Icon
             HStack {
-                Image(systemName: "crown.fill")
-                    .foregroundColor(.yellow)
-                Text("PRO")
-                    .font(.caption)
-                    .fontWeight(.bold)
+                Spacer()
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                        .scaleEffect(1.0)
+                        .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: UUID())
+                    
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundColor(.white)
+                        .scaleEffect(1.0)
+                        .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: UUID())
+                }
+                Spacer()
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(16)
+            .padding(.top, 20)
             
-            // Main Header
+            // Main Header with Animation
             Text(configuration.headerText)
                 .font(.largeTitle)
                 .fontWeight(.bold)
+                .foregroundColor(.white)
                 .multilineTextAlignment(.center)
+                .scaleEffect(1.0)
+                .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: UUID())
             
-            // Subheader
+            // Subheader with Gradient
             Text(configuration.subheaderText)
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.white, .white.opacity(0.8)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
                 .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+            
+            // Interactive Feature Highlights
+            HStack(spacing: 20) {
+                FeatureHighlight(icon: "brain.head.profile", text: "AI-Powered")
+                FeatureHighlight(icon: "waveform", text: "Personalized")
+                FeatureHighlight(icon: "chart.line.uptrend.xyaxis", text: "Analytics")
+            }
+            .padding(.top, 8)
         }
-        .padding(.top, 20)
+        .padding(.top, 0)
+    }
+    
+    // MARK: - Feature Highlight Component
+    private func FeatureHighlight(icon: String, text: String) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(.white)
+                .frame(width: 24, height: 24)
+            
+            Text(text)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(.white.opacity(0.9))
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.white.opacity(0.1))
+        )
     }
     
     // MARK: - Benefits Section
     private var benefitsSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 10) {
             ForEach(configuration.benefitsText, id: \.self) { benefit in
-                HStack(spacing: 12) {
+                HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundColor(.white)
                         .font(.title3)
+                        .background(
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 20, height: 20)
+                        )
                     
                     Text(benefit)
                         .font(.body)
+                        .foregroundColor(.white)
                         .multilineTextAlignment(.leading)
                     
                     Spacer()
                 }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.white.opacity(0.1))
+                )
             }
         }
         .padding(.horizontal, 8)
@@ -123,12 +197,13 @@ struct PaywallView: View {
     
     // MARK: - Subscription Plans Section
     private var subscriptionPlansSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             Text("Choose Your Plan")
                 .font(.headline)
                 .fontWeight(.semibold)
+                .foregroundColor(.white)
             
-            VStack(spacing: 8) {
+            VStack(spacing: 6) {
                 ForEach(SubscriptionPlan.allPlans) { plan in
                     subscriptionPlanRow(plan)
                 }
@@ -141,11 +216,12 @@ struct PaywallView: View {
             selectedPlan = plan
         } label: {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
                     HStack {
                         Text(plan.name)
                             .font(.headline)
                             .fontWeight(.semibold)
+                            .foregroundColor(.white)
                         
                         if plan.isPopular && configuration.highlightPopular {
                             Text("POPULAR")
@@ -175,12 +251,28 @@ struct PaywallView: View {
                     
                     Text(plan.description)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.white.opacity(0.8))
                     
                     if let trialDays = plan.trialDays, configuration.showTrial {
-                        Text("\(trialDays)-day free trial")
-                            .font(.caption2)
-                            .foregroundColor(.blue)
+                        HStack(spacing: 4) {
+                            Image(systemName: "gift.fill")
+                                .font(.caption2)
+                                .foregroundColor(.yellow)
+                            Text("\(trialDays)-day FREE trial")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(.yellow)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.yellow.opacity(0.2))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.yellow.opacity(0.6), lineWidth: 1)
+                                )
+                        )
                     }
                 }
                 
@@ -190,20 +282,21 @@ struct PaywallView: View {
                     Text(plan.price)
                         .font(.headline)
                         .fontWeight(.bold)
+                        .foregroundColor(.white)
                     
                     Text(plan.period.abbreviation)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.white.opacity(0.8))
                 }
             }
-            .padding(16)
+            .padding(12)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(selectedPlan.id == plan.id ? Color.blue.opacity(0.1) : Color.gray.opacity(0.05))
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(selectedPlan.id == plan.id ? Color.white.opacity(0.2) : Color.white.opacity(0.1))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: 10)
                             .stroke(
-                                selectedPlan.id == plan.id ? Color.blue : Color.clear,
+                                selectedPlan.id == plan.id ? Color.white : Color.clear,
                                 lineWidth: 2
                             )
                     )
@@ -221,50 +314,46 @@ struct PaywallView: View {
                 }
             } label: {
                 HStack {
-                    if isLoading {
+                    if subscriptionStateManager.isLoading {
                         ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .progressViewStyle(CircularProgressViewStyle(tint: .blue))
                             .scaleEffect(0.8)
                     }
                     
-                    Text(isLoading ? "Processing..." : "Start Your \(selectedPlan.trialDays ?? 0)-Day Free Trial")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(
-                    Group {
-                        switch configuration.buttonStyle {
-                        case .gradient:
-                            LinearGradient(
-                                colors: [Color.blue, Color.purple],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        case .solid:
-                            Color.blue
-                        case .outline:
-                            Color.clear
+                    HStack(spacing: 6) {
+                        if !subscriptionStateManager.isLoading {
+                            Image(systemName: "gift.fill")
+                                .font(.headline)
+                                .foregroundColor(.blue)
                         }
+                        Text(subscriptionStateManager.isLoading ? "Processing..." : "Start Your \(selectedPlan.trialDays ?? 0)-Day FREE Trial")
+                            .font(.headline)
+                            .fontWeight(.semibold)
                     }
+                }
+                .foregroundColor(.blue)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(
+                    LinearGradient(
+                        colors: [.white, .white.opacity(0.8)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
                 )
-                .cornerRadius(16)
+                .cornerRadius(12)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(
-                            configuration.buttonStyle == .outline ? Color.blue : Color.clear,
-                            lineWidth: 2
-                        )
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
                 )
+                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
             }
-            .disabled(isLoading || subscriptionService.currentSubscriptionStatus.isPremium)
+            .disabled(subscriptionStateManager.isLoading || subscriptionStateManager.isPremium)
             
-            if subscriptionService.currentSubscriptionStatus.isPremium {
+            if subscriptionStateManager.isPremium {
                 Text("You already have an active subscription")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.white.opacity(0.8))
             }
         }
     }
@@ -278,44 +367,54 @@ struct PaywallView: View {
         } label: {
             Text("Restore Purchases")
                 .font(.body)
-                .foregroundColor(.blue)
+                .foregroundColor(.white.opacity(0.8))
         }
-        .disabled(isLoading)
+        .disabled(subscriptionStateManager.isLoading)
+    }
+    
+    // MARK: - Continue with Free Section
+    private var continueWithFreeSection: some View {
+        Button {
+            // Mark paywall as seen and continue with free version
+            UserDefaults.standard.set(true, forKey: "has_seen_paywall")
+            dismiss()
+        } label: {
+            Text("Continue with Free Version")
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.6))
+                .underline()
+        }
+        .padding(.top, 8)
     }
     
     // MARK: - Legal Section
     private var legalSection: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             Text(configuration.legalText)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
             
             HStack(spacing: 20) {
                 Button("Privacy Policy") {
                     // Open privacy policy
                 }
-                .font(.caption)
+                .font(.caption2)
+                .foregroundColor(.white.opacity(0.8))
                 
                 Button("Terms of Service") {
                     // Open terms of service
                 }
-                .font(.caption)
+                .font(.caption2)
+                .foregroundColor(.white.opacity(0.8))
             }
-            .foregroundColor(.blue)
         }
         .padding(.top, 8)
     }
     
     // MARK: - Actions
     private func loadOfferings() async {
-        do {
-            let offerings = try await subscriptionService.getOfferings()
-            // Update plan prices from RevenueCat if available
-            updatePlanPricesFromOfferings(offerings)
-        } catch {
-            showErrorMessage("Failed to load subscription options: \(error.localizedDescription)")
-        }
+        await subscriptionStateManager.refreshSubscriptionData()
     }
     
     private func updatePlanPricesFromOfferings(_ offerings: Offerings) {
@@ -323,15 +422,15 @@ struct PaywallView: View {
         
         // Update plan prices with actual values from RevenueCat
         for package in currentOffering.availablePackages {
-            let priceString = package.storeProduct.localizedPriceString
+            let _ = package.storeProduct.localizedPriceString
             
             switch package.storeProduct.productIdentifier {
             case SubscriptionPlan.weeklyProductId:
-                if let index = SubscriptionPlan.allPlans.firstIndex(where: { $0.id == SubscriptionPlan.weeklyProductId }) {
+                if SubscriptionPlan.allPlans.firstIndex(where: { $0.id == SubscriptionPlan.weeklyProductId }) != nil {
                     // Note: In a real implementation, you'd want to update the plan or create a mutable version
                 }
             case SubscriptionPlan.monthlyProductId:
-                if let index = SubscriptionPlan.allPlans.firstIndex(where: { $0.id == SubscriptionPlan.monthlyProductId }) {
+                if SubscriptionPlan.allPlans.firstIndex(where: { $0.id == SubscriptionPlan.monthlyProductId }) != nil {
                     // Update monthly plan price
                 }
             case SubscriptionPlan.annualProductId:
@@ -345,68 +444,22 @@ struct PaywallView: View {
     }
     
     private func purchaseSelectedPlan() async {
-        guard !isLoading else { return }
-        
-        isLoading = true
-        
-        do {
-            // Get current offerings
-            let offerings = try await subscriptionService.getOfferings()
-            guard let currentOffering = offerings.current else {
-                throw SubscriptionError.noOfferingsAvailable
-            }
-            
-            // Find the package for selected plan
-            guard let package = currentOffering.availablePackages.first(where: {
-                $0.storeProduct.productIdentifier == selectedPlan.id
-            }) else {
-                throw SubscriptionError.invalidProductId
-            }
-            
-            // Make the purchase
-            let _ = try await subscriptionService.purchasePackage(package)
-            
-            // Success
-            showSuccessMessage = true
-            
-            // Track analytics
-            trackPurchaseEvent(plan: selectedPlan, source: source)
-            
-        } catch SubscriptionError.userCancelled {
-            // User cancelled, no error needed
+        guard let package = subscriptionStateManager.getPackageForPlan(selectedPlan) else {
+            subscriptionStateManager.showError("Selected plan is not available")
             return
-        } catch {
-            showErrorMessage(error.localizedDescription)
         }
         
-        isLoading = false
+        let success = await subscriptionStateManager.purchasePackage(package)
+        if success {
+            // Track analytics
+            trackPurchaseEvent(plan: selectedPlan, source: source)
+        }
     }
     
     private func restorePurchases() async {
-        guard !isLoading else { return }
-        
-        isLoading = true
-        
-        do {
-            let customerInfo = try await subscriptionService.restorePurchases()
-            
-            if subscriptionService.currentSubscriptionStatus.isPremium {
-                showSuccessMessage = true
-            } else {
-                showErrorMessage("No previous purchases found to restore")
-            }
-            
-        } catch {
-            showErrorMessage("Failed to restore purchases: \(error.localizedDescription)")
-        }
-        
-        isLoading = false
+        _ = await subscriptionStateManager.restorePurchases()
     }
     
-    private func showErrorMessage(_ message: String) {
-        errorMessage = message
-        showError = true
-    }
     
     private func trackPurchaseEvent(plan: SubscriptionPlan, source: String) {
         // Track purchase for analytics
@@ -419,6 +472,55 @@ struct PaywallView: View {
 struct PaywallView_Previews: PreviewProvider {
     static var previews: some View {
         PaywallView(source: "preview")
+    }
+}
+
+// MARK: - Mock Subscription Service for Testing
+class MockSubscriptionService: SubscriptionServiceProtocol {
+    var currentSubscriptionStatus: StartSmartSubscriptionStatus = .free
+    var customerInfo: CustomerInfo? = nil
+    var availableOfferings: Offerings? = nil
+    
+    var subscriptionStatusPublisher: AnyPublisher<StartSmartSubscriptionStatus, Never> {
+        Just(.free).eraseToAnyPublisher()
+    }
+    
+    func configureRevenueCat() async {
+        print("Mock: RevenueCat configured")
+    }
+    
+    func getCustomerInfo() async throws -> CustomerInfo {
+        print("Mock: Getting customer info")
+        throw NSError(domain: "MockError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Mock service - no real customer info"])
+    }
+    
+    func getOfferings() async throws -> Offerings {
+        print("Mock: Getting offerings")
+        throw NSError(domain: "MockError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Mock service - no real offerings"])
+    }
+    
+    func purchasePackage(_ package: Package) async throws -> CustomerInfo {
+        print("Mock: Purchasing package")
+        throw NSError(domain: "MockError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Mock service - no real purchase"])
+    }
+    
+    func restorePurchases() async throws -> CustomerInfo {
+        print("Mock: Restoring purchases")
+        throw NSError(domain: "MockError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Mock service - no real restore"])
+    }
+    
+    func checkSubscriptionStatus() async throws -> StartSmartSubscriptionStatus {
+        print("Mock: Checking subscription status")
+        return .free
+    }
+    
+    func presentCodeRedemptionSheet() {
+        print("Mock: Presenting code redemption sheet")
+    }
+    
+    func canMakePayments() -> Bool {
+        print("Mock: Can make payments")
+        return true
     }
 }
 

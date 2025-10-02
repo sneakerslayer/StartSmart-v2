@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01BA08664E944A139C51913D /* StartSmart/Views/Onboarding/OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD2D763377C74333BEF2B66F /* StartSmart/Views/Onboarding/OnboardingFlowView.swift */; };
+		0A3AA4E3E9234D72B21F181D /* SimpleAuthenticationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3AA4E3E9234D72B21F181E /* SimpleAuthenticationService.swift */; };
 		0E41DCB12E74F96100358D55 /* Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0E41DC732E74F96000358D55 /* Config.plist */; };
 		0E41DCB22E74F96100358D55 /* Config-template.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0E41DC742E74F96000358D55 /* Config-template.plist */; };
 		0E41DCB32E74F96100358D55 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0E41DC752E74F96000358D55 /* GoogleService-Info.plist */; };
@@ -38,6 +40,7 @@
 		0E41DCCD2E74F96100358D55 /* LocalStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8F2E74F96000358D55 /* LocalStorage.swift */; };
 		0E41DCCE2E74F96100358D55 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC892E74F96000358D55 /* SubscriptionManager.swift */; };
 		0E41DCD02E74F96100358D55 /* SubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8A2E74F96000358D55 /* SubscriptionService.swift */; };
+		0E41DCD12E74F96200358D55 /* SubscriptionStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8B2E74F96100358D55 /* SubscriptionStateManager.swift */; };
 		0E41DCD12E74F96100358D55 /* NotificationCategoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC832E74F96000358D55 /* NotificationCategoryService.swift */; };
 		0E41DCD22E74F96100358D55 /* AuthenticationLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC9F2E74F96000358D55 /* AuthenticationLoadingView.swift */; };
 		0E41DCD32E74F96100358D55 /* AlarmDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC962E74F96000358D55 /* AlarmDetailView.swift */; };
@@ -60,6 +63,9 @@
 		0E41DCE52E74F96100358D55 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCAD2E74F96000358D55 /* PaywallView.swift */; };
 		0E41DCE72E74F96100358D55 /* SocialSharingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC862E74F96000358D55 /* SocialSharingService.swift */; };
 		0E41DCE92E75026500358D55 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 0E41DCE82E75026500358D55 /* RevenueCat */; };
+		0E41DCF02E74F96100358D55 /* PersonaManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCEF2E74F96100358D55 /* PersonaManager.swift */; };
+		0E41DCF12E74F96100358D55 /* MainAppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCF22E74F96100358D55 /* MainAppView.swift */; };
+		0E41DCF32E74F96100358D55 /* OnboardingCompletionData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCF42E74F96100358D55 /* OnboardingCompletionData.swift */; };
 		0EF353F52E74A76500B66B53 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F42E74A76500B66B53 /* FirebaseAnalytics */; };
 		0EF353F72E74A76500B66B53 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F62E74A76500B66B53 /* FirebaseAuth */; };
 		0EF353F92E74A76500B66B53 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F82E74A76500B66B53 /* FirebaseCore */; };
@@ -67,21 +73,20 @@
 		0EF353FD2E74A76500B66B53 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353FC2E74A76500B66B53 /* FirebaseStorage */; };
 		0EF354002E74AA4600B66B53 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353FF2E74AA4600B66B53 /* GoogleSignIn */; };
 		0EF354022E74AA4600B66B53 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF354012E74AA4600B66B53 /* GoogleSignInSwift */; };
+		20913532AE484808923816E5 /* StartSmart/Views/Onboarding/ToneSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3D5A457CED47FD9310D74F /* StartSmart/Views/Onboarding/ToneSelectionView.swift */; };
+		3F359AACBCED415997BA2464 /* StartSmart/Views/Onboarding/MotivationSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C43AA2FAE90A40D9876DAD19 /* StartSmart/Views/Onboarding/MotivationSelectionView.swift */; };
+		416D6397FB264B96B69D0B33 /* StartSmart/Views/Onboarding/EnhancedWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C412C4D8A79419E896C64FC /* StartSmart/Views/Onboarding/EnhancedWelcomeView.swift */; };
+		44E4D0E960314946A3F718C0 /* StartSmart/Views/Onboarding/VoiceSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02D52818D1B45DDA99CBFC4 /* StartSmart/Views/Onboarding/VoiceSelectionView.swift */; };
+		78623D0B33E64EA1910CE12E /* StartSmart/Views/Onboarding/DemoGenerationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB6CB892061746018A16BFCB /* StartSmart/Views/Onboarding/DemoGenerationView.swift */; };
+		8F68888080944CE0A380058D /* StartSmart/Views/Onboarding/PermissionPrimingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC5E2EAB9D44303B4B850DA /* StartSmart/Views/Onboarding/PermissionPrimingView.swift */; };
+		9DEABF64196242FD9F2F7A71 /* StartSmart/Models/OnboardingState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2596752C91664F69939DBD57 /* StartSmart/Models/OnboardingState.swift */; };
+		CF5D655054BC48F7BD603B62 /* StartSmart/Services/OnboardingDemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A422E3E1E70472089A511FF /* StartSmart/Services/OnboardingDemoService.swift */; };
 		D0000001000000000000000A /* StartSmartApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000000B /* StartSmartApp.swift */; };
 		D0000001000000000000000C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000000D /* ContentView.swift */; };
 		D0000001000000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000000F /* Assets.xcassets */; };
 		D0000001000000000000002A /* StartSmartTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000002B /* StartSmartTests.swift */; };
-		9DEABF64196242FD9F2F7A71 /* OnboardingState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2596752C91664F69939DBD57 /* OnboardingState.swift */; };
-		01BA08664E944A139C51913D /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD2D763377C74333BEF2B66F /* OnboardingFlowView.swift */; };
-		416D6397FB264B96B69D0B33 /* EnhancedWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C412C4D8A79419E896C64FC /* EnhancedWelcomeView.swift */; };
-		3F359AACBCED415997BA2464 /* MotivationSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C43AA2FAE90A40D9876DAD19 /* MotivationSelectionView.swift */; };
-		20913532AE484808923816E5 /* ToneSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3D5A457CED47FD9310D74F /* ToneSelectionView.swift */; };
-		44E4D0E960314946A3F718C0 /* VoiceSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02D52818D1B45DDA99CBFC4 /* VoiceSelectionView.swift */; };
-		78623D0B33E64EA1910CE12E /* DemoGenerationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB6CB892061746018A16BFCB /* DemoGenerationView.swift */; };
-		8F68888080944CE0A380058D /* PermissionPrimingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC5E2EAB9D44303B4B850DA /* PermissionPrimingView.swift */; };
-		D18AFF8EBD864888931C3442 /* AccountCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5991B1CBA7934AACA630BD23 /* AccountCreationView.swift */; };
-		CF5D655054BC48F7BD603B62 /* OnboardingDemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A422E3E1E70472089A511FF /* OnboardingDemoService.swift */; };
-		E05ED718CB114E329263DFD8 /* OnboardingDemoServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC94B8C01E9E436188E1FC88 /* OnboardingDemoServiceProtocol.swift */; };
+		D18AFF8EBD864888931C3442 /* StartSmart/Views/Onboarding/AccountCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5991B1CBA7934AACA630BD23 /* StartSmart/Views/Onboarding/AccountCreationView.swift */; };
+		E05ED718CB114E329263DFD8 /* StartSmart/Services/OnboardingDemoServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC94B8C01E9E436188E1FC88 /* StartSmart/Services/OnboardingDemoServiceProtocol.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -95,6 +100,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0A3AA4E3E9234D72B21F181E /* SimpleAuthenticationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleAuthenticationService.swift; sourceTree = "<group>"; };
 		0E41DC6C2E74F96000358D55 /* Alarm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alarm.swift; sourceTree = "<group>"; };
 		0E41DC6D2E74F96000358D55 /* Intent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intent.swift; sourceTree = "<group>"; };
 		0E41DC6E2E74F96000358D55 /* Subscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subscription.swift; sourceTree = "<group>"; };
@@ -123,6 +129,7 @@
 		0E41DC882E74F96000358D55 /* StreakTrackingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakTrackingService.swift; sourceTree = "<group>"; };
 		0E41DC892E74F96000358D55 /* SubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
 		0E41DC8A2E74F96000358D55 /* SubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionService.swift; sourceTree = "<group>"; };
+		0E41DC8B2E74F96100358D55 /* SubscriptionStateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionStateManager.swift; sourceTree = "<group>"; };
 		0E41DC8D2E74F96000358D55 /* AssetOptimizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetOptimizer.swift; sourceTree = "<group>"; };
 		0E41DC8E2E74F96000358D55 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
 		0E41DC8F2E74F96000358D55 /* LocalStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStorage.swift; sourceTree = "<group>"; };
@@ -147,6 +154,18 @@
 		0E41DCAC2E74F96000358D55 /* FeatureGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureGateView.swift; sourceTree = "<group>"; };
 		0E41DCAD2E74F96000358D55 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		0E41DCAF2E74F96000358D55 /* NotificationPermissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPermissionView.swift; sourceTree = "<group>"; };
+		0E41DCEF2E74F96100358D55 /* PersonaManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaManager.swift; sourceTree = "<group>"; };
+		0E41DCF22E74F96100358D55 /* MainAppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainAppView.swift; sourceTree = "<group>"; };
+		0E41DCF42E74F96100358D55 /* OnboardingCompletionData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCompletionData.swift; sourceTree = "<group>"; };
+		1F3D5A457CED47FD9310D74F /* StartSmart/Views/Onboarding/ToneSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/ToneSelectionView.swift; sourceTree = "<group>"; };
+		2596752C91664F69939DBD57 /* StartSmart/Models/OnboardingState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Models/OnboardingState.swift; sourceTree = "<group>"; };
+		5991B1CBA7934AACA630BD23 /* StartSmart/Views/Onboarding/AccountCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/AccountCreationView.swift; sourceTree = "<group>"; };
+		5C412C4D8A79419E896C64FC /* StartSmart/Views/Onboarding/EnhancedWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/EnhancedWelcomeView.swift; sourceTree = "<group>"; };
+		6A422E3E1E70472089A511FF /* StartSmart/Services/OnboardingDemoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Services/OnboardingDemoService.swift; sourceTree = "<group>"; };
+		9DC5E2EAB9D44303B4B850DA /* StartSmart/Views/Onboarding/PermissionPrimingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/PermissionPrimingView.swift; sourceTree = "<group>"; };
+		BC94B8C01E9E436188E1FC88 /* StartSmart/Services/OnboardingDemoServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Services/OnboardingDemoServiceProtocol.swift; sourceTree = "<group>"; };
+		C43AA2FAE90A40D9876DAD19 /* StartSmart/Views/Onboarding/MotivationSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/MotivationSelectionView.swift; sourceTree = "<group>"; };
+		CB6CB892061746018A16BFCB /* StartSmart/Views/Onboarding/DemoGenerationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/DemoGenerationView.swift; sourceTree = "<group>"; };
 		D0000001000000000000000B /* StartSmartApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmartApp.swift; sourceTree = "<group>"; };
 		D0000001000000000000000D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D0000001000000000000000F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -155,17 +174,8 @@
 		D0000001000000000000002D /* StartSmartTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StartSmartTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0000001000000000000003C /* StartSmart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StartSmart.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0000001000000000000004A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		2596752C91664F69939DBD57 /* OnboardingState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Models/OnboardingState.swift; sourceTree = "<group>"; };
-		FD2D763377C74333BEF2B66F /* OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/OnboardingFlowView.swift; sourceTree = "<group>"; };
-		5C412C4D8A79419E896C64FC /* EnhancedWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/EnhancedWelcomeView.swift; sourceTree = "<group>"; };
-		C43AA2FAE90A40D9876DAD19 /* MotivationSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/MotivationSelectionView.swift; sourceTree = "<group>"; };
-		1F3D5A457CED47FD9310D74F /* ToneSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/ToneSelectionView.swift; sourceTree = "<group>"; };
-		D02D52818D1B45DDA99CBFC4 /* VoiceSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/VoiceSelectionView.swift; sourceTree = "<group>"; };
-		CB6CB892061746018A16BFCB /* DemoGenerationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/DemoGenerationView.swift; sourceTree = "<group>"; };
-		9DC5E2EAB9D44303B4B850DA /* PermissionPrimingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/PermissionPrimingView.swift; sourceTree = "<group>"; };
-		5991B1CBA7934AACA630BD23 /* AccountCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/AccountCreationView.swift; sourceTree = "<group>"; };
-		6A422E3E1E70472089A511FF /* OnboardingDemoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Services/OnboardingDemoService.swift; sourceTree = "<group>"; };
-		BC94B8C01E9E436188E1FC88 /* OnboardingDemoServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Services/OnboardingDemoServiceProtocol.swift; sourceTree = "<group>"; };
+		D02D52818D1B45DDA99CBFC4 /* StartSmart/Views/Onboarding/VoiceSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/VoiceSelectionView.swift; sourceTree = "<group>"; };
+		FD2D763377C74333BEF2B66F /* StartSmart/Views/Onboarding/OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/OnboardingFlowView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -201,6 +211,7 @@
 				0E41DC6D2E74F96000358D55 /* Intent.swift */,
 				0E41DC6E2E74F96000358D55 /* Subscription.swift */,
 				0E41DC6F2E74F96000358D55 /* User.swift */,
+				0E41DCF42E74F96100358D55 /* OnboardingCompletionData.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -233,10 +244,12 @@
 				0E41DC7B2E74F96000358D55 /* AudioPipelineService.swift */,
 				0E41DC7C2E74F96000358D55 /* AudioPlaybackService.swift */,
 				0E41DC7D2E74F96000358D55 /* AuthenticationService.swift */,
+				0A3AA4E3E9234D72B21F181E /* SimpleAuthenticationService.swift */,
 				0E41DC7E2E74F96000358D55 /* ContentGenerationManager.swift */,
 				0E41DC7F2E74F96000358D55 /* ElevenLabsService.swift */,
 				0E41DC802E74F96000358D55 /* FirebaseService.swift */,
 				0E41DC812E74F96000358D55 /* Grok4Service.swift */,
+				0E41DCEF2E74F96100358D55 /* PersonaManager.swift */,
 				0E41DC822E74F96000358D55 /* IntentRepository.swift */,
 				0E41DC832E74F96000358D55 /* NotificationCategoryService.swift */,
 				0E41DC842E74F96000358D55 /* NotificationService.swift */,
@@ -246,6 +259,7 @@
 				0E41DC882E74F96000358D55 /* StreakTrackingService.swift */,
 				0E41DC892E74F96000358D55 /* SubscriptionManager.swift */,
 				0E41DC8A2E74F96000358D55 /* SubscriptionService.swift */,
+				0E41DC8B2E74F96100358D55 /* SubscriptionStateManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -362,8 +376,27 @@
 				0E41DCAB2E74F96000358D55 /* Streaks */,
 				0E41DCAE2E74F96000358D55 /* Subscription */,
 				0E41DCAF2E74F96000358D55 /* NotificationPermissionView.swift */,
+				0E41DCF22E74F96100358D55 /* MainAppView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		0EE1022C2E8DB1E700FCC6B6 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				2596752C91664F69939DBD57 /* StartSmart/Models/OnboardingState.swift */,
+				FD2D763377C74333BEF2B66F /* StartSmart/Views/Onboarding/OnboardingFlowView.swift */,
+				5C412C4D8A79419E896C64FC /* StartSmart/Views/Onboarding/EnhancedWelcomeView.swift */,
+				C43AA2FAE90A40D9876DAD19 /* StartSmart/Views/Onboarding/MotivationSelectionView.swift */,
+				1F3D5A457CED47FD9310D74F /* StartSmart/Views/Onboarding/ToneSelectionView.swift */,
+				D02D52818D1B45DDA99CBFC4 /* StartSmart/Views/Onboarding/VoiceSelectionView.swift */,
+				CB6CB892061746018A16BFCB /* StartSmart/Views/Onboarding/DemoGenerationView.swift */,
+				9DC5E2EAB9D44303B4B850DA /* StartSmart/Views/Onboarding/PermissionPrimingView.swift */,
+				5991B1CBA7934AACA630BD23 /* StartSmart/Views/Onboarding/AccountCreationView.swift */,
+				6A422E3E1E70472089A511FF /* StartSmart/Services/OnboardingDemoService.swift */,
+				BC94B8C01E9E436188E1FC88 /* StartSmart/Services/OnboardingDemoServiceProtocol.swift */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 		D0000001000000000000001C /* Preview Content */ = {
@@ -423,6 +456,7 @@
 				D0000001000000000000003E /* StartSmart */,
 				D0000001000000000000002F /* StartSmartTests */,
 				D0000001000000000000003F /* Products */,
+				0EE1022C2E8DB1E700FCC6B6 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -594,7 +628,11 @@
 				0E41DCB92E74F96100358D55 /* ContentGenerationManager.swift in Sources */,
 				0E41DCBA2E74F96100358D55 /* AlarmListView.swift in Sources */,
 				0E41DCBB2E74F96100358D55 /* AuthenticationService.swift in Sources */,
+				0A3AA4E3E9234D72B21F181D /* SimpleAuthenticationService.swift in Sources */,
 				0E41DCBC2E74F96100358D55 /* Grok4Service.swift in Sources */,
+				0E41DCF02E74F96100358D55 /* PersonaManager.swift in Sources */,
+				0E41DCF12E74F96100358D55 /* MainAppView.swift in Sources */,
+				0E41DCF32E74F96100358D55 /* OnboardingCompletionData.swift in Sources */,
 				0E41DCBD2E74F96100358D55 /* IntentViewModel.swift in Sources */,
 				0E41DCBE2E74F96100358D55 /* SettingsView.swift in Sources */,
 				0E41DCBF2E74F96100358D55 /* AlarmRepository.swift in Sources */,
@@ -614,6 +652,7 @@
 				0E41DCCD2E74F96100358D55 /* LocalStorage.swift in Sources */,
 				0E41DCCE2E74F96100358D55 /* SubscriptionManager.swift in Sources */,
 				0E41DCD02E74F96100358D55 /* SubscriptionService.swift in Sources */,
+				0E41DCD12E74F96200358D55 /* SubscriptionStateManager.swift in Sources */,
 				0E41DCD12E74F96100358D55 /* NotificationCategoryService.swift in Sources */,
 				0E41DCD22E74F96100358D55 /* AuthenticationLoadingView.swift in Sources */,
 				0E41DCD32E74F96100358D55 /* AlarmDetailView.swift in Sources */,
@@ -636,18 +675,18 @@
 				0E41DCE52E74F96100358D55 /* PaywallView.swift in Sources */,
 				0E41DCE72E74F96100358D55 /* SocialSharingService.swift in Sources */,
 				D0000001000000000000000A /* StartSmartApp.swift in Sources */,
-							9DEABF64196242FD9F2F7A71 /* OnboardingState.swift in Sources */,
-				01BA08664E944A139C51913D /* OnboardingFlowView.swift in Sources */,
-				416D6397FB264B96B69D0B33 /* EnhancedWelcomeView.swift in Sources */,
-				3F359AACBCED415997BA2464 /* MotivationSelectionView.swift in Sources */,
-				20913532AE484808923816E5 /* ToneSelectionView.swift in Sources */,
-				44E4D0E960314946A3F718C0 /* VoiceSelectionView.swift in Sources */,
-				78623D0B33E64EA1910CE12E /* DemoGenerationView.swift in Sources */,
-				8F68888080944CE0A380058D /* PermissionPrimingView.swift in Sources */,
-				D18AFF8EBD864888931C3442 /* AccountCreationView.swift in Sources */,
-				CF5D655054BC48F7BD603B62 /* OnboardingDemoService.swift in Sources */,
-				E05ED718CB114E329263DFD8 /* OnboardingDemoServiceProtocol.swift in Sources */,
-);
+				9DEABF64196242FD9F2F7A71 /* StartSmart/Models/OnboardingState.swift in Sources */,
+				01BA08664E944A139C51913D /* StartSmart/Views/Onboarding/OnboardingFlowView.swift in Sources */,
+				416D6397FB264B96B69D0B33 /* StartSmart/Views/Onboarding/EnhancedWelcomeView.swift in Sources */,
+				3F359AACBCED415997BA2464 /* StartSmart/Views/Onboarding/MotivationSelectionView.swift in Sources */,
+				20913532AE484808923816E5 /* StartSmart/Views/Onboarding/ToneSelectionView.swift in Sources */,
+				44E4D0E960314946A3F718C0 /* StartSmart/Views/Onboarding/VoiceSelectionView.swift in Sources */,
+				78623D0B33E64EA1910CE12E /* StartSmart/Views/Onboarding/DemoGenerationView.swift in Sources */,
+				8F68888080944CE0A380058D /* StartSmart/Views/Onboarding/PermissionPrimingView.swift in Sources */,
+				D18AFF8EBD864888931C3442 /* StartSmart/Views/Onboarding/AccountCreationView.swift in Sources */,
+				CF5D655054BC48F7BD603B62 /* StartSmart/Services/OnboardingDemoService.swift in Sources */,
+				E05ED718CB114E329263DFD8 /* StartSmart/Services/OnboardingDemoServiceProtocol.swift in Sources */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		D0000001000000000000005H /* Sources */ = {

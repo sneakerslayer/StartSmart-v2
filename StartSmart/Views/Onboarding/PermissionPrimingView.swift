@@ -17,31 +17,39 @@ struct PermissionPrimingView: View {
     @State private var isRequestingPermission = false
     
     var body: some View {
-        VStack(spacing: 32) {
-            // Header section
-            headerSection
-                .opacity(animateElements ? 1 : 0)
-                .offset(y: animateElements ? 0 : -20)
-            
-            // Permission explanation
-            permissionExplanation
-                .opacity(showFeatures ? 1 : 0)
-                .offset(y: showFeatures ? 0 : 20)
-            
-            // Features that require notifications
-            notificationFeatures
-                .opacity(showFeatures ? 1 : 0)
-                .offset(y: showFeatures ? 0 : 30)
-            
-            Spacer()
-            
-            // Permission request button
-            permissionRequestButton
-                .opacity(showFeatures ? 1 : 0)
-                .offset(y: showFeatures ? 0 : 20)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 24) { // Reduced spacing from 32 to 24
+                    // Header section
+                    headerSection
+                        .opacity(animateElements ? 1 : 0)
+                        .offset(y: animateElements ? 0 : -20)
+                    
+                    // Permission explanation
+                    permissionExplanation
+                        .opacity(showFeatures ? 1 : 0)
+                        .offset(y: showFeatures ? 0 : 20)
+                    
+                    // Features that require notifications
+                    notificationFeatures
+                        .opacity(showFeatures ? 1 : 0)
+                        .offset(y: showFeatures ? 0 : 30)
+                    
+                    // Permission request button
+                    permissionRequestButton
+                        .opacity(showFeatures ? 1 : 0)
+                        .offset(y: showFeatures ? 0 : 20)
+                    
+                    // Add space for navigation buttons
+                    Spacer(minLength: 20) // Reduced to minimize dead space
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 10) // Reduced from 40 to 10 to prevent cutoff
+                .padding(.bottom, 20) // Reduced to minimize dead space
+                .frame(minHeight: geometry.size.height)
+            }
+            .scrollContentBackground(.hidden) // Hide default background for better bounce effect
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 40)
         .onAppear {
             startAnimations()
         }
@@ -50,12 +58,12 @@ struct PermissionPrimingView: View {
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) { // Standardized spacing
             // Notification bell icon with animation
             ZStack {
                 Circle()
                     .fill(Color.white.opacity(0.2))
-                    .frame(width: 80, height: 80)
+                    .frame(width: 50, height: 50) // Standardized size
                     .overlay(
                         Circle()
                             .stroke(Color.white.opacity(0.4), lineWidth: 2)
@@ -67,27 +75,29 @@ struct PermissionPrimingView: View {
                     )
                 
                 Image(systemName: "bell.fill")
-                    .font(.system(size: 36, weight: .medium))
+                    .font(.system(size: 24, weight: .medium)) // Standardized size
                     .foregroundColor(.white)
                     .modifier(BounceAnimationModifier(animate: animateElements))
             }
             
             // Title
             Text("Enable notifications to wake up inspired")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: 28, weight: .bold, design: .rounded)) // Standardized size
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                .tracking(-1)
-                .lineSpacing(4)
+                .tracking(-1) // Standardized tracking
+                .lineSpacing(2) // Standardized line spacing
+                .padding(.horizontal, 10) // Standardized padding
             
             // Subtitle
             Text("StartSmart needs permission to play your personalized motivational alarms, even when the app is closed")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white.opacity(0.85))
+                .font(.system(size: 14, weight: .medium)) // Standardized size
+                .foregroundColor(.white.opacity(0.85)) // Standardized opacity
                 .multilineTextAlignment(.center)
-                .lineSpacing(4)
-                .padding(.horizontal, 8)
+                .lineSpacing(2) // Standardized line spacing
+                .padding(.horizontal, 10) // Standardized padding
         }
+        .padding(.top, 10) // Standardized top padding
     }
     
     // MARK: - Permission Explanation

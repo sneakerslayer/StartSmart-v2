@@ -8,6 +8,7 @@
 
 import Foundation
 import SwiftUI
+import Combine
 
 // MARK: - Motivation Categories
 enum MotivationCategory: String, CaseIterable, Codable {
@@ -155,7 +156,11 @@ enum OnboardingStep: Int, CaseIterable {
 
 // MARK: - Onboarding State
 class OnboardingState: ObservableObject {
-    @Published var currentStep: OnboardingStep = .welcome
+    @Published var currentStep: OnboardingStep = .welcome {
+        didSet {
+            print("🔄 OnboardingState.currentStep changed from \(oldValue) to \(currentStep)")
+        }
+    }
     @Published var selectedMotivation: MotivationCategory?
     @Published var toneSliderPosition: Double = 0.5 // 0.0 (gentle) to 1.0 (tough)
     @Published var selectedVoice: VoicePersona?
@@ -221,19 +226,29 @@ class OnboardingState: ObservableObject {
     
     // MARK: - Navigation Methods
     func proceedToNext() {
-        guard canProceed else { return }
+        print("🔄 proceedToNext() called - current step: \(currentStep), canProceed: \(canProceed)")
+        guard canProceed else { 
+            print("❌ Cannot proceed from current step")
+            return 
+        }
         
         if let nextStep = OnboardingStep(rawValue: currentStep.rawValue + 1) {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                currentStep = nextStep
+            print("✅ Moving to next step: \(nextStep)")
+            
+            // Force state update on main thread
+            DispatchQueue.main.async {
+                self.currentStep = nextStep
+                print("✅ State updated to: \(self.currentStep)")
             }
+        } else {
+            print("❌ No next step available")
         }
     }
     
     func goBack() {
         if let previousStep = OnboardingStep(rawValue: currentStep.rawValue - 1) {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                currentStep = previousStep
+            DispatchQueue.main.async {
+                self.currentStep = previousStep
             }
         }
     }
@@ -245,14 +260,14 @@ class OnboardingState: ObservableObject {
     
     // MARK: - Selection Methods
     func selectMotivation(_ motivation: MotivationCategory) {
+        print("🎯 selectMotivation called with: \(motivation.rawValue)")
         withAnimation(.easeOut(duration: 0.2)) {
             selectedMotivation = motivation
         }
+        print("🎯 selectedMotivation set to: \(selectedMotivation?.rawValue ?? "nil")")
         
-        // Auto-advance after selection with slight delay for animation
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.proceedToNext()
-        }
+        // Don't auto-advance - let user manually tap Next button
+        // This ensures proper state synchronization with OnboardingFlowView
     }
     
     func selectVoice(_ voice: VoicePersona) {
@@ -260,10 +275,8 @@ class OnboardingState: ObservableObject {
             selectedVoice = voice
         }
         
-        // Auto-advance after selection with slight delay for animation
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.proceedToNext()
-        }
+        // Don't auto-advance - let user manually tap Next button
+        // This ensures proper state synchronization with OnboardingFlowView
     }
     
     func updateTonePosition(_ position: Double) {
@@ -389,6 +402,29 @@ class OnboardingViewModel: ObservableObject {
     @Published var onboardingState = OnboardingState()
     @Published var isAudioPlaying = false
     @Published var audioError: String?
+    // Proxy published value so parent views react to slider changes
+    @Published var toneSliderPositionProxy: Double = 0.5
+    private var cancellables: Set<AnyCancellable> = []
+    
+    init() {
+        // Bridge nested object changes to this view model so views observing
+        // the view model update when the slider moves
+        onboardingState.$toneSliderPosition
+            .receive(on: RunLoop.main)
+            .sink { [weak self] value in
+                self?.toneSliderPositionProxy = value
+            }
+            .store(in: &cancellables)
+    }
+    
+    // MARK: - Navigation Methods
+    func proceedToNext() {
+        onboardingState.proceedToNext()
+    }
+    
+    func goBack() {
+        onboardingState.goBack()
+    }
     
     // MARK: - Audio Preview
     func playVoicePreview(for voice: VoicePersona) {

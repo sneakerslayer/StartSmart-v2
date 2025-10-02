@@ -46,14 +46,14 @@ class SubscriptionServiceTests: XCTestCase {
     }
     
     func testSubscriptionStatusMapping_ProMonthly() {
-        let mockEntitlement = createMockEntitlement(productId: "startsmart_pro_monthly")
+        let mockEntitlement = createMockEntitlement(productId: "startsmart_pro_monthly_")
         let mockCustomerInfo = createMockCustomerInfo(activeEntitlements: ["pro": mockEntitlement])
         let status = subscriptionService.mapToSubscriptionStatus(mockCustomerInfo)
         XCTAssertEqual(status, .proMonthly)
     }
     
     func testSubscriptionStatusMapping_ProAnnual() {
-        let mockEntitlement = createMockEntitlement(productId: "startsmart_pro_annual")
+        let mockEntitlement = createMockEntitlement(productId: "startsmart_pro_yearly_")
         let mockCustomerInfo = createMockCustomerInfo(activeEntitlements: ["pro": mockEntitlement])
         let status = subscriptionService.mapToSubscriptionStatus(mockCustomerInfo)
         XCTAssertEqual(status, .proAnnual)
@@ -454,7 +454,7 @@ class SubscriptionStatusExtensionTests: XCTestCase {
     }
     
     func testAlarmLimits() {
-        XCTAssertEqual(SubscriptionStatus.free.alarmLimit, 15)
+        XCTAssertEqual(SubscriptionStatus.free.alarmLimit, 3)
         XCTAssertNil(SubscriptionStatus.proMonthly.alarmLimit)
         XCTAssertNil(SubscriptionStatus.proAnnual.alarmLimit)
     }

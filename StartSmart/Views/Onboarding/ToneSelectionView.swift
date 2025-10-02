@@ -16,31 +16,37 @@ struct ToneSelectionView: View {
     @State private var isDragging = false
     
     var body: some View {
-        VStack(spacing: 40) {
-            // Header section
-            headerSection
-                .opacity(animateElements ? 1 : 0)
-                .offset(y: animateElements ? 0 : -20)
-            
-            // Dynamic text display
-            dynamicTextDisplay
-                .opacity(showSlider ? 1 : 0)
-                .offset(y: showSlider ? 0 : 10)
-            
-            // Tone slider
-            toneSliderSection
-                .opacity(showSlider ? 1 : 0)
-                .offset(y: showSlider ? 0 : 30)
-            
-            // Examples section
-            examplesSection
-                .opacity(showSlider ? 1 : 0)
-                .offset(y: showSlider ? 0 : 20)
-            
-            Spacer()
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 16) { // Reduced spacing from 24 to 16
+                    // Header section
+                    headerSection
+                        .opacity(animateElements ? 1 : 0)
+                        .offset(y: animateElements ? 0 : -20)
+                    
+                    // Dynamic text display
+                    dynamicTextDisplay
+                        .opacity(showSlider ? 1 : 0)
+                        .offset(y: showSlider ? 0 : 10)
+                    
+                    // Examples section - moved above slider
+                    examplesSection
+                        .opacity(showSlider ? 1 : 0)
+                        .offset(y: showSlider ? 0 : 20)
+                    
+                    // Tone slider
+                    toneSliderSection
+                        .opacity(showSlider ? 1 : 0)
+                        .offset(y: showSlider ? 0 : 30)
+                    
+                    Spacer(minLength: 20) // Further reduced to minimize dead space
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 20) // Reduced bottom padding to minimize dead space
+                .frame(minHeight: geometry.size.height) // Ensure content takes at least full screen height
+            }
+            .scrollContentBackground(.hidden) // Hide default background for better bounce effect
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 40)
         .onAppear {
             startAnimations()
         }
@@ -49,32 +55,34 @@ struct ToneSelectionView: View {
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) { // Standardized spacing
             // Tone icon
             ZStack {
                 Circle()
                     .fill(Color.white.opacity(0.2))
-                    .frame(width: 60, height: 60)
+                    .frame(width: 50, height: 50) // Standardized size
                 
                 Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 28, weight: .medium))
+                    .font(.system(size: 24, weight: .medium)) // Standardized size
                     .foregroundColor(.white)
             }
             
             // Main question
             Text("How do you like your motivation?")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .font(.system(size: 28, weight: .bold, design: .rounded)) // Standardized size
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                .tracking(-1)
+                .tracking(-1) // Standardized tracking
             
             // Subtitle
             Text("Slide to find your perfect motivational style")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white.opacity(0.85))
+                .font(.system(size: 14, weight: .medium)) // Standardized size
+                .foregroundColor(.white.opacity(0.85)) // Standardized opacity
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 16)
+                .lineSpacing(2) // Standardized line spacing
+                .padding(.horizontal, 10) // Standardized padding
         }
+        .padding(.top, 10) // Standardized top padding
     }
     
     // MARK: - Dynamic Text Display
@@ -111,7 +119,7 @@ struct ToneSelectionView: View {
     // MARK: - Tone Slider Section
     
     private var toneSliderSection: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 16) { // Reduced spacing from 24 to 16
             // Slider labels
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -159,7 +167,7 @@ struct ToneSelectionView: View {
     // MARK: - Examples Section
     
     private var examplesSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) { // Reduced spacing from 16 to 12
             Text("Examples by tone")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.9))
@@ -167,7 +175,7 @@ struct ToneSelectionView: View {
             LazyVGrid(columns: [
                 GridItem(.flexible()),
                 GridItem(.flexible())
-            ], spacing: 12) {
+            ], spacing: 10) { // Reduced spacing from 12 to 10
                 ForEach(AlarmTone.allCases, id: \.self) { tone in
                     ToneExampleCard(
                         tone: tone,

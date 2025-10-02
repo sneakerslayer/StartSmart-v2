@@ -6,9 +6,11 @@
 //
 
 import Foundation
+import SwiftUI
 
 // MARK: - OnboardingDemoService Protocol
 
+@MainActor
 protocol OnboardingDemoServiceProtocol {
     func generateDemoContent(
         motivation: MotivationCategory,

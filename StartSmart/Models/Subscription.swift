@@ -56,9 +56,17 @@ enum StartSmartSubscriptionStatus: String, CaseIterable, Codable {
         self != .free
     }
     
+    var weeklyAlarmLimit: Int? {
+        switch self {
+        case .free: return 3
+        case .proWeekly, .proMonthly, .proAnnual: return nil // Unlimited
+        }
+    }
+    
+    // Legacy support - keeping monthlyAlarmLimit for compatibility
     var monthlyAlarmLimit: Int? {
         switch self {
-        case .free: return 15
+        case .free: return 12 // 3 alarms/week * 4 weeks
         case .proWeekly, .proMonthly, .proAnnual: return nil // Unlimited
         }
     }
@@ -90,15 +98,15 @@ struct SubscriptionPlan: Identifiable, Codable, Equatable {
     
     // MARK: - Product IDs (these should match your RevenueCat/App Store Connect configuration)
     static let weeklyProductId = "startsmart_pro_weekly"
-    static let monthlyProductId = "startsmart_pro_monthly"
-    static let annualProductId = "startsmart_pro_annual"
+    static let monthlyProductId = "startsmart_pro_monthly_"
+    static let annualProductId = "startsmart_pro_yearly_"
     
     // MARK: - Predefined Plans
     static let weekly = SubscriptionPlan(
         id: weeklyProductId,
         name: "Pro Weekly",
         description: "Perfect for trying out premium features",
-        price: "$2.99",
+        price: "$3.99",
         period: .weekly,
         features: StartSmartFeature.proFeatures,
         isPopular: false,
@@ -110,7 +118,7 @@ struct SubscriptionPlan: Identifiable, Codable, Equatable {
         id: monthlyProductId,
         name: "Pro Monthly",
         description: "Great for regular users",
-        price: "$9.99",
+        price: "$6.99",
         period: .monthly,
         features: StartSmartFeature.proFeatures,
         isPopular: true,
@@ -122,7 +130,7 @@ struct SubscriptionPlan: Identifiable, Codable, Equatable {
         id: annualProductId,
         name: "Pro Annual",
         description: "Best value with exclusive perks",
-        price: "$79.99",
+        price: "$39.99",
         period: .annual,
         features: StartSmartFeature.proFeatures + [.earlyAccess, .prioritySupport],
         isPopular: false,
@@ -239,7 +247,7 @@ struct SubscriptionFeature: Identifiable, Codable, Equatable {
         SubscriptionFeature(
             id: "basic_alarms",
             name: "Basic Alarms",
-            description: "Up to 15 alarms per month",
+            description: "Up to 3 alarms per week",
             iconName: "alarm",
             isPremiumOnly: false
         ),

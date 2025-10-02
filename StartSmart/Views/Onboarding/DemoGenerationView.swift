@@ -1,3 +1,4 @@
+//#if DEBUG
 //
 //  DemoGenerationView.swift
 //  StartSmart
@@ -24,35 +25,45 @@ struct DemoGenerationView: View {
     @State private var demoService: OnboardingDemoService?
     
     var body: some View {
-        VStack(spacing: 32) {
-            // Header section
-            headerSection
-                .opacity(animateElements ? 1 : 0)
-                .offset(y: animateElements ? 0 : -20)
-            
-            // Main animation area
-            mainAnimationArea
-                .opacity(showGenerationAnimation ? 1 : 0)
-                .offset(y: showGenerationAnimation ? 0 : 30)
-            
-            // Generated content display
-            if let content = onboardingState.generatedDemoContent {
-                generatedContentSection(content)
-                    .opacity(showContent ? 1 : 0)
-                    .offset(y: showContent ? 0 : 20)
+        GeometryReader { geometry in
+            ScrollView {
+                        VStack(spacing: 20) { // Reduced spacing from 24 to 20
+                            // Header section with forced centering
+                            HStack {
+                                Spacer()
+                                headerSection
+                                Spacer()
+                            }
+                            
+                            // Main animation area
+                            mainAnimationArea
+                                .opacity(showGenerationAnimation ? 1 : 0)
+                                .offset(y: showGenerationAnimation ? 0 : 30)
+                            
+                            // Generated content display
+                            if let content = onboardingState.generatedDemoContent {
+                                generatedContentSection(content)
+                                    .opacity(showContent ? 1 : 0)
+                                    .offset(y: showContent ? 0 : 20)
+                            }
+                            
+                            // Error handling
+                            if let error = onboardingState.demoError {
+                                errorSection(error)
+                                    .opacity(showContent ? 1 : 0)
+                                    .offset(y: showContent ? 0 : 20)
+                            }
+                            
+                            // Add space for navigation buttons
+                            Spacer(minLength: 20) // Further reduced to minimize dead space
+                        }
+                .padding(.horizontal, 24)
+                .padding(.top, 10) // Reduced from 40 to 10 to prevent cutoff
+                .padding(.bottom, 20) // Further reduced to minimize dead space
+                .frame(minHeight: geometry.size.height)
             }
-            
-            // Error handling
-            if let error = onboardingState.demoError {
-                errorSection(error)
-                    .opacity(showContent ? 1 : 0)
-                    .offset(y: showContent ? 0 : 20)
-            }
-            
-            Spacer()
+            .scrollContentBackground(.hidden) // Hide default background for better bounce effect
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 40)
         .onAppear {
             startDemoGeneration()
         }
@@ -61,44 +72,48 @@ struct DemoGenerationView: View {
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) { // Standardized spacing
             // Magic wand icon
             ZStack {
                 Circle()
                     .fill(Color.white.opacity(0.2))
-                    .frame(width: 60, height: 60)
+                    .frame(width: 50, height: 50) // Standardized size
                 
                 Image(systemName: "wand.and.stars")
-                    .font(.system(size: 28, weight: .medium))
+                    .font(.system(size: 24, weight: .medium)) // Standardized size
                     .foregroundColor(.white)
-                    .modifier(PulseAnimationModifier(animate: animateElements))
+                    .modifier(PulseAnimationModifier(animate: true))
             }
             
             // Title
             Text("Creating Your First Wake-Up...")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .font(.system(size: 28, weight: .bold, design: .rounded)) // Standardized size
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                .tracking(-1)
+                .tracking(-1) // Standardized tracking
+                .lineSpacing(2) // Standardized line spacing
+                .padding(.horizontal, 10) // Standardized padding
             
             // Subtitle with personalization details
-            VStack(spacing: 8) {
+            VStack(spacing: 6) {
                 if let motivation = onboardingState.selectedMotivation,
                    let voice = onboardingState.selectedVoice {
                     Text("Crafting a \(onboardingState.computedTone.displayName.lowercased()) message about \(motivation.displayName.lowercased()) in \(voice.name)'s voice")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.85))
+                        .font(.system(size: 14, weight: .medium)) // Standardized size
+                        .foregroundColor(.white.opacity(0.85)) // Standardized opacity
                         .multilineTextAlignment(.center)
-                        .lineSpacing(4)
+                        .lineSpacing(2) // Standardized line spacing
                 } else {
                     Text("Personalizing your perfect wake-up experience")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.85))
+                        .font(.system(size: 14, weight: .medium)) // Standardized size
+                        .foregroundColor(.white.opacity(0.85)) // Standardized opacity
                         .multilineTextAlignment(.center)
+                        .lineSpacing(2) // Standardized line spacing
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 10) // Standardized padding
         }
+        .padding(.top, 10) // Standardized top padding
     }
     
     // MARK: - Main Animation Area
@@ -114,6 +129,7 @@ struct DemoGenerationView: View {
             }
         }
         .frame(height: 200)
+        .frame(maxWidth: .infinity)
     }
     
     // MARK: - Generation Animation
@@ -131,6 +147,7 @@ struct DemoGenerationView: View {
                 .multilineTextAlignment(.center)
                 .animation(.easeInOut(duration: 0.5), value: currentAnimationStep)
         }
+        .frame(maxWidth: .infinity)
         .onAppear {
             startGenerationStatusAnimation()
         }
@@ -177,6 +194,7 @@ struct DemoGenerationView: View {
                 .opacity(showContent ? 1 : 0)
                 .animation(.easeInOut(duration: 0.5).delay(0.3), value: showContent)
         }
+        .frame(maxWidth: .infinity)
     }
     
     // MARK: - Error Animation
@@ -203,14 +221,15 @@ struct DemoGenerationView: View {
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.white)
         }
+        .frame(maxWidth: .infinity)
     }
     
     // MARK: - Generated Content Section
     
     private func generatedContentSection(_ content: GeneratedContent) -> some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             // Content preview card
-            VStack(spacing: 16) {
+            VStack(spacing: 12) {
                 // Content text
                 ScrollView {
                     Text(content.textContent)
@@ -220,14 +239,14 @@ struct DemoGenerationView: View {
                         .lineSpacing(6)
                         .padding(.horizontal, 16)
                 }
-                .frame(maxHeight: 120)
+                .frame(maxHeight: 180) // Increased from 120 to 180
                 
                 // Audio playback controls
                 audioPlaybackControls(for: content)
                     .opacity(showPlaybackControls ? 1 : 0)
                     .animation(.easeInOut(duration: 0.5).delay(0.5), value: showPlaybackControls)
             }
-            .padding(24)
+            .padding(20) // Reduced from 24 to 20
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(Color.white.opacity(0.15))
@@ -238,7 +257,7 @@ struct DemoGenerationView: View {
             )
             
             // Magic moment message
-            VStack(spacing: 8) {
+            VStack(spacing: 6) { // Reduced spacing from 8 to 6
                 Text("✨ This is just a preview")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.9))
@@ -338,12 +357,10 @@ struct DemoGenerationView: View {
     private func startDemoGeneration() {
         startAnimations()
         
-        // Initialize demo service
-        demoService = OnboardingDemoService()
-        
-        // Start generation immediately
+        // Skip dependency-heavy demo service for now, use fallback content
+        // This prevents the app crash from DependencyContainer timeout
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            generateDemoContent()
+            generateFallbackContent()
         }
     }
     
@@ -410,6 +427,59 @@ struct DemoGenerationView: View {
         }
     }
     
+    private func generateFallbackContent() {
+        guard let motivation = onboardingState.selectedMotivation,
+              let voice = onboardingState.selectedVoice else {
+            print("⚠️ Missing required onboarding selections")
+            onboardingState.isGeneratingDemo = false
+            return
+        }
+        
+        // Create fallback content without depending on external services
+        let fallbackContent = GeneratedContent(
+            textContent: getFallbackText(for: motivation),
+            audioURL: nil, // No audio for fallback
+            audioData: nil,
+            voiceId: voice.name,
+            metadata: ContentMetadata(
+                textContent: getFallbackText(for: motivation),
+                tone: onboardingState.computedTone,
+                aiModel: "fallback",
+                ttsModel: nil,
+                generationTime: 0
+            )
+        )
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            onboardingState.isGeneratingDemo = false
+            onboardingState.generatedDemoContent = fallbackContent
+            
+            withAnimation(.easeInOut(duration: 0.6)) {
+                showContent = true
+                
+                // Don't auto-advance - let user manually tap Next button
+                // This ensures proper state synchronization with OnboardingFlowView
+            }
+        }
+    }
+    
+    private func getFallbackText(for motivation: MotivationCategory) -> String {
+        switch motivation {
+        case .fitness:
+            return "Good morning, champion! Today is the day you push your body to new limits. Every rep, every step, every breath is building the strongest version of yourself. Let's make it count!"
+        case .career:
+            return "Rise and shine, future leader! Today's challenges are tomorrow's success stories. Your dreams are calling – time to answer with action and determination!"
+        case .studies:
+            return "Good morning, brilliant mind! Knowledge is calling your name today. Every page you read, every concept you master brings you closer to your goals. Let's learn something amazing!"
+        case .mindfulness:
+            return "Good morning, peaceful soul. Take a deep breath and feel the calm energy of a new day. Today is your opportunity to find balance and inner peace. Let's embrace the present moment."
+        case .personalProject:
+            return "Good morning, creator! Your vision is waiting to come to life today. Every small step forward is progress toward something amazing. Let's build something incredible!"
+        case .other:
+            return "Good morning! Today is a fresh start full of endless possibilities. Whatever you're working toward, believe in yourself and take that first step. You've got this!"
+        }
+    }
+    
     private func retryDemoGeneration() {
         // Reset state and try again
         onboardingState.demoError = nil
@@ -425,10 +495,7 @@ struct DemoGenerationView: View {
     // MARK: - Animation Control
     
     private func startAnimations() {
-        withAnimation(.easeOut(duration: 0.8)) {
-            animateElements = true
-        }
-        
+        // Header is now always visible for consistent centering
         withAnimation(.easeOut(duration: 0.8).delay(0.3)) {
             showGenerationAnimation = true
         }

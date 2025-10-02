@@ -292,9 +292,6 @@ class PersonaManager {
 }
 
 // MARK: - Extensions for Convenience
-extension PersonaManager.Persona: Identifiable {
-    var id: String { return self.rawValue }
-}
 
 extension PersonaManager.Persona {
     var displayName: String {

@@ -101,7 +101,7 @@ final class ModelTests: XCTestCase {
     }
     
     func testSubscriptionFeatures() {
-        XCTAssertTrue(SubscriptionStatus.free.monthlyAlarmLimit == 15)
+        XCTAssertTrue(SubscriptionStatus.free.monthlyAlarmLimit == 3)
         XCTAssertNil(SubscriptionStatus.proMonthly.monthlyAlarmLimit)
         XCTAssertTrue(SubscriptionStatus.proAnnual.hasEarlyAccess)
         XCTAssertFalse(SubscriptionStatus.free.isPremium)

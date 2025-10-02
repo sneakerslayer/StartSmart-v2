@@ -49,7 +49,7 @@ struct OnboardingFlowView: View {
         case .demo:
             result = true // Always allow proceeding from demo page
         case .permissions:
-            result = true // Always allow proceeding from permissions page
+            result = onboardingViewModel.onboardingState.notificationPermissionGranted != nil
         case .accountCreation:
             result = true // Always allow proceeding from account creation (implies completion)
         }
@@ -67,11 +67,10 @@ struct OnboardingFlowView: View {
                 
                 VStack(spacing: 0) {
                     // Progress indicator (hidden on welcome screen)
-                    if currentStep != .welcome {
+                    if onboardingViewModel.onboardingState.currentStep != .welcome {
                         progressIndicator
-                            .padding(.top, 20) // Increased top padding to prevent cutoff
+                            .padding(.top, 20)
                             .padding(.horizontal, 20)
-                            .padding(.bottom, 10) // Added bottom padding
                     }
                     
                     // Main content area - Conditional View System (No TabView)
@@ -118,15 +117,10 @@ struct OnboardingFlowView: View {
                             )
                             
                         case .demo:
-                            #if DEBUG
                             DemoGenerationView(
                                 onboardingState: onboardingViewModel.onboardingState,
                                 onboardingViewModel: onboardingViewModel
                             )
-                            #else
-                            // Skip demo in Release builds
-                            PermissionPrimingView(onboardingState: onboardingViewModel.onboardingState)
-                            #endif
                             
                         case .permissions:
                             PermissionPrimingView(onboardingState: onboardingViewModel.onboardingState)
@@ -147,15 +141,12 @@ struct OnboardingFlowView: View {
                         }
                     }
                     .animation(.easeInOut(duration: 0.3), value: onboardingViewModel.onboardingState.currentStep)
-                }
-                
-                // Floating navigation controls (positioned outside VStack to float over background)
-                VStack {
-                    Spacer()
+                    
+                    // Navigation controls (hidden on certain steps)
                     if shouldShowNavigationControls {
                         navigationControls
                             .padding(.horizontal, 20)
-                            .padding(.bottom, 20)
+                            .padding(.bottom, 40)
                     }
                 }
             }
@@ -188,18 +179,16 @@ struct OnboardingFlowView: View {
                 )
             case .motivation:
                 LinearGradient(
-                    colors: toneGradientColors,
+                    colors: [.orange.opacity(0.7), .pink.opacity(0.5)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                .animation(.easeInOut(duration: 0.3), value: onboardingViewModel.toneSliderPositionProxy)
             case .tone:
                 LinearGradient(
                     colors: toneGradientColors,
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                .animation(.easeInOut(duration: 0.3), value: onboardingViewModel.toneSliderPositionProxy)
             case .voice:
                 LinearGradient(
                     colors: [.green.opacity(0.7), .teal.opacity(0.5)],
@@ -229,7 +218,7 @@ struct OnboardingFlowView: View {
     }
     
     private var toneGradientColors: [Color] {
-        let position = onboardingViewModel.toneSliderPositionProxy
+        let position = onboardingViewModel.onboardingState.toneSliderPosition
         
         switch position {
         case 0.0..<0.25:
@@ -250,40 +239,32 @@ struct OnboardingFlowView: View {
             // Progress bar
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.white.opacity(0.2))
-                        .frame(height: 12)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.white.opacity(0.3))
+                        .frame(height: 8)
                     
-                    RoundedRectangle(cornerRadius: 6)
+                    RoundedRectangle(cornerRadius: 4)
                         .fill(Color.white)
                         .frame(
                             width: geometry.size.width * progress,
-                            height: 12
+                            height: 8
                         )
                         .animation(.easeInOut(duration: 0.3), value: progress)
                 }
             }
-            .frame(height: 12)
+            .frame(height: 8)
             
             // Step indicator
             HStack {
                 Text("\(currentStep.rawValue + 1) of \(OnboardingStep.allCases.count)")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.white.opacity(0.2))
-                    )
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.8))
                 
                 Spacer()
                 
                 Text(currentStep.title)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.9))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .font(.caption.weight(.medium))
+                    .foregroundColor(.white)
             }
         }
     }
@@ -319,8 +300,7 @@ struct OnboardingFlowView: View {
                     .padding(.vertical, 12)
                     .background(
                         RoundedRectangle(cornerRadius: 25)
-                            .fill(.ultraThinMaterial)
-                            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                            .fill(Color.white.opacity(0.2))
                     )
                 }
             }
@@ -343,8 +323,8 @@ struct OnboardingFlowView: View {
                     .padding(.vertical, 12)
                     .background(
                         RoundedRectangle(cornerRadius: 25)
-                            .fill(.ultraThinMaterial)
-                            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                            .fill(Color.white.opacity(0.9))
+                            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     )
                 }
             }
@@ -365,12 +345,8 @@ struct OnboardingFlowView: View {
                 currentStep = nextStep
             }
         case .permissions:
-            print("🔘 Requesting notification permissions and proceeding")
+            print("🔘 Requesting notification permissions")
             requestNotificationPermissions()
-            // Proceed to next step regardless of permission result
-            if let nextStep = OnboardingStep(rawValue: currentStep.rawValue + 1) {
-                currentStep = nextStep
-            }
         default:
             print("🔘 Proceeding to next step")
             if let nextStep = OnboardingStep(rawValue: currentStep.rawValue + 1) {
@@ -456,15 +432,3 @@ struct OnboardingFlowView_Previews: PreviewProvider {
     }
 }
 #endif
-
-// MARK: - Local Animation Modifier
-
-struct BounceAnimationModifier: ViewModifier {
-    let animate: Bool
-    
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(animate ? 1.0 : 0.95)
-            .animation(.spring(response: 0.4, dampingFraction: 0.7, blendDuration: 0.2), value: animate)
-    }
-}

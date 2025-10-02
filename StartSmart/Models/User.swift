@@ -175,7 +175,7 @@ enum SubscriptionStatus: String, Codable, CaseIterable {
     
     var monthlyAlarmLimit: Int? {
         switch self {
-        case .free: return 15
+        case .free: return 3
         case .proWeekly, .proMonthly, .proAnnual: return nil // Unlimited
         }
     }

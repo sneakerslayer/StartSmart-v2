@@ -18,16 +18,16 @@ This guide covers the complete setup and configuration of the subscription syste
 
 StartSmart uses a freemium subscription model with the following tiers:
 
-- **Free**: Up to 15 alarms per month, basic features
-- **Pro Weekly**: $2.99/week, 3-day free trial
-- **Pro Monthly**: $9.99/month, 7-day free trial (Popular)
-- **Pro Annual**: $79.99/year, 7-day free trial, 33% discount
+- **Free**: Up to 3 alarms per week, basic features
+- **Pro Weekly**: $3.99/week, 3-day free trial
+- **Pro Monthly**: $6.99/month, 7-day free trial (Popular)
+- **Pro Annual**: $39.99/year, 7-day free trial, 52% discount
 
 ### Key Features by Tier
 
 | Feature | Free | Pro |
 |---------|------|-----|
-| Monthly Alarm Limit | 15 | Unlimited |
+| Weekly Alarm Limit | 3 | Unlimited |
 | Voice Personalities | 1 (Energetic) | All 4 |
 | Advanced Analytics | ❌ | ✅ |
 | Social Sharing | ❌ | ✅ |
@@ -52,12 +52,12 @@ Type: Auto-renewable subscription
 Duration: 1 week
 Trial: 3 days
 
-Product ID: startsmart_pro_monthly  
+Product ID: startsmart_pro_monthly_  
 Type: Auto-renewable subscription
 Duration: 1 month
 Trial: 7 days
 
-Product ID: startsmart_pro_annual
+Product ID: startsmart_pro_yearly_
 Type: Auto-renewable subscription
 Duration: 1 year
 Trial: 7 days
@@ -94,23 +94,23 @@ Create three auto-renewable subscriptions:
 - **Product ID**: `startsmart_pro_weekly`
 - **Reference Name**: StartSmart Pro Weekly
 - **Duration**: 1 Week
-- **Price**: $2.99 (Tier 3)
+- **Price**: $3.99 (Tier 6)
 - **Free Trial**: 3 Days
 - **Subscription Group**: StartSmart Pro
 
 #### Monthly Subscription
-- **Product ID**: `startsmart_pro_monthly`
+- **Product ID**: `startsmart_pro_monthly_`
 - **Reference Name**: StartSmart Pro Monthly
 - **Duration**: 1 Month
-- **Price**: $9.99 (Tier 10)
+- **Price**: $6.99 (Tier 8)
 - **Free Trial**: 7 Days
 - **Subscription Group**: StartSmart Pro
 
 #### Annual Subscription
-- **Product ID**: `startsmart_pro_annual`
+- **Product ID**: `startsmart_pro_yearly_`
 - **Reference Name**: StartSmart Pro Annual
 - **Duration**: 1 Year
-- **Price**: $79.99 (Tier 50)
+- **Price**: $39.99 (Tier 30)
 - **Free Trial**: 7 Days
 - **Subscription Group**: StartSmart Pro
 
@@ -136,8 +136,8 @@ The subscription products are defined in `StartSmart/Models/Subscription.swift`:
 
 ```swift
 static let weeklyProductId = "startsmart_pro_weekly"
-static let monthlyProductId = "startsmart_pro_monthly"
-static let annualProductId = "startsmart_pro_annual"
+static let monthlyProductId = "startsmart_pro_monthly_"
+static let annualProductId = "startsmart_pro_yearly_"
 ```
 
 ### Subscription Features
@@ -248,7 +248,7 @@ let canAccessAnalytics = subscriptionManager.canAccessFeature(.advancedAnalytics
 
 ### 1. Alarm Limits
 
-Free users are limited to 15 alarms per month:
+Free users are limited to 3 alarms per week:
 
 ```swift
 func canCreateAlarm() -> Bool {

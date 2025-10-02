@@ -13,25 +13,38 @@ import AVFoundation
 struct VoiceSelectionView: View {
     @ObservedObject var onboardingState: OnboardingState
     @ObservedObject var onboardingViewModel: OnboardingViewModel
+    let onVoiceSelected: ((VoicePersona) -> Void)?
     @State private var animateElements = false
     @State private var showVoices = false
     
+    init(onboardingState: OnboardingState, onboardingViewModel: OnboardingViewModel, onVoiceSelected: ((VoicePersona) -> Void)? = nil) {
+        self.onboardingState = onboardingState
+        self.onboardingViewModel = onboardingViewModel
+        self.onVoiceSelected = onVoiceSelected
+    }
+    
     var body: some View {
-        VStack(spacing: 32) {
-            // Header section
-            headerSection
-                .opacity(animateElements ? 1 : 0)
-                .offset(y: animateElements ? 0 : -20)
-            
-            // Voice selection list
-            voiceSelectionList
-                .opacity(showVoices ? 1 : 0)
-                .offset(y: showVoices ? 0 : 30)
-            
-            Spacer()
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 24) { // Reduced spacing from 32 to 24
+                    // Header section
+                    headerSection
+                        .opacity(animateElements ? 1 : 0)
+                        .offset(y: animateElements ? 0 : -20)
+                    
+                    // Voice selection list
+                    voiceSelectionList
+                        .opacity(showVoices ? 1 : 0)
+                        .offset(y: showVoices ? 0 : 30)
+                    
+                    Spacer(minLength: 20) // Reduced to minimize dead space
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 20) // Reduced bottom padding to minimize dead space
+                .frame(minHeight: geometry.size.height) // Ensure content takes at least full screen height
+            }
+            .scrollContentBackground(.hidden) // Hide default background for better bounce effect
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 40)
         .onAppear {
             startAnimations()
         }
@@ -40,32 +53,34 @@ struct VoiceSelectionView: View {
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) { // Standardized spacing
             // Voice icon
             ZStack {
                 Circle()
                     .fill(Color.white.opacity(0.2))
-                    .frame(width: 60, height: 60)
+                    .frame(width: 50, height: 50) // Standardized size
                 
                 Image(systemName: "person.wave.2.fill")
-                    .font(.system(size: 28, weight: .medium))
+                    .font(.system(size: 24, weight: .medium)) // Standardized size
                     .foregroundColor(.white)
             }
             
             // Main question
             Text("Choose your morning guide")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .font(.system(size: 28, weight: .bold, design: .rounded)) // Standardized size
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                .tracking(-1)
+                .tracking(-1) // Standardized tracking
             
             // Subtitle
             Text("Each voice has its own personality. Tap to hear a preview.")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white.opacity(0.85))
+                .font(.system(size: 14, weight: .medium)) // Standardized size
+                .foregroundColor(.white.opacity(0.85)) // Standardized opacity
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 16)
+                .lineSpacing(2) // Standardized line spacing
+                .padding(.horizontal, 10) // Standardized padding
         }
+        .padding(.top, 10) // Standardized top padding
     }
     
     // MARK: - Voice Selection List
@@ -107,11 +122,12 @@ struct VoiceSelectionView: View {
     // MARK: - Voice Handlers
     
     private func handleVoiceSelection(_ voice: VoicePersona) {
-        // Provide haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        print("🎯 handleVoiceSelection called with: \(voice.name)")
         
-        // Select the voice (this will auto-advance)
+        // Call the callback if provided
+        onVoiceSelected?(voice)
+        
+        // Also update the onboarding state for backward compatibility
         onboardingState.selectVoice(voice)
     }
     
@@ -137,6 +153,8 @@ struct VoicePersonaCard: View {
     @State private var isPressed = false
     @State private var showContent = false
     @State private var playButtonScale: CGFloat = 1.0
+    @State private var isThisCardPlaying = false
+    @State private var synthesizer: AVSpeechSynthesizer?
     
     var body: some View {
         HStack(spacing: 16) {
@@ -162,16 +180,24 @@ struct VoicePersonaCard: View {
                 .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isSelected)
                 
                 // Play button
-                Button(action: onPlayPreview) {
+                Button(action: {
+                    if isThisCardPlaying {
+                        // Stop playback
+                        stopAudio()
+                    } else {
+                        // Start playback
+                        playSampleAudio()
+                    }
+                }) {
                     ZStack {
                         Circle()
                             .fill(Color.white.opacity(0.9))
                             .frame(width: 32, height: 32)
                         
-                        Image(systemName: isPlaying ? "stop.fill" : "play.fill")
+                        Image(systemName: isThisCardPlaying ? "stop.fill" : "play.fill")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.primary)
-                            .offset(x: isPlaying ? 0 : 1) // Offset play icon slightly for better visual balance
+                            .offset(x: isThisCardPlaying ? 0 : 1) // Offset play icon slightly for better visual balance
                     }
                     .scaleEffect(playButtonScale)
                     .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
@@ -305,6 +331,54 @@ struct VoicePersonaCard: View {
                 showContent = true
             }
         }
+    }
+    
+    // MARK: - Audio Playback Functions
+    
+    private func playSampleAudio() {
+        // Stop any currently playing audio
+        stopAudio()
+        
+        // Use text-to-speech to play the sample text
+        let synthesizer = AVSpeechSynthesizer()
+        let utterance = AVSpeechUtterance(string: voice.sampleText)
+        
+        // Configure voice based on the persona
+        switch voice.tone {
+        case .gentle:
+            utterance.rate = 0.4
+            utterance.pitchMultiplier = 1.1
+        case .energetic:
+            utterance.rate = 0.5
+            utterance.pitchMultiplier = 1.2
+        case .toughLove:
+            utterance.rate = 0.6
+            utterance.pitchMultiplier = 0.9
+        case .storyteller:
+            utterance.rate = 0.4
+            utterance.pitchMultiplier = 1.0
+        }
+        
+        utterance.volume = 0.8
+        
+        // Start playing
+        isThisCardPlaying = true
+        synthesizer.speak(utterance)
+        
+        // Store synthesizer to prevent deallocation
+        self.synthesizer = synthesizer
+        
+        // Simulate completion after a reasonable duration
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+            self.isThisCardPlaying = false
+        }
+    }
+    
+    private func stopAudio() {
+        // Stop any currently playing audio
+        synthesizer?.stopSpeaking(at: .immediate)
+        isThisCardPlaying = false
+        synthesizer = nil
     }
     
     private var voiceColor: Color {

@@ -53,5 +53,16 @@
 	<array>
 		<string>com.startsmart.app.content-generation</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>GoogleSignIn</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.761977742726-rs1r4p4u0pqv7jp5dmmhclnr2ipj8l03</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

@@ -10,9 +10,9 @@
 - **Content Rating**: 4+ (No objectionable content)
 - **Price**: Free (with In-App Purchases)
 
-### Keywords
+### Keywords (≤100 chars recommended)
 ```
-AI alarm, motivational alarm, wake up, morning routine, productivity, voice alarm, smart alarm, personal coach, motivation, mindfulness, habits, goals, streak, social sharing, custom alarm
+alarm,smart alarm,AI alarm,motivation,morning routine,productivity,habit,goals,coach,streaks
 ```
 
 ### App Description
@@ -22,17 +22,25 @@ AI alarm, motivational alarm, wake up, morning routine, productivity, voice alar
 AI-powered motivational alarms
 ```
 
-#### App Store Description
+#### App Store Description (conversion‑focused)
 
 ```
-Transform every morning with StartSmart - the revolutionary AI-powered alarm app that creates personalized motivational speeches to help you wake up with purpose and energy.
+Start smart. Win your morning.
+
+StartSmart is an AI‑powered alarm that gives you a short, personalized message in a voice you love—so you wake up motivated and stick to better routines.
+
+🔥 WHY STARTSMART
+• Fast setup — create your first AI alarm in under a minute
+• Feels personal — content matches your goals and vibe
+• Stays consistent — streaks and gentle nudges keep you on track
+• Works anywhere — pre‑generated content plays even offline
 
 🎯 PERSONALIZED AI MOTIVATION
 • Get fresh, AI-generated motivational content every morning
 • Choose from 4 unique voice personalities: Gentle, Energetic, Tough Love, and Storyteller
 • Customize content based on your personal goals and intentions
 
-🔊 SMART WAKE-UP EXPERIENCE
+🔊 SMART WAKE‑UP EXPERIENCE
 • Voice-activated dismiss: just say "good morning" to turn off your alarm
 • Beautiful full-screen alarm interface with tone-based themes
 • Pre-generated content ensures reliability even without internet
@@ -48,7 +56,7 @@ Transform every morning with StartSmart - the revolutionary AI-powered alarm app
 • Celebrate your progress with friends
 
 ✨ PREMIUM FEATURES
-• Unlimited AI-powered alarms (Free: 15/month)
+• Unlimited AI-powered alarms (Free: 3/week)
 • Access to all 4 voice personalities
 • Advanced analytics and insights
 • Social sharing capabilities
@@ -61,15 +69,15 @@ Transform every morning with StartSmart - the revolutionary AI-powered alarm app
 
 Perfect for students, professionals, and anyone looking to start their day with intention and motivation. Whether you're working toward fitness goals, career objectives, or personal growth, StartSmart adapts to your unique journey.
 
-Download StartSmart today and transform your mornings forever!
+Try StartSmart free today and make tomorrow morning easier.
 
 ---
 
 SUBSCRIPTION INFORMATION:
-• Free: Up to 15 alarms per month with basic features
-• Pro Weekly: $2.99/week with 3-day free trial
-• Pro Monthly: $9.99/month with 7-day free trial
-• Pro Annual: $79.99/year with 7-day free trial (Save 33%)
+• Free: Up to 3 alarms per week with basic features
+• Pro Weekly: $3.99/week with 3-day free trial
+• Pro Monthly: $6.99/month with 7-day free trial
+• Pro Annual: $39.99/year with 7-day free trial (Save 52%)
 
 Subscriptions automatically renew unless canceled at least 24 hours before the end of the current period. Manage subscriptions in Settings.
 

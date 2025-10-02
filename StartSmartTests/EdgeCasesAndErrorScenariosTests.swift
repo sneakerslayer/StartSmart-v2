@@ -366,7 +366,7 @@ final class EdgeCasesAndErrorScenariosTests: XCTestCase {
         mockSubscriptionService.shouldFailPurchase = true
         
         do {
-            _ = try await mockSubscriptionService.purchaseProduct("startsmart_pro_monthly")
+            _ = try await mockSubscriptionService.purchaseProduct("startsmart_pro_monthly_")
             XCTFail("Should have failed purchase")
         } catch {
             XCTAssertTrue(error is SubscriptionError)
@@ -390,7 +390,7 @@ final class EdgeCasesAndErrorScenariosTests: XCTestCase {
         
         // Test free user limits
         XCTAssertFalse(user.canAccessPremiumFeatures)
-        XCTAssertEqual(user.subscription.monthlyAlarmLimit, 15)
+        XCTAssertEqual(user.subscription.monthlyAlarmLimit, 3)
         
         // Test subscription expiration
         user.subscription = .proMonthly

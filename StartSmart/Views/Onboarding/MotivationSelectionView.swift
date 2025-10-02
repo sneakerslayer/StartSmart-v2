@@ -11,8 +11,14 @@ import SwiftUI
 /// Interactive motivation selection step with animated cards
 struct MotivationSelectionView: View {
     @ObservedObject var onboardingState: OnboardingState
+    let onMotivationSelected: ((MotivationCategory) -> Void)?
     @State private var animateCards = false
     @State private var showInstructions = false
+    
+    init(onboardingState: OnboardingState, onMotivationSelected: ((MotivationCategory) -> Void)? = nil) {
+        self.onboardingState = onboardingState
+        self.onMotivationSelected = onMotivationSelected
+    }
     
     // Grid layout configuration
     private let columns = [
@@ -21,21 +27,29 @@ struct MotivationSelectionView: View {
     ]
     
     var body: some View {
-        VStack(spacing: 32) {
-            // Header section
-            headerSection
-                .opacity(showInstructions ? 1 : 0)
-                .offset(y: showInstructions ? 0 : -20)
-            
-            // Motivation cards grid
-            motivationCardsGrid
-                .opacity(animateCards ? 1 : 0)
-                .offset(y: animateCards ? 0 : 30)
-            
-            Spacer()
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Header section
+                    headerSection
+                        .opacity(showInstructions ? 1 : 0)
+                        .offset(y: showInstructions ? 0 : -20)
+                    
+                    // Motivation cards grid
+                    motivationCardsGrid
+                        .opacity(animateCards ? 1 : 0)
+                        .offset(y: animateCards ? 0 : 30)
+                    
+                    // Bottom spacing to ensure content doesn't get cut off
+                    Spacer()
+                        .frame(height: 20) // Reduced to minimize dead space
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 20)
+                .frame(minHeight: geometry.size.height)
+            }
+            .scrollContentBackground(.hidden) // Hide default background for better bounce effect
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 40)
         .onAppear {
             startAnimations()
         }
@@ -44,33 +58,34 @@ struct MotivationSelectionView: View {
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             // Question icon
             ZStack {
                 Circle()
                     .fill(Color.white.opacity(0.2))
-                    .frame(width: 60, height: 60)
+                    .frame(width: 50, height: 50)
                 
                 Image(systemName: "questionmark.bubble.fill")
-                    .font(.system(size: 28, weight: .medium))
+                    .font(.system(size: 24, weight: .medium))
                     .foregroundColor(.white)
             }
             
             // Main question
             Text("What drives you right now?")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .tracking(-1)
             
             // Subtitle
             Text("Choose what motivates you most to help us create your perfect wake-up message")
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.85))
                 .multilineTextAlignment(.center)
-                .lineSpacing(4)
+                .lineSpacing(2)
                 .padding(.horizontal, 16)
         }
+        .padding(.top, -10)
     }
     
     // MARK: - Motivation Cards Grid
@@ -110,11 +125,12 @@ struct MotivationSelectionView: View {
     // MARK: - Selection Handler
     
     private func handleMotivationSelection(_ motivation: MotivationCategory) {
-        // Provide haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        print("🎯 handleMotivationSelection called with: \(motivation.rawValue)")
         
-        // Select the motivation (this will auto-advance)
+        // Call the callback if provided
+        onMotivationSelected?(motivation)
+        
+        // Also update the onboarding state for backward compatibility
         onboardingState.selectMotivation(motivation)
     }
 }
@@ -162,6 +178,8 @@ struct MotivationCard: View {
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
+                        .minimumScaleFactor(0.8)
+                        .fixedSize(horizontal: false, vertical: true)
                     
                     Text(motivation.description)
                         .font(.system(size: 12, weight: .regular))
@@ -176,7 +194,7 @@ struct MotivationCard: View {
             }
             .padding(20)
             .frame(maxWidth: .infinity)
-            .frame(height: 160)
+            .frame(height: 180)
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(
