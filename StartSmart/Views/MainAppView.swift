@@ -30,9 +30,11 @@ struct MainAppView: View {
     @State private var showingAlarmDismissalSheet = false
     @State private var triggeredAlarmId: String?
     
-    // Initialize AlarmViewModel with proper dependencies from container
+    // Create AlarmViewModel lazily - it will use the repository from DependencyContainer once initialized
     @StateObject private var alarmViewModel: AlarmViewModel = {
-        let repository: AlarmRepositoryProtocol = DependencyContainer.shared.resolve()
+        // Create with a repository that has NotificationService
+        let notificationService = NotificationService()
+        let repository = AlarmRepository(notificationService: notificationService)
         return AlarmViewModel(alarmRepository: repository)
     }()
 
@@ -77,10 +79,35 @@ struct MainAppView: View {
                 handleAlarmTriggered(notification)
             }
             .sheet(isPresented: $showingAlarmDismissalSheet) {
-                if let alarmId = triggeredAlarmId, 
-                   let alarm = alarmViewModel.alarms.first(where: { $0.id.uuidString == alarmId }) {
-                    AlarmDismissalView(alarm: alarm) {
-                        showingAlarmDismissalSheet = false
+                if let alarmId = triggeredAlarmId {
+                    if let alarm = alarmViewModel.alarms.first(where: { $0.id.uuidString == alarmId }) {
+                        AlarmDismissalView(alarm: alarm) {
+                            showingAlarmDismissalSheet = false
+                        }
+                    } else {
+                        // Fallback if alarm not found
+                        VStack(spacing: 20) {
+                            Image(systemName: "alarm.fill")
+                                .font(.system(size: 60))
+                                .foregroundColor(.blue)
+                            
+                            Text("Alarm Triggered!")
+                                .font(.title.bold())
+                            
+                            Text("Could not find alarm details")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                            Button("Dismiss") {
+                                showingAlarmDismissalSheet = false
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .padding()
+                        .onAppear {
+                            logger.error("❌ Could not find alarm with ID: \(alarmId)")
+                            logger.info("Available alarms: \(alarmViewModel.alarms.map { $0.id.uuidString })")
+                        }
                     }
                 }
             }
@@ -115,15 +142,39 @@ struct MainAppView: View {
     private func handleAlarmDismissed(_ notification: Notification) {
         guard let alarmId = notification.userInfo?["alarmId"] as? String else { return }
         logger.info("🔔 Alarm dismissed: \(alarmId)")
-        triggeredAlarmId = alarmId
-        showingAlarmDismissalSheet = true
+        
+        // Ensure alarms are loaded before showing dismissal sheet
+        if alarmViewModel.alarms.isEmpty {
+            logger.info("⏳ Alarms not loaded, loading now...")
+            alarmViewModel.loadAlarms()
+            // Wait a moment for alarms to load
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.triggeredAlarmId = alarmId
+                self.showingAlarmDismissalSheet = true
+            }
+        } else {
+            triggeredAlarmId = alarmId
+            showingAlarmDismissalSheet = true
+        }
     }
     
     private func handleAlarmTriggered(_ notification: Notification) {
         guard let alarmId = notification.userInfo?["alarmId"] as? String else { return }
         logger.info("🔔 Alarm triggered: \(alarmId)")
-        triggeredAlarmId = alarmId
-        showingAlarmDismissalSheet = true
+        
+        // Ensure alarms are loaded before showing dismissal sheet
+        if alarmViewModel.alarms.isEmpty {
+            logger.info("⏳ Alarms not loaded, loading now...")
+            alarmViewModel.loadAlarms()
+            // Wait a moment for alarms to load
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.triggeredAlarmId = alarmId
+                self.showingAlarmDismissalSheet = true
+            }
+        } else {
+            triggeredAlarmId = alarmId
+            showingAlarmDismissalSheet = true
+        }
     }
 }
 
