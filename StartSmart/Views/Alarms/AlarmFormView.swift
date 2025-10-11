@@ -1,21 +1,29 @@
 import SwiftUI
 
-// MARK: - Alarm Form View
+// MARK: - Alarm Form View with Step-by-Step Restoration
 struct AlarmFormView: View {
-    @StateObject private var formViewModel: AlarmFormViewModel
-    @StateObject private var subscriptionManager = DependencyContainer.shared.resolve() as SubscriptionManager
-    @Environment(\.dismiss) private var dismiss
-    @State private var showPaywall = false
+    @State private var formViewModel: AlarmFormViewModel? = nil
+    @State private var tomorrowsMission: String = ""
+    @State private var selectedVoice: String = "Motivational Mike"
+    @State private var toneStyle: Double = 0.5 // 0.0 = Gentle, 1.0 = Tough Love
+    @State private var showTimePicker = false
+    @State private var generatedScript: String = ""
+    @State private var generatedAudioURL: URL? = nil
+    @State private var isPlayingAudio = false
+    @State private var audioPlaybackService: AudioPlaybackService? = nil
     
+    // Traditional alarm sound selection
+    @State private var selectedTraditionalSound: TraditionalAlarmSound = .classic
+    @State private var useTraditionalSound: Bool = true
+    @State private var useAIScript: Bool = true
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var appState: AppState
     let onSave: (Alarm) -> Void
+    private let editingAlarm: Alarm?
     
     // MARK: - Initialization
     init(alarm: Alarm? = nil, onSave: @escaping (Alarm) -> Void) {
-        if let alarm = alarm {
-            self._formViewModel = StateObject(wrappedValue: AlarmFormViewModel(alarm: alarm))
-        } else {
-            self._formViewModel = StateObject(wrappedValue: AlarmFormViewModel())
-        }
+        self.editingAlarm = alarm
         self.onSave = onSave
     }
     
@@ -23,344 +31,845 @@ struct AlarmFormView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Subscription Status Banner
-                    if !subscriptionManager.currentSubscriptionStatus.isPremium {
-                        AlarmCountBadge()
-                    }
-                    
-                    // Time Picker Section
-                    timePickerSection
-                    
-                    // Label Section
-                    labelSection
-                    
-                    // Repeat Days Section
-                    repeatDaysSection
-                    
-                    // Tone Selection Section
-                    VoiceSelectionGate(
-                        selectedVoice: formViewModel.tone,
-                        onVoiceChange: { tone in
-                            formViewModel.tone = tone
+                    if formViewModel != nil {
+                        headerSection
+                        missionSection
+                        alarmSettingsSection
+
+                        generateScriptButton
+                        
+
+                        scriptPreviewSection
+                        
+                        if !generatedScript.isEmpty {
+                            createAlarmButton
                         }
-                    )
-                    
-                    // Snooze Settings Section
-                    snoozeSettingsSection
+                        
+                    } else {
+                        loadingSection
+                    }
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle(formViewModel.isEditing ? "Edit Alarm" : "New Alarm")
+            .background(Color(.systemBackground))
+            .navigationTitle("New Alarm")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
-                        dismiss()
+                        appState.selectedTab = 0
                     }
                 }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveAlarm()
+            }
+            .onAppear {
+                // Lazy initialization of AlarmFormViewModel
+                if formViewModel == nil {
+                    if let alarm = editingAlarm {
+                        formViewModel = AlarmFormViewModel(alarm: alarm)
+                    } else {
+                        formViewModel = AlarmFormViewModel()
                     }
-                    .fontWeight(.semibold)
-                    .disabled(!formViewModel.validate())
+                    print("AlarmFormViewModel initialized successfully")
                 }
             }
-        }
-        .presentPaywall(
-            isPresented: $showPaywall,
-            configuration: subscriptionManager.getOptimalPaywallConfiguration(
-                for: .unlimitedAlarms,
-                source: "alarm_form"
-            ),
-            source: "alarm_form"
-        )
-        .alert("Validation Error", isPresented: .constant(formViewModel.errorMessage != nil)) {
-            Button("OK") {
-                formViewModel.errorMessage = nil
-            }
+            .alert(
+                "Generation Error",
+                isPresented: Binding(
+                    get: { generationErrorMessage != nil },
+                    set: { _ in generationErrorMessage = nil }
+                )
+            ) {
+                Button("OK") { generationErrorMessage = nil }
+                if !generatedScript.isEmpty && generatedAudioURL == nil {
+                    Button("Retry Audio") { 
+                        generationErrorMessage = nil
+                        Task {
+                            await retryAudioGeneration()
+                        }
+                    }
+                }
         } message: {
-            if let errorMessage = formViewModel.errorMessage {
-                Text(errorMessage)
+                Text(generationErrorMessage ?? "")
+            }
+            .sheet(isPresented: $showTimePicker) {
+                timePickerSheet
+            }
+            .onAppear {
+                // Services will be resolved lazily when needed
+                print("DEBUG: AlarmFormView appeared, services will be resolved on demand")
             }
         }
     }
     
-    // MARK: - Time Picker Section
-    private var timePickerSection: some View {
-        VStack(spacing: 16) {
-            SectionHeader(title: "Time", icon: "clock.fill")
-            
-            VStack(spacing: 20) {
-                // Large Time Display
-                Text(formViewModel.timeDisplayString)
-                    .font(.system(size: 48, weight: .light, design: .rounded))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.blue, .purple],
-                            startPoint: .leading,
-                            endPoint: .trailing
+    // MARK: - View Components
+    
+    private var generateScriptButton: some View {
+        Button {
+            Task { await generateScriptAndAudio() }
+        } label: {
+            HStack(spacing: 12) {
+                if isGenerating {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .tint(.white)
+                } else {
+                    Image(systemName: "brain.head.profile")
+                        .font(.system(size: 18, weight: .semibold))
+                }
+                Text(isGenerating ? "Generating..." : "Generate AI Script")
+                    .font(.system(size: 18, weight: .semibold))
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color.blue)
+            .cornerRadius(16)
+            .shadow(color: .blue.opacity(0.3), radius: 6, x: 0, y: 3)
+        }
+        .disabled(isGenerating)
+        .scaleEffect(isGenerating ? 0.98 : 1.0)
+        .animation(.easeInOut(duration: 0.1), value: isGenerating)
+        .padding(.horizontal, 20)
+    }
+    
+    private var scriptPreviewSection: some View {
+        Group {
+            if !generatedScript.isEmpty {
+                VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Generated Script Preview")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.primary)
+                        
+                        Text("Your personalized morning motivation")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    Text(generatedScript)
+                        .font(.system(size: 16))
+                        .foregroundColor(.primary)
+                        .padding(20)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color(.systemGray6))
                         )
-                    )
-                    .padding(.vertical, 8)
-                
-                // Time Picker
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color(.systemGray4), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 20)
+                    
+                    HStack(spacing: 16) {
+                        Button {
+                            previewVoice()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: isPlayingAudio ? "stop.circle.fill" : "play.circle.fill")
+                                    .font(.system(size: 18, weight: .semibold))
+                                Text("Preview Voice")
+                                    .font(.system(size: 16, weight: .semibold))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 20)
+                            .background(Color.blue)
+                            .cornerRadius(12)
+                            .shadow(color: .blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                        }
+                        .disabled(generatedAudioURL == nil)
+                        .opacity(generatedAudioURL == nil ? 0.6 : 1.0)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                }
+            }
+        }
+    }
+    
+    private var createAlarmButton: some View {
+        VStack(spacing: 12) {
+            Button {
+                saveAlarm()
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "alarm.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                    
+                    Text("Create Smart Alarm")
+                        .font(.system(size: 18, weight: .semibold))
+                    
+                    Spacer()
+                    
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .padding(.vertical, 16)
+                .padding(.horizontal, 24)
+                .background(Color.blue)
+                .cornerRadius(16)
+                .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
+            }
+            .disabled(false)
+            .scaleEffect(isGenerating ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: isGenerating)
+            
+            Text("Your personalized morning experience awaits")
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 20)
+    }
+    
+    private var loadingSection: some View {
+        VStack {
+            ProgressView()
+            Text("Loading...")
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private var timePickerSheet: some View {
+        NavigationView {
+            VStack {
                 DatePicker(
                     "Alarm Time",
-                    selection: $formViewModel.time,
+                    selection: Binding(
+                        get: { formViewModel?.time ?? Date() },
+                        set: { formViewModel?.time = $0 }
+                    ),
                     displayedComponents: .hourAndMinute
                 )
                 .datePickerStyle(.wheel)
                 .labelsHidden()
-            }
-            .padding(.vertical, 20)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .blue.opacity(0.1), radius: 4, x: 0, y: 2)
-            )
-        }
-    }
-    
-    // MARK: - Label Section
-    private var labelSection: some View {
-        VStack(spacing: 16) {
-            SectionHeader(title: "Label", icon: "tag.fill")
-            
-            TextField("Enter alarm label", text: $formViewModel.label)
-                .textFieldStyle(CustomTextFieldStyle())
-        }
-    }
-    
-    // MARK: - Repeat Days Section
-    private var repeatDaysSection: some View {
-        VStack(spacing: 16) {
-            SectionHeader(title: "Repeat", icon: "repeat")
-            
-            VStack(spacing: 12) {
-                Text(formViewModel.repeatDaysDisplayString)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
                 
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 12) {
-                    ForEach(WeekDay.allCases, id: \.self) { day in
-                        WeekDayButton(
-                            day: day,
-                            isSelected: formViewModel.repeatDays.contains(day)
-                        ) {
-                            formViewModel.toggleRepeatDay(day)
-                        }
-                    }
-                }
+                Spacer()
             }
-            .padding(.vertical, 20)
-            .padding(.horizontal, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .gray.opacity(0.1), radius: 4, x: 0, y: 2)
+            .navigationTitle("Set Alarm Time")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(
+                leading: Button("Cancel") {
+                    showTimePicker = false
+                },
+                trailing: Button("Done") {
+                    showTimePicker = false
+                }
             )
         }
-    }
-    
-    // MARK: - Tone Selection Section
-    private var toneSelectionSection: some View {
-        VStack(spacing: 16) {
-            SectionHeader(title: "Tone", icon: "speaker.wave.2.fill")
-            
-            VStack(spacing: 12) {
-                ForEach(AlarmTone.allCases, id: \.self) { tone in
-                    ToneSelectionRow(
-                        tone: tone,
-                        isSelected: formViewModel.tone == tone
-                    ) {
-                        formViewModel.tone = tone
-                    }
-                }
-            }
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .gray.opacity(0.1), radius: 4, x: 0, y: 2)
-            )
-        }
-    }
-    
-    // MARK: - Snooze Settings Section
-    private var snoozeSettingsSection: some View {
-        VStack(spacing: 16) {
-            SectionHeader(title: "Snooze", icon: "moon.zzz.fill")
-            
-            VStack(spacing: 20) {
-                // Snooze Enable Toggle
-                HStack {
-                    Text("Enable Snooze")
-                        .font(.headline)
-                    
-                    Spacer()
-                    
-                    Toggle("", isOn: $formViewModel.snoozeEnabled)
-                        .toggleStyle(CustomToggleStyle(isEnabled: formViewModel.snoozeEnabled))
-                }
-                
-                if formViewModel.snoozeEnabled {
-                    VStack(spacing: 16) {
-                        // Snooze Duration
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Duration: \(formViewModel.snoozeDurationDisplayString)")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            
-                            Slider(
-                                value: Binding(
-                                    get: { Double(formViewModel.snoozeDuration / 60) },
-                                    set: { formViewModel.snoozeDuration = TimeInterval($0 * 60) }
-                                ),
-                                in: 1...30,
-                                step: 1
-                            )
-                            .tint(LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing))
-                        }
-                        
-                        // Max Snooze Count
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Maximum snoozes: \(formViewModel.maxSnoozeCount)")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            
-                            Slider(
-                                value: Binding(
-                                    get: { Double(formViewModel.maxSnoozeCount) },
-                                    set: { formViewModel.maxSnoozeCount = Int($0) }
-                                ),
-                                in: 1...10,
-                                step: 1
-                            )
-                            .tint(LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing))
-                        }
-                    }
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-            }
-            .padding(.vertical, 20)
-            .padding(.horizontal, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .gray.opacity(0.1), radius: 4, x: 0, y: 2)
-            )
-            .animation(.easeInOut, value: formViewModel.snoozeEnabled)
-        }
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
     }
     
     // MARK: - Helper Methods
     private func saveAlarm() {
-        // Check if user can create more alarms
-        if !formViewModel.isEditing && !subscriptionManager.canCreateAlarm() {
-            showPaywall = true
+        guard let formViewModel = formViewModel else { return }
+        
+        if formViewModel.validate() {
+            var alarm = formViewModel.createAlarm()
+            
+            // Set traditional sound properties
+            alarm.traditionalSound = selectedTraditionalSound
+            alarm.useTraditionalSound = useTraditionalSound
+            alarm.useAIScript = useAIScript
+            
+            // Attach generated content if present
+            if !generatedScript.isEmpty, let fileURL = lastGeneratedAudioURL, let voice = lastVoiceIdUsed {
+                let content = AlarmGeneratedContent(
+                    textContent: generatedScript,
+                    audioFilePath: fileURL.path,
+                    voiceId: voice,
+                    generatedAt: Date(),
+                    duration: nil,
+                    intentId: nil
+                )
+                alarm.setGeneratedContent(content)
+            }
+            // Persist alarm directly via StorageManager to ensure list updates
+            Task { @MainActor in
+                do {
+                    let storage = StorageManager()
+                    var all = try storage.loadAlarms()
+                    all.append(alarm)
+                    try storage.saveAlarms(all)
+                } catch { print("Storage save failed: \(error)") }
+                onSave(alarm)
+                appState.selectedTab = 2
+            }
+        }
+    }
+
+    // MARK: - AI/Audio Integration
+    @State private var isGenerating = false
+    @State private var lastGeneratedAudioURL: URL?
+    @State private var lastVoiceIdUsed: String?
+    @State private var generationErrorMessage: String?
+    
+    // Dependencies
+    @State private var elevenLabsService: ElevenLabsServiceProtocol?
+    @State private var grok4Service: Grok4ServiceProtocol?
+
+    private func personaForSelectedVoice() -> PersonaManager.Persona {
+        switch selectedVoice {
+        case "Coach Marcus": return .motivationalMike
+        case "Wise Sarah": return .mrsWalker
+        case "Gentle Grace": return .calmKyle
+        case "Motivator Mike": return .motivationalMike
+        default: return .motivationalMike
+        }
+    }
+
+    private func generateScriptAndAudio() async {
+        guard !isGenerating else { return }
+        guard !tomorrowsMission.isEmpty else {
+            await MainActor.run {
+                generationErrorMessage = "Please enter your mission for tomorrow."
+            }
             return
         }
         
-        if formViewModel.validate() {
-            let alarm = formViewModel.createAlarm()
+        isGenerating = true
+        defer {
+            isGenerating = false
+        }
+        
+        do {
+            // Resolve services lazily without blocking
+            print("DEBUG: Resolving Grok4Service...")
+            let grokService: Grok4ServiceProtocol = try await DependencyContainer.shared.resolveAsync()
+            print("DEBUG: Grok4Service resolved successfully")
             
-            // Increment alarm count for new alarms
-            if !formViewModel.isEditing {
-                subscriptionManager.incrementAlarmCount()
+            print("DEBUG: Resolving ElevenLabsService...")
+            let elevenLabsService: ElevenLabsServiceProtocol = try await DependencyContainer.shared.resolveAsync()
+            print("DEBUG: ElevenLabsService resolved successfully")
+            print("DEBUG: ElevenLabsService type: \(type(of: elevenLabsService))")
+            
+            // Convert tone slider to tone string
+            let toneString: String = {
+                switch PersonaManager.ToneLevel.fromSliderValue(toneStyle) {
+                case .gentle: return "gentle"
+                case .balanced: return "energetic"
+                case .toughLove: return "tough_love"
+                }
+            }()
+            
+            // Generate script using Grok4
+            let script = try await grokService.generateMotivationalScript(
+                userIntent: tomorrowsMission,
+                tone: toneString,
+                context: ["timeOfDay": "morning", "dayOfWeek": ""]
+            )
+            
+            await MainActor.run { 
+                self.generatedScript = script
             }
             
-            onSave(alarm)
-        }
-    }
-}
-
-// MARK: - Section Header
-struct SectionHeader: View {
-    let title: String
-    let icon: String
-    
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.blue, .purple],
-                        startPoint: .leading,
-                        endPoint: .trailing
+            // Get voice ID for selected voice
+            let voiceId = getVoiceIdForSelectedVoice()
+            print("DEBUG: Using voice ID: \(voiceId)")
+            
+            // Try to generate audio with multiple attempts and fallback
+            var audioGenerated = false
+            var lastError: Error?
+            
+            // Try up to 3 times with progressive backoff (reduced from 5)
+            for attempt in 1...3 {
+                do {
+                    print("DEBUG: Attempting audio generation (attempt \(attempt)) with voice ID: \(voiceId)")
+                    print("DEBUG: Script text length: \(script.count) characters")
+                    print("DEBUG: ElevenLabsService instance: \(elevenLabsService)")
+                    
+                    let audioData = try await elevenLabsService.generateSpeech(
+                        text: script,
+                        voiceId: voiceId
                     )
-                )
-                .font(.title3)
+                    
+                    print("DEBUG: Audio generation successful - data size: \(audioData.count) bytes")
+                    
+                    
+                    // Save audio to documents
+                    let fileURL = try await writeAudioData(audioData)
+                    
+                    await MainActor.run {
+                        self.lastGeneratedAudioURL = fileURL
+                        self.generatedAudioURL = fileURL
+                        self.lastVoiceIdUsed = voiceId
+                    }
+                    
+                    audioGenerated = true
+                    break // Success, exit retry loop
+                    
+                } catch {
+                    lastError = error
+                    print("DEBUG: Audio generation attempt \(attempt) failed: \(error)")
+                    
+                    // Check if this is a retryable error
+                    let shouldRetry = shouldRetryAudioError(error)
+                    if !shouldRetry {
+                        print("DEBUG: Error is not retryable, stopping attempts")
+                        break
+                    }
+                    
+                    // If this isn't the last attempt, wait with progressive backoff
+                    if attempt < 3 {
+                        let delay = min(pow(2.0, Double(attempt - 1)) * 1.0, 8.0) // Max 8 seconds
+                        print("DEBUG: Waiting \(delay) seconds before retry...")
+                        try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                    }
+                }
+            }
             
-            Text(title)
-                .font(.headline)
-                .fontWeight(.semibold)
+            // If all attempts failed, automatically fall back to traditional sound
+            if !audioGenerated {
+                print("DEBUG: All audio generation attempts failed - falling back to traditional sound")
+                await MainActor.run {
+                    // Automatically disable AI script and enable traditional sound
+                    useAIScript = false
+                    useTraditionalSound = true
+                    
+                    if let error = lastError {
+                        let nsError = error as NSError
+                        switch nsError.code {
+                        case -1005: // Network connection lost
+                            generationErrorMessage = "Script generated successfully! Audio generation failed due to network issues. Switched to traditional alarm sound."
+                        case -1009: // No internet connection
+                            generationErrorMessage = "Script generated successfully! Audio generation failed - no internet connection. Switched to traditional alarm sound."
+                        case -1017: // Cannot parse response
+                            generationErrorMessage = "Script generated successfully! ElevenLabs API is currently experiencing issues. Switched to traditional alarm sound."
+                        default:
+                            generationErrorMessage = "Script generated successfully! Audio generation failed. Switched to traditional alarm sound."
+                        }
+                    } else {
+                        generationErrorMessage = "Script generated successfully! Audio generation failed. Switched to traditional alarm sound."
+                    }
+                }
+            }
             
-            Spacer()
+        } catch {
+            print("DEBUG: Error in generateScriptAndAudio (script generation failed): \(error)")
+            await MainActor.run { 
+                generationErrorMessage = "Failed to generate script: \(error.localizedDescription)"
+            }
         }
     }
-}
+    private func getVoiceIdForSelectedVoice() -> String {
+        // Map UI voice names to ElevenLabs voice IDs - using the specific voice IDs provided by the user
+        switch selectedVoice {
+        case "Drill Sergeant Drew":
+            return "DGzg6RaUqxGRTHSBjfgF"
+        case "Girl Bestie":
+            return "uYXf8XasLslADfZ2MB4u"
+        case "Mrs. Walker - Warm & Caring Southern Mom":
+            return "DLsHlh26Ugcm6ELvS0qi"
+        case "Motivational Mike":
+            return "84Fal4DSXWfp7nJ8emqQ"
+        case "Calm Kyle":
+            return "MpZY6e8MW2zHVi4Vtxrn"
+        case "Angry Allen":
+            return "KLZOWyG48RjZkAAjuM89"
+        default:
+            return "84Fal4DSXWfp7nJ8emqQ" // Default to Motivational Mike
+        }
+    }
 
-// MARK: - Week Day Button
-struct WeekDayButton: View {
-    let day: WeekDay
-    let isSelected: Bool
-    let action: () -> Void
+    private func writeAudioData(_ data: Data) async throws -> URL {
+        let fm = FileManager.default
+        let docs = try fm.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        let dir = docs.appendingPathComponent("AlarmAudio", isDirectory: true)
+        if !fm.fileExists(atPath: dir.path) {
+            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        let filename = UUID().uuidString + ".mp3"
+        let url = dir.appendingPathComponent(filename)
+        try data.write(to: url)
+        return url
+    }
     
-    var body: some View {
-        Button(action: action) {
-            Text(day.shortName)
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(isSelected ? .white : .primary)
-                .frame(width: 40, height: 40)
+    // Helper function to add timeout to async operations
+    
+    // MARK: - ElevenLabs API Test Function
+    
+    // MARK: - Error Handling Helper
+    
+    private func shouldRetryAudioError(_ error: Error) -> Bool {
+        // Check for specific network errors that should be retried
+        if let nsError = error as NSError? {
+            switch nsError.code {
+            case -1001, -1005, -1009, -1017, -1018, -1019, -1020, -1021, -1022, -1023, -1024, -1025, -1026, -1027, -1028, -1029, -1030, -1031, -1032, -1033, -1034, -1035, -1036, -1037, -1038, -1039, -1040, -1041, -1042, -1043, -1044, -1045, -1046, -1047, -1048, -1049, -1050:
+                return true
+            default:
+                break
+            }
+        }
+        
+        // Check for ElevenLabs specific errors that should be retried
+        let errorString = error.localizedDescription.lowercased()
+        if !errorString.isEmpty {
+            if errorString.contains("cannot parse response") ||
+               errorString.contains("network connection") ||
+               errorString.contains("timeout") ||
+               errorString.contains("connection lost") ||
+               errorString.contains("server error") {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    // MARK: - Audio Retry Function
+    private func retryAudioGeneration() async {
+        guard !generatedScript.isEmpty else {
+            await MainActor.run {
+                generationErrorMessage = "No script available to generate audio for."
+            }
+            return
+        }
+        
+        print("DEBUG: Retrying audio generation for existing script...")
+        
+        // Get voice ID for selected voice
+        let voiceId = getVoiceIdForSelectedVoice()
+        print("DEBUG: Using voice ID: \(voiceId)")
+        
+        // Try to generate audio with multiple attempts
+        var audioGenerated = false
+        var lastError: Error?
+        
+            // Try up to 5 times with progressive backoff
+            for attempt in 1...5 {
+                do {
+                    
+                    let elevenLabsService: ElevenLabsServiceProtocol = DependencyContainer.shared.resolve()
+                    let audioData = try await elevenLabsService.generateSpeech(
+                        text: generatedScript,
+                        voiceId: voiceId
+                    )
+                    
+                    
+                    // Save audio to documents
+                    let fileURL = try await writeAudioData(audioData)
+                    
+                    await MainActor.run {
+                        self.lastGeneratedAudioURL = fileURL
+                        self.generatedAudioURL = fileURL
+                        self.lastVoiceIdUsed = voiceId
+                    }
+                    
+                    audioGenerated = true
+                    break // Success, exit retry loop
+                    
+                } catch {
+                    lastError = error
+                    print("DEBUG: Audio retry attempt \(attempt) failed: \(error)")
+                    
+                    // Check if this is a retryable error
+                    let shouldRetry = shouldRetryAudioError(error)
+                    if !shouldRetry {
+                        print("DEBUG: Error is not retryable, stopping attempts")
+                        break
+                    }
+                    
+                    // If this isn't the last attempt, wait with progressive backoff
+                    if attempt < 5 {
+                        let delay = min(pow(2.0, Double(attempt - 1)) * 1.0, 8.0) // Max 8 seconds
+                        print("DEBUG: Waiting \(delay) seconds before retry...")
+                        do {
+                            try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                        } catch {
+                            // Ignore sleep errors
+                        }
+                    }
+                }
+            }
+        
+        // If all attempts failed, show a helpful message
+        if !audioGenerated {
+            print("DEBUG: All audio retry attempts failed")
+            await MainActor.run {
+                if let error = lastError {
+                    let nsError = error as NSError
+                    switch nsError.code {
+                    case -1005: // Network connection lost
+                        generationErrorMessage = "Audio generation failed due to network issues. Please check your internet connection and try again."
+                    case -1009: // No internet connection
+                        generationErrorMessage = "Audio generation failed - no internet connection. Please check your network settings and try again."
+                    case -1017: // Cannot parse response
+                        generationErrorMessage = "ElevenLabs API is currently experiencing issues. Please try again later."
+                    default:
+                        generationErrorMessage = "Audio generation failed: \(error.localizedDescription). Please try again later."
+                    }
+                } else {
+                    generationErrorMessage = "Audio generation failed after multiple attempts. Please try again later."
+                }
+            }
+        }
+    }
+    
+    // MARK: - Audio Playback Functions
+    private func previewVoice() {
+        print("DEBUG: previewVoice() called")
+        print("DEBUG: generatedAudioURL = \(generatedAudioURL?.path ?? "nil")")
+        
+        guard let audioURL = generatedAudioURL else { 
+            print("DEBUG: No audio URL available for preview")
+            Task { @MainActor in
+                generationErrorMessage = "No audio available to preview. Please generate audio first."
+            }
+            return 
+        }
+        
+        print("DEBUG: Audio URL exists: \(audioURL.path)")
+        
+        // Check if file exists
+        let fileManager = FileManager.default
+        if !fileManager.fileExists(atPath: audioURL.path) {
+            print("DEBUG: Audio file does not exist at path: \(audioURL.path)")
+            Task { @MainActor in
+                generationErrorMessage = "Audio file not found. Please regenerate audio."
+            }
+            return
+        }
+        
+        // Check file size
+        do {
+            let attributes = try fileManager.attributesOfItem(atPath: audioURL.path)
+            let fileSize = attributes[.size] as? Int64 ?? 0
+            print("DEBUG: Audio file size: \(fileSize) bytes")
+            
+            if fileSize == 0 {
+                print("DEBUG: Audio file is empty")
+                Task { @MainActor in
+                    generationErrorMessage = "Audio file is empty. Please regenerate audio."
+                }
+                return
+            }
+        } catch {
+            print("DEBUG: Could not read audio file attributes: \(error)")
+        }
+        
+        if isPlayingAudio {
+            print("DEBUG: Stopping current playback")
+            // Stop current playback
+            audioPlaybackService?.stop()
+            audioPlaybackService = nil
+            isPlayingAudio = false
+        } else {
+            print("DEBUG: Starting audio playback")
+            // Start playback
+            audioPlaybackService = AudioPlaybackService()
+            Task {
+                do {
+                    print("DEBUG: Attempting to play audio from: \(audioURL.path)")
+                    try await audioPlaybackService?.play(from: audioURL)
+                    print("DEBUG: Audio playback started successfully")
+                    await MainActor.run {
+                        isPlayingAudio = true
+                    }
+                } catch {
+                    print("DEBUG: Error playing audio: \(error)")
+                    await MainActor.run {
+                        isPlayingAudio = false
+                        generationErrorMessage = "Audio playback failed: \(error.localizedDescription)"
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - View Components
+    
+    private var headerSection: some View {
+        EmptyView()
+    }
+    
+    private var missionSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Tomorrow's Mission")
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Text("Tell me what you want to accomplish tomorrow")
+                    .font(.system(size: 16))
+                    .foregroundColor(.secondary)
+            }
+            
+            TextEditor(text: $tomorrowsMission)
+                .frame(minHeight: 120)
+                .padding(16)
                 .background(
-                    Circle()
-                        .fill(
-                            isSelected 
-                                ? LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)
-                                : LinearGradient(colors: [Color(.systemGray5)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                        )
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(.systemGray6))
                 )
                 .overlay(
-                    Circle()
-                        .stroke(
-                            isSelected ? Color.clear : Color(.systemGray4),
-                            lineWidth: 1
-                        )
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
                 )
+                .font(.system(size: 16))
         }
-        .buttonStyle(ScaleButtonStyle())
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
     }
+    
+    private var alarmSettingsSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Alarm Settings")
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(.primary)
+                .padding(.horizontal, 20)
+            
+            // Wake-up Time Row
+            HStack {
+                Text("Wake-up Time")
+                    .font(.system(size: 17, weight: .regular))
+                
+                Spacer()
+                
+                Button(action: {
+                    withAnimation(.easeInOut) { showTimePicker.toggle() }
+                }) {
+                    Text(formViewModel?.timeDisplayString ?? "12:00 AM")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color(.systemGray6))
+                        )
+                }
+            }
+            .padding(.horizontal, 20)
+            
+            // Voice Style Section
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Voice Style")
+                    .font(.system(size: 17, weight: .regular))
+                    .padding(.horizontal, 20)
+                
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(["Drill Sergeant Drew", "Girl Bestie", "Mrs. Walker - Warm & Caring Southern Mom", "Motivational Mike", "Calm Kyle", "Angry Allen"], id: \.self) { voice in
+                            Button(action: {
+                                selectedVoice = voice
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "waveform")
+                                        .foregroundColor(selectedVoice == voice ? .white : .blue)
+                                    
+                                    Text(voice)
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(selectedVoice == voice ? .white : .primary)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(selectedVoice == voice ? Color.blue : Color(.systemGray6))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(selectedVoice == voice ? Color.blue : Color.clear, lineWidth: 2)
+                                )
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
+            }
+            
+            // Tone Style Section
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Tone Style")
+                    .font(.system(size: 17, weight: .regular))
+                    .padding(.horizontal, 20)
+                
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("Gentle & Nurturing")
+                            .font(.system(size: 13))
+                            .foregroundColor(.secondary)
+                        
+                        Spacer()
+                        
+                        Text("Tough Love & Direct")
+                            .font(.system(size: 13))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    Slider(value: $toneStyle, in: 0...1)
+                        .padding(.horizontal, 20)
+                        .tint(.blue)
+                }
+            }
+            
+            // Traditional Alarm Sound Section
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Wake-up Sound")
+                    .font(.system(size: 17, weight: .regular))
+                    .padding(.horizontal, 20)
+                
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(TraditionalAlarmSound.allCases, id: \.self) { sound in
+                            Button(action: {
+                                selectedTraditionalSound = sound
+                            }) {
+                                VStack(spacing: 4) {
+                                    Image(systemName: sound.iconName)
+                                        .font(.system(size: 20))
+                                        .foregroundColor(selectedTraditionalSound == sound ? .white : .blue)
+                                    
+                                    Text(sound.displayName)
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundColor(selectedTraditionalSound == sound ? .white : .primary)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .frame(width: 80, height: 60)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(selectedTraditionalSound == sound ? Color.blue : Color(.systemGray6))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(selectedTraditionalSound == sound ? Color.blue : Color.clear, lineWidth: 2)
+                                )
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
+                
+                // Sound Description
+                Text(selectedTraditionalSound.description)
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 20)
+            }
+        }
+        .padding(.vertical, 18)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemGray6))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color(.systemGray4), lineWidth: 1)
+        )
+        .padding(.horizontal, 20)
+    }
+    
 }
 
-// MARK: - Tone Selection Row
 
-// MARK: - Custom Text Field Style
-struct CustomTextFieldStyle: TextFieldStyle {
-    func _body(configuration: TextField<Self._Label>) -> some View {
-        configuration
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .gray.opacity(0.1), radius: 4, x: 0, y: 2)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(.systemGray4), lineWidth: 1)
-            )
-    }
-}
-
-// MARK: - Preview
 #Preview {
-    AlarmFormView { alarm in
-        print("Saved alarm: \(alarm)")
-    }
+    AlarmFormView(onSave: { _ in })
 }

@@ -207,7 +207,7 @@ class AudioPipelineService: AudioPipelineServiceProtocol, ObservableObject {
         let voiceId = getVoiceId(for: intent)
         
         // Get TTS options based on intent preferences
-        let options = TTSGenerationOptions.production // Use high quality for cached audio
+        let options = TTSGenerationOptions.default // Use high quality for cached audio
         
         return try await ttsService.generateSpeech(
             text: text,

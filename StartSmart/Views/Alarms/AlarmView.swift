@@ -2,6 +2,13 @@ import SwiftUI
 import AVFoundation
 import Combine
 
+// MARK: - Alarm Phase
+enum AlarmPhase {
+    case traditionalAlarm      // Phase 1: Traditional alarm sound
+    case aiScriptPlayback     // Phase 2: AI-generated content
+    case dismissed            // User dismissed
+}
+
 // MARK: - Alarm View
 struct AlarmView: View {
     let alarm: Alarm
@@ -17,6 +24,11 @@ struct AlarmView: View {
     @State private var waveformTimer: Timer?
     @State private var dismissalAttempts = 0
     @State private var showingVoiceInstructions = false
+    
+    // Two-phase alarm flow
+    @State private var alarmPhase: AlarmPhase = .traditionalAlarm
+    @State private var traditionalAlarmTimer: Timer?
+    @State private var traditionalAlarmPlayer: AVAudioPlayer?
     
     // Animation states
     @State private var pulseScale: CGFloat = 1.0
@@ -330,11 +342,15 @@ struct AlarmView: View {
     
     // MARK: - Private Methods
     private func setupAlarmExperience() {
-        // Start audio playback if available
-        if let audioURL = alarm.audioFileURL {
-            Task {
-                try? await audioPlaybackService.play(from: audioURL)
-            }
+        // Initialize alarm phase based on alarm settings
+        if alarm.useTraditionalSound {
+            alarmPhase = .traditionalAlarm
+            startTraditionalAlarmPhase()
+        } else if alarm.useAIScript, let audioURL = alarm.audioFileURL {
+            alarmPhase = .aiScriptPlayback
+            startAIScriptPhase(audioURL: audioURL)
+        } else {
+            alarmPhase = .dismissed
         }
         
         // Setup animations
@@ -353,11 +369,69 @@ struct AlarmView: View {
         }
     }
     
+    private func startTraditionalAlarmPhase() {
+        // Load and play the traditional alarm sound with looping
+        let fileName = alarm.traditionalSound.soundFileName.replacingOccurrences(of: ".mp3", with: "")
+        guard let soundURL = Bundle.main.url(forResource: fileName, withExtension: "mp3") else {
+            print("DEBUG: Could not find traditional alarm sound file: \(alarm.traditionalSound.soundFileName)")
+            return
+        }
+        
+        print("DEBUG: Loading traditional alarm sound: \(fileName).mp3")
+        
+        do {
+            traditionalAlarmPlayer = try AVAudioPlayer(contentsOf: soundURL)
+            traditionalAlarmPlayer?.numberOfLoops = -1 // Loop indefinitely
+            traditionalAlarmPlayer?.volume = 1.0 // Full volume for alarm
+            traditionalAlarmPlayer?.play()
+            
+            print("DEBUG: Traditional alarm playing: \(alarm.traditionalSound.displayName), loops: \(traditionalAlarmPlayer?.numberOfLoops ?? 0)")
+        } catch {
+            print("DEBUG: Error playing traditional alarm sound: \(error)")
+        }
+    }
+    
+    private func startAIScriptPhase(audioURL: URL) {
+        // Stop traditional alarm player
+        traditionalAlarmPlayer?.stop()
+        traditionalAlarmPlayer = nil
+        
+        // Stop traditional alarm timer
+        traditionalAlarmTimer?.invalidate()
+        traditionalAlarmTimer = nil
+        
+        print("DEBUG: Stopped traditional alarm, starting AI script")
+        
+        // Start AI script playback
+        Task {
+            try? await audioPlaybackService.play(from: audioURL)
+        }
+    }
+    
+    private func userInteracted() {
+        // User tapped or interacted with the alarm
+        if alarmPhase == .traditionalAlarm && alarm.useAIScript {
+            // Transition to AI script phase
+            if let audioURL = alarm.audioFileURL {
+                alarmPhase = .aiScriptPlayback
+                startAIScriptPhase(audioURL: audioURL)
+            } else {
+                alarmPhase = .dismissed
+            }
+        } else {
+            alarmPhase = .dismissed
+        }
+    }
+    
     private func cleanupAlarmExperience() {
         audioPlaybackService.stop()
         speechService.stopListening()
         waveformTimer?.invalidate()
         waveformTimer = nil
+        traditionalAlarmTimer?.invalidate()
+        traditionalAlarmTimer = nil
+        traditionalAlarmPlayer?.stop()
+        traditionalAlarmPlayer = nil
     }
     
     private func startWaveformAnimation() {
@@ -397,16 +471,19 @@ struct AlarmView: View {
     }
     
     private func handleSnooze() {
+        userInteracted()
         viewModel.snoozeAlarm(alarm.id)
         presentationMode.wrappedValue.dismiss()
     }
     
     private func handleStop() {
+        userInteracted()
         viewModel.dismissAlarm(alarm.id, method: .button)
         presentationMode.wrappedValue.dismiss()
     }
     
     private func handleSuccessfulDismiss() {
+        userInteracted()
         // Add a brief success animation/feedback
         pulseScale = 1.2
         

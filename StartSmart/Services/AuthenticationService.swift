@@ -43,15 +43,17 @@ class AuthenticationService: NSObject, @preconcurrency AuthenticationServiceProt
     
     // MARK: - Private Properties
     
-    @Injected private var firebaseService: FirebaseServiceProtocol
-    @Injected private var userViewModel: UserViewModel
+    private let firebaseService: FirebaseServiceProtocol
+    private let userViewModel: UserViewModel
     
     private var cancellables = Set<AnyCancellable>()
     private var currentNonce: String?
     
     // MARK: - Initialization
     
-    override init() {
+    init(firebaseService: FirebaseServiceProtocol, userViewModel: UserViewModel) {
+        self.firebaseService = firebaseService
+        self.userViewModel = userViewModel
         super.init()
         setupAuthenticationStateListener()
     }

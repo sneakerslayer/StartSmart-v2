@@ -40,8 +40,8 @@
 		0E41DCCD2E74F96100358D55 /* LocalStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8F2E74F96000358D55 /* LocalStorage.swift */; };
 		0E41DCCE2E74F96100358D55 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC892E74F96000358D55 /* SubscriptionManager.swift */; };
 		0E41DCD02E74F96100358D55 /* SubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8A2E74F96000358D55 /* SubscriptionService.swift */; };
-		0E41DCD12E74F96200358D55 /* SubscriptionStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8B2E74F96100358D55 /* SubscriptionStateManager.swift */; };
 		0E41DCD12E74F96100358D55 /* NotificationCategoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC832E74F96000358D55 /* NotificationCategoryService.swift */; };
+		0E41DCD12E74F96200358D55 /* SubscriptionStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8B2E74F96100358D55 /* SubscriptionStateManager.swift */; };
 		0E41DCD22E74F96100358D55 /* AuthenticationLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC9F2E74F96000358D55 /* AuthenticationLoadingView.swift */; };
 		0E41DCD32E74F96100358D55 /* AlarmDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC962E74F96000358D55 /* AlarmDetailView.swift */; };
 		0E41DCD42E74F96100358D55 /* AudioCacheService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC7A2E74F96000358D55 /* AudioCacheService.swift */; };
@@ -73,6 +73,12 @@
 		0EF353FD2E74A76500B66B53 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353FC2E74A76500B66B53 /* FirebaseStorage */; };
 		0EF354002E74AA4600B66B53 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353FF2E74AA4600B66B53 /* GoogleSignIn */; };
 		0EF354022E74AA4600B66B53 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF354012E74AA4600B66B53 /* GoogleSignInSwift */; };
+		0EF3EC142E984D630006E382 /* Bark.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 0EF3EC0E2E984D630006E382 /* Bark.mp3 */; };
+		0EF3EC152E984D630006E382 /* Buzzer.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 0EF3EC102E984D630006E382 /* Buzzer.mp3 */; };
+		0EF3EC162E984D630006E382 /* Warning.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 0EF3EC132E984D630006E382 /* Warning.mp3 */; };
+		0EF3EC172E984D630006E382 /* Classic.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 0EF3EC112E984D630006E382 /* Classic.mp3 */; };
+		0EF3EC182E984D630006E382 /* Bells.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 0EF3EC0F2E984D630006E382 /* Bells.mp3 */; };
+		0EF3EC192E984D630006E382 /* Thunderstorm.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 0EF3EC122E984D630006E382 /* Thunderstorm.mp3 */; };
 		20913532AE484808923816E5 /* StartSmart/Views/Onboarding/ToneSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3D5A457CED47FD9310D74F /* StartSmart/Views/Onboarding/ToneSelectionView.swift */; };
 		3F359AACBCED415997BA2464 /* StartSmart/Views/Onboarding/MotivationSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C43AA2FAE90A40D9876DAD19 /* StartSmart/Views/Onboarding/MotivationSelectionView.swift */; };
 		416D6397FB264B96B69D0B33 /* StartSmart/Views/Onboarding/EnhancedWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C412C4D8A79419E896C64FC /* StartSmart/Views/Onboarding/EnhancedWelcomeView.swift */; };
@@ -157,6 +163,12 @@
 		0E41DCEF2E74F96100358D55 /* PersonaManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaManager.swift; sourceTree = "<group>"; };
 		0E41DCF22E74F96100358D55 /* MainAppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainAppView.swift; sourceTree = "<group>"; };
 		0E41DCF42E74F96100358D55 /* OnboardingCompletionData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCompletionData.swift; sourceTree = "<group>"; };
+		0EF3EC0E2E984D630006E382 /* Bark.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Bark.mp3; sourceTree = "<group>"; };
+		0EF3EC0F2E984D630006E382 /* Bells.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Bells.mp3; sourceTree = "<group>"; };
+		0EF3EC102E984D630006E382 /* Buzzer.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Buzzer.mp3; sourceTree = "<group>"; };
+		0EF3EC112E984D630006E382 /* Classic.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Classic.mp3; sourceTree = "<group>"; };
+		0EF3EC122E984D630006E382 /* Thunderstorm.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Thunderstorm.mp3; sourceTree = "<group>"; };
+		0EF3EC132E984D630006E382 /* Warning.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Warning.mp3; sourceTree = "<group>"; };
 		1F3D5A457CED47FD9310D74F /* StartSmart/Views/Onboarding/ToneSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/ToneSelectionView.swift; sourceTree = "<group>"; };
 		2596752C91664F69939DBD57 /* StartSmart/Models/OnboardingState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Models/OnboardingState.swift; sourceTree = "<group>"; };
 		5991B1CBA7934AACA630BD23 /* StartSmart/Views/Onboarding/AccountCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/AccountCreationView.swift; sourceTree = "<group>"; };
@@ -227,6 +239,12 @@
 		0E41DC762E74F96000358D55 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				0EF3EC0E2E984D630006E382 /* Bark.mp3 */,
+				0EF3EC0F2E984D630006E382 /* Bells.mp3 */,
+				0EF3EC102E984D630006E382 /* Buzzer.mp3 */,
+				0EF3EC112E984D630006E382 /* Classic.mp3 */,
+				0EF3EC122E984D630006E382 /* Thunderstorm.mp3 */,
+				0EF3EC132E984D630006E382 /* Warning.mp3 */,
 				0E41DC732E74F96000358D55 /* Config.plist */,
 				0E41DC742E74F96000358D55 /* Config-template.plist */,
 				0E41DC752E74F96000358D55 /* GoogleService-Info.plist */,
@@ -602,6 +620,12 @@
 				0E41DCB22E74F96100358D55 /* Config-template.plist in Resources */,
 				0E41DCB32E74F96100358D55 /* GoogleService-Info.plist in Resources */,
 				0E41DCB42E74F96100358D55 /* Preview Assets.xcassets in Resources */,
+				0EF3EC142E984D630006E382 /* Bark.mp3 in Resources */,
+				0EF3EC152E984D630006E382 /* Buzzer.mp3 in Resources */,
+				0EF3EC162E984D630006E382 /* Warning.mp3 in Resources */,
+				0EF3EC172E984D630006E382 /* Classic.mp3 in Resources */,
+				0EF3EC182E984D630006E382 /* Bells.mp3 in Resources */,
+				0EF3EC192E984D630006E382 /* Thunderstorm.mp3 in Resources */,
 				D0000001000000000000000E /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

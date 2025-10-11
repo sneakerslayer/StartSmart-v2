@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Alarm List View
 struct AlarmListView: View {
-    @StateObject private var alarmViewModel = AlarmViewModel()
+    @EnvironmentObject private var alarmViewModel: AlarmViewModel
     @StateObject private var notificationService = NotificationService()
     @State private var showingAddAlarm = false
     @State private var showingPermissionView = false
@@ -68,16 +68,8 @@ struct AlarmListView: View {
     
     // MARK: - Background
     private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color.blue.opacity(0.1),
-                Color.purple.opacity(0.05),
-                Color(.systemBackground)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
+        Color(.systemBackground)
+            .ignoresSafeArea()
     }
     
     // MARK: - Header Section
@@ -88,13 +80,7 @@ struct AlarmListView: View {
                     Text("My Alarms")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.blue, .purple],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .foregroundColor(.primary)
                     
                     if let nextAlarm = alarmViewModel.nextAlarm {
                         Text("Next: \(nextAlarm.timeDisplayString)")
@@ -120,13 +106,7 @@ struct AlarmListView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
                         .frame(width: 44, height: 44)
-                        .background(
-                            LinearGradient(
-                                colors: [.blue, .purple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .background(Color.blue)
                         .clipShape(Circle())
                         .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
@@ -154,13 +134,7 @@ struct AlarmListView: View {
             // Illustration
             Image(systemName: "alarm.fill")
                 .font(.system(size: 80))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.blue.opacity(0.6), .purple.opacity(0.6)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .foregroundColor(.blue)
                 .padding(.bottom, 8)
             
             VStack(spacing: 12) {
@@ -186,13 +160,7 @@ struct AlarmListView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(
-                    LinearGradient(
-                        colors: [.blue, .purple],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
+                .background(Color.blue)
                 .cornerRadius(25)
                 .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
             }

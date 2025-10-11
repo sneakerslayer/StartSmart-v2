@@ -26,9 +26,9 @@ struct AlarmRowView: View {
         .padding(.vertical, 16)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(Color(.secondarySystemBackground))
                 .shadow(
-                    color: alarm.isEnabled ? .blue.opacity(0.1) : .gray.opacity(0.05),
+                    color: alarm.isEnabled ? .black.opacity(0.1) : .gray.opacity(0.05),
                     radius: alarm.isEnabled ? 8 : 4,
                     x: 0,
                     y: alarm.isEnabled ? 4 : 2
@@ -38,7 +38,7 @@ struct AlarmRowView: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(
                     alarm.isEnabled 
-                        ? LinearGradient(colors: [.blue.opacity(0.2), .purple.opacity(0.2)], startPoint: .leading, endPoint: .trailing)
+                        ? LinearGradient(colors: [.black.opacity(0.2)], startPoint: .leading, endPoint: .trailing)
                         : LinearGradient(colors: [.gray.opacity(0.1)], startPoint: .leading, endPoint: .trailing),
                     lineWidth: 1
                 )
@@ -63,7 +63,7 @@ struct AlarmRowView: View {
             if let nextTrigger = alarm.nextTriggerDate {
                 Text(timeUntilNextTrigger(nextTrigger))
                     .font(.caption)
-                    .foregroundColor(alarm.isEnabled ? .blue : .secondary)
+                    .foregroundColor(alarm.isEnabled ? .primary : .secondary)
                     .fontWeight(.medium)
             }
         }
@@ -145,9 +145,9 @@ struct AlarmRowView: View {
                     Button(action: onEdit) {
                         Image(systemName: "pencil")
                             .font(.caption)
-                            .foregroundColor(.blue)
+                            .foregroundColor(.primary)
                             .frame(width: 24, height: 24)
-                            .background(Color.blue.opacity(0.1))
+                            .background(Color(.tertiarySystemBackground))
                             .clipShape(Circle())
                     }
                     .buttonStyle(ScaleButtonStyle())
@@ -230,7 +230,7 @@ struct CustomToggleStyle: ToggleStyle {
             RoundedRectangle(cornerRadius: 16)
                 .fill(
                     configuration.isOn 
-                        ? LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing)
+                        ? LinearGradient(colors: [Color.blue], startPoint: .leading, endPoint: .trailing)
                         : LinearGradient(colors: [Color(.systemGray4)], startPoint: .leading, endPoint: .trailing)
                 )
                 .frame(width: 50, height: 30)

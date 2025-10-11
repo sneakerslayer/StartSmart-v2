@@ -48,318 +48,29 @@ struct Voice: Codable, Identifiable {
 // MARK: - Audio Quality Settings
 struct AudioQualitySettings {
     let sampleRate: Int
-    let bitrate: Int
-    let format: AudioFormat
-    
-    static let standard = AudioQualitySettings(sampleRate: 22050, bitrate: 128, format: .mp3)
-    static let high = AudioQualitySettings(sampleRate: 44100, bitrate: 256, format: .mp3)
-    static let premium = AudioQualitySettings(sampleRate: 48000, bitrate: 320, format: .mp3)
-}
-
-enum AudioFormat: String, CaseIterable {
-    case mp3 = "audio/mpeg"
-    case wav = "audio/wav"
-    case flac = "audio/flac"
+    let bitRate: Int
+    let channels: Int
 }
 
 // MARK: - TTS Generation Options
 struct TTSGenerationOptions {
-    let audioQuality: AudioQualitySettings
-    let enableOptimizations: Bool
-    let timeoutInterval: TimeInterval
     let maxRetries: Int
+    let timeout: TimeInterval
+    let quality: AudioQualitySettings
     
     static let `default` = TTSGenerationOptions(
-        audioQuality: .standard,
-        enableOptimizations: true,
-        timeoutInterval: 30.0,
-        maxRetries: 3
-    )
-    
-    static let production = TTSGenerationOptions(
-        audioQuality: .high,
-        enableOptimizations: true,
-        timeoutInterval: 45.0,
-        maxRetries: 5
+        maxRetries: 3,
+        timeout: 30.0,
+        quality: AudioQualitySettings(sampleRate: 44100, bitRate: 128000, channels: 1)
     )
 }
 
-// MARK: - ElevenLabs Service Protocol
-protocol ElevenLabsServiceProtocol {
-    func generateSpeech(text: String, voiceId: String) async throws -> Data
-    func generateSpeech(text: String, voiceId: String, options: TTSGenerationOptions) async throws -> Data
-    func getAvailableVoices() async throws -> [Voice]
-    func validateAudioData(_ data: Data) throws -> AudioValidationResult
-}
-
-class ElevenLabsService: ElevenLabsServiceProtocol {
-    private let apiKey: String
-    private let baseURL = "https://api.elevenlabs.io/v1"
-    private let session: URLSession
-    private let defaultOptions: TTSGenerationOptions
-    
-    // Default voice configurations for different tones
-    static let voiceConfigurations: [String: (voiceId: String, settings: VoiceSettings)] = [
-        "gentle": (
-            voiceId: "21m00Tcm4TlvDq8ikWAM", // Rachel - Calm, pleasant
-            settings: VoiceSettings(stability: 0.75, similarityBoost: 0.75, style: 0.4, useSpeakerBoost: true)
-        ),
-        "energetic": (
-            voiceId: "pNInz6obpgDQGcFmaJgB", // Adam - Energetic, confident
-            settings: VoiceSettings(stability: 0.5, similarityBoost: 0.8, style: 0.8, useSpeakerBoost: true)
-        ),
-        "tough_love": (
-            voiceId: "VR6AewLTigWG4xSOukaG", // Arnold - Firm, motivational
-            settings: VoiceSettings(stability: 0.8, similarityBoost: 0.9, style: 0.6, useSpeakerBoost: true)
-        ),
-        "storyteller": (
-            voiceId: "CYw3kZ02Hs0563khs1Fj", // Dave - Narrative, engaging
-            settings: VoiceSettings(stability: 0.7, similarityBoost: 0.7, style: 0.5, useSpeakerBoost: true)
-        ),
-        "default": (
-            voiceId: "21m00Tcm4TlvDq8ikWAM",
-            settings: VoiceSettings(stability: 0.7, similarityBoost: 0.75, style: 0.5, useSpeakerBoost: true)
-        )
-    ]
-    
-    init(apiKey: String, options: TTSGenerationOptions = .default) {
-        self.apiKey = apiKey
-        self.defaultOptions = options
-        
-        // Configure URLSession with timeout
-        let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = options.timeoutInterval
-        configuration.timeoutIntervalForResource = options.timeoutInterval * 2
-        self.session = URLSession(configuration: configuration)
-    }
-    
-    func generateSpeech(text: String, voiceId: String) async throws -> Data {
-        return try await generateSpeech(text: text, voiceId: voiceId, options: defaultOptions)
-    }
-    
-    func generateSpeech(text: String, voiceId: String, options: TTSGenerationOptions) async throws -> Data {
-        // Input validation
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw ElevenLabsError.invalidInput("Text cannot be empty")
-        }
-        
-        guard text.count <= 5000 else {
-            throw ElevenLabsError.invalidInput("Text exceeds maximum length of 5000 characters")
-        }
-        
-        return try await performWithRetry(maxRetries: options.maxRetries) {
-            return try await self.generateSpeechRequest(text: text, voiceId: voiceId, options: options)
-        }
-    }
-    
-    private func generateSpeechRequest(text: String, voiceId: String, options: TTSGenerationOptions) async throws -> Data {
-        guard let url = URL(string: "\(baseURL)/text-to-speech/\(voiceId)") else {
-            throw ElevenLabsError.invalidURL
-        }
-        
-        let voiceSettings = Self.voiceConfigurations[voiceId]?.settings ?? 
-                           Self.voiceConfigurations["default"]!.settings
-        
-        let request = ElevenLabsRequest(
-            text: text,
-            modelId: options.enableOptimizations ? "eleven_turbo_v2" : "eleven_monolingual_v1",
-            voiceSettings: voiceSettings
-        )
-        
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = "POST"
-        urlRequest.addValue(apiKey, forHTTPHeaderField: "xi-api-key")
-        urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        urlRequest.addValue(options.audioQuality.format.rawValue, forHTTPHeaderField: "Accept")
-        
-        // Add quality optimization headers
-        if options.enableOptimizations {
-            urlRequest.addValue("true", forHTTPHeaderField: "xi-optimize-streaming-latency")
-        }
-        
-        urlRequest.httpBody = try JSONEncoder().encode(request)
-        
-        let (data, response) = try await session.data(for: urlRequest)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw ElevenLabsError.invalidResponse
-        }
-        
-        if httpResponse.statusCode != 200 {
-            let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw ElevenLabsError.apiError(statusCode: httpResponse.statusCode, message: errorMessage)
-        }
-        
-        // Validate audio data
-        let validationResult = try validateAudioData(data)
-        if !validationResult.isValid {
-            throw ElevenLabsError.invalidAudioData(validationResult.errorMessage ?? "Audio validation failed")
-        }
-        
-        return data
-    }
-    
-    func getAvailableVoices() async throws -> [Voice] {
-        guard let url = URL(string: "\(baseURL)/voices") else {
-            throw ElevenLabsError.invalidURL
-        }
-        
-        var urlRequest = URLRequest(url: url)
-        urlRequest.addValue(apiKey, forHTTPHeaderField: "xi-api-key")
-        
-        let (data, response) = try await session.data(for: urlRequest)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw ElevenLabsError.invalidResponse
-        }
-        
-        if httpResponse.statusCode != 200 {
-            let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw ElevenLabsError.apiError(statusCode: httpResponse.statusCode, message: errorMessage)
-        }
-        
-        do {
-            let voicesResponse = try JSONDecoder().decode(VoicesResponse.self, from: data)
-            return voicesResponse.voices
-        } catch {
-            throw ElevenLabsError.decodingError(error)
-        }
-    }
-    
-    // Helper method to get voice ID for a tone
-    func getVoiceId(for tone: String) -> String {
-        let normalizedTone = tone.lowercased().replacingOccurrences(of: " ", with: "_")
-        return Self.voiceConfigurations[normalizedTone]?.voiceId ?? 
-               Self.voiceConfigurations["default"]!.voiceId
-    }
-    
-    // MARK: - Audio Validation
-    
-    func validateAudioData(_ data: Data) throws -> AudioValidationResult {
-        guard !data.isEmpty else {
-            return AudioValidationResult(isValid: false, errorMessage: "Audio data is empty")
-        }
-        
-        // Minimum size check (basic MP3 header is at least 32 bytes)
-        guard data.count >= 32 else {
-            return AudioValidationResult(isValid: false, errorMessage: "Audio data too small")
-        }
-        
-        // Check for MP3 header signature
-        let headerBytes = data.prefix(4)
-        if headerBytes.count >= 3 {
-            let header = Array(headerBytes)
-            
-            // MP3 frame header starts with 11111111 111xxxxx (0xFF 0xFB, 0xFF 0xFA, etc.)
-            if header[0] == 0xFF && (header[1] & 0xE0) == 0xE0 {
-                return AudioValidationResult(
-                    isValid: true,
-                    format: .mp3,
-                    estimatedDuration: estimateMP3Duration(data),
-                    fileSize: data.count
-                )
-            }
-            
-            // WAV header check ("RIFF" at start, "WAVE" at offset 8)
-            if header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46 {
-                return AudioValidationResult(
-                    isValid: true,
-                    format: .wav,
-                    estimatedDuration: estimateWAVDuration(data),
-                    fileSize: data.count
-                )
-            }
-        }
-        
-        // If we can't detect format but data seems reasonable, assume it's valid
-        if data.count > 1000 {
-            return AudioValidationResult(
-                isValid: true,
-                format: .mp3, // Default assumption
-                estimatedDuration: nil,
-                fileSize: data.count
-            )
-        }
-        
-        return AudioValidationResult(isValid: false, errorMessage: "Unrecognized audio format")
-    }
-    
-    private func estimateMP3Duration(_ data: Data) -> TimeInterval? {
-        // Basic estimation: assume 128kbps bitrate
-        let estimatedBitrate: Double = 128 * 1000 / 8 // bytes per second
-        return Double(data.count) / estimatedBitrate
-    }
-    
-    private func estimateWAVDuration(_ data: Data) -> TimeInterval? {
-        // WAV duration requires parsing the header for sample rate and data size
-        // For now, return nil (would need full WAV parsing implementation)
-        return nil
-    }
-    
-    // MARK: - Retry Logic
-    
-    private func performWithRetry<T>(maxRetries: Int, operation: () async throws -> T) async throws -> T {
-        var lastError: Error?
-        
-        for attempt in 0...maxRetries {
-            do {
-                return try await operation()
-            } catch {
-                lastError = error
-                
-                // Don't retry on certain errors
-                if case ElevenLabsError.invalidInput = error {
-                    throw error
-                }
-                if case ElevenLabsError.invalidURL = error {
-                    throw error
-                }
-                
-                // Don't retry on final attempt
-                if attempt == maxRetries {
-                    break
-                }
-                
-                // Exponential backoff
-                let delay = pow(2.0, Double(attempt)) * 0.5
-                try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-            }
-        }
-        
-        throw lastError ?? ElevenLabsError.unknownError
-    }
-}
-
-// MARK: - Supporting Types
-private struct VoicesResponse: Codable {
-    let voices: [Voice]
-}
-
-// MARK: - Audio Validation Result
-struct AudioValidationResult {
-    let isValid: Bool
-    let format: AudioFormat?
-    let estimatedDuration: TimeInterval?
-    let fileSize: Int
-    let errorMessage: String?
-    
-    init(isValid: Bool, format: AudioFormat? = nil, estimatedDuration: TimeInterval? = nil, fileSize: Int = 0, errorMessage: String? = nil) {
-        self.isValid = isValid
-        self.format = format
-        self.estimatedDuration = estimatedDuration
-        self.fileSize = fileSize
-        self.errorMessage = errorMessage
-    }
-}
-
-// MARK: - ElevenLabs Errors
-enum ElevenLabsError: LocalizedError {
-    case invalidURL
-    case invalidResponse
+// MARK: - ElevenLabs Error Types
+enum ElevenLabsError: Error, LocalizedError {
     case invalidInput(String)
-    case invalidAudioData(String)
+    case invalidURL
+    case invalidAudioData
     case apiError(statusCode: Int, message: String)
-    case decodingError(Error)
     case networkError(Error)
     case rateLimitExceeded
     case quotaExceeded
@@ -367,18 +78,14 @@ enum ElevenLabsError: LocalizedError {
     
     var errorDescription: String? {
         switch self {
-        case .invalidURL:
-            return "Invalid ElevenLabs API URL"
-        case .invalidResponse:
-            return "Invalid response from ElevenLabs server"
         case .invalidInput(let message):
             return "Invalid input: \(message)"
-        case .invalidAudioData(let message):
-            return "Invalid audio data: \(message)"
+        case .invalidURL:
+            return "Invalid URL"
+        case .invalidAudioData:
+            return "Invalid audio data received"
         case .apiError(let statusCode, let message):
-            return "ElevenLabs API Error \(statusCode): \(message)"
-        case .decodingError(let error):
-            return "Failed to decode ElevenLabs response: \(error.localizedDescription)"
+            return "API Error (\(statusCode)): \(message)"
         case .networkError(let error):
             return "Network error: \(error.localizedDescription)"
         case .rateLimitExceeded:
@@ -417,4 +124,360 @@ enum ElevenLabsError: LocalizedError {
             return nil
         }
     }
+}
+
+// MARK: - ElevenLabs Service Protocol
+protocol ElevenLabsServiceProtocol {
+    func generateSpeech(text: String, voiceId: String) async throws -> Data
+    func generateSpeech(text: String, voiceId: String, options: TTSGenerationOptions) async throws -> Data
+    func generateVoicePreview(text: String, voiceName: String) async throws -> Data
+    func getAvailableVoices() async throws -> [Voice]
+    func testAPIConnection() async throws -> Bool
+}
+
+// MARK: - ElevenLabs Service Implementation
+class ElevenLabsService: ElevenLabsServiceProtocol {
+    private let apiKey: String
+    private let baseURL = "https://api.elevenlabs.io/v1"
+    private let session: URLSession
+    private let defaultOptions: TTSGenerationOptions
+    
+    // Default voice configurations for different tones
+    static let voiceConfigurations: [String: (voiceId: String, settings: VoiceSettings)] = [
+        "gentle": (
+            voiceId: "21m00Tcm4TlvDq8ikWAM", // Rachel - Calm, pleasant
+            settings: VoiceSettings(stability: 0.75, similarityBoost: 0.75, style: 0.4, useSpeakerBoost: true)
+        ),
+        "energetic": (
+            voiceId: "AZnzlk1XvdvUeBnXmlld", // Domi - Energetic, upbeat
+            settings: VoiceSettings(stability: 0.5, similarityBoost: 0.8, style: 0.8, useSpeakerBoost: true)
+        ),
+        "tough_love": (
+            voiceId: "EXAVITQu4vr4xnSDxMaL", // Bella - Strong, motivational
+            settings: VoiceSettings(stability: 0.6, similarityBoost: 0.7, style: 0.6, useSpeakerBoost: true)
+        ),
+        // New voice personas for previews
+        "drill_sergeant_drew": (
+            voiceId: "DGzg6RaUqxGRTHSBjfgF", // Drill Sergeant Drew - Strong, commanding
+            settings: VoiceSettings(stability: 0.4, similarityBoost: 0.9, style: 0.9, useSpeakerBoost: true)
+        ),
+        "girl_bestie": (
+            voiceId: "uYXf8XasLslADfZ2MB4u", // Girl Bestie - Warm, friendly
+            settings: VoiceSettings(stability: 0.8, similarityBoost: 0.8, style: 0.3, useSpeakerBoost: true)
+        ),
+        "mrs_walker": (
+            voiceId: "DLsHlh26Ugcm6ELvS0qi", // Mrs. Walker - Warm & caring Southern mom
+            settings: VoiceSettings(stability: 0.9, similarityBoost: 0.7, style: 0.2, useSpeakerBoost: true)
+        ),
+        "motivational_mike": (
+            voiceId: "84Fal4DSXWfp7nJ8emqQ", // Motivational Mike - High-energy
+            settings: VoiceSettings(stability: 0.3, similarityBoost: 0.9, style: 0.9, useSpeakerBoost: true)
+        ),
+        "calm_kyle": (
+            voiceId: "MpZY6e8MW2zHVi4Vtxrn", // Calm Kyle - Peaceful, zen
+            settings: VoiceSettings(stability: 0.95, similarityBoost: 0.6, style: 0.1, useSpeakerBoost: true)
+        ),
+        "angry_allen": (
+            voiceId: "KLZOWyG48RjZkAAjuM89", // Angry Allen - Intense, no-nonsense
+            settings: VoiceSettings(stability: 0.3, similarityBoost: 0.95, style: 0.95, useSpeakerBoost: true)
+        )
+    ]
+    
+    init(apiKey: String) {
+        self.apiKey = apiKey
+        self.defaultOptions = TTSGenerationOptions.default
+        print("DEBUG: ElevenLabsService init - API key length: \(apiKey.count)")
+        print("DEBUG: ElevenLabsService init - API key starts with: \(String(apiKey.prefix(10)))")
+        
+        // Configure URLSession with appropriate timeout and retry policy
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 15.0  // Reduced timeout
+        config.timeoutIntervalForResource = 30.0  // Reduced timeout
+        config.waitsForConnectivity = true
+        config.allowsCellularAccess = true
+        self.session = URLSession(configuration: config)
+    }
+    
+    convenience init() {
+        let apiKey = ServiceConfiguration.APIKeys.elevenLabs
+        print("DEBUG: ElevenLabsService convenience init - API key length: \(apiKey.count)")
+        print("DEBUG: ElevenLabsService convenience init - API key starts with: \(String(apiKey.prefix(10)))")
+        self.init(apiKey: apiKey)
+    }
+    
+    func generateSpeech(text: String, voiceId: String) async throws -> Data {
+        return try await generateSpeech(text: text, voiceId: voiceId, options: defaultOptions)
+    }
+    
+    func generateSpeech(text: String, voiceId: String, options: TTSGenerationOptions) async throws -> Data {
+        // Input validation
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw ElevenLabsError.invalidInput("Text cannot be empty")
+        }
+        
+        guard text.count <= 5000 else {
+            throw ElevenLabsError.invalidInput("Text exceeds maximum length of 5000 characters")
+        }
+        
+        return try await generateSpeechRequest(text: text, voiceId: voiceId, options: options)
+    }
+    
+    private func generateSpeechRequest(text: String, voiceId: String, options: TTSGenerationOptions) async throws -> Data {
+        guard let url = URL(string: "\(baseURL)/text-to-speech/\(voiceId)") else {
+            throw ElevenLabsError.invalidURL
+        }
+        
+        // Check network connectivity first
+        guard await isNetworkAvailable() else {
+            throw ElevenLabsError.networkError(URLError(.notConnectedToInternet))
+        }
+        
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue(apiKey, forHTTPHeaderField: "xi-api-key")
+        
+        // Get voice settings for the given voice ID
+        let voiceSettings = getVoiceSettings(for: voiceId)
+        
+        let request = ElevenLabsRequest(
+            text: text,
+            modelId: "eleven_multilingual_v2",
+            voiceSettings: voiceSettings
+        )
+        
+        do {
+            urlRequest.httpBody = try JSONEncoder().encode(request)
+        } catch {
+            throw ElevenLabsError.invalidInput("Failed to encode request: \(error.localizedDescription)")
+        }
+        
+        do {
+            print("DEBUG: ElevenLabs API Request - URL: \(url)")
+            print("DEBUG: ElevenLabs API Request - Voice ID: \(voiceId)")
+            print("DEBUG: ElevenLabs API Request - Text length: \(text.count)")
+            
+            let (data, response) = try await session.data(for: urlRequest)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("DEBUG: ElevenLabs API Error - Invalid response type")
+                throw ElevenLabsError.networkError(URLError(.badServerResponse))
+            }
+            
+            print("DEBUG: ElevenLabs API Response - Status: \(httpResponse.statusCode)")
+            
+            if httpResponse.statusCode != 200 {
+                let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+                print("DEBUG: ElevenLabs API Error Response: \(errorMessage)")
+                
+                switch httpResponse.statusCode {
+                case 400:
+                    if errorMessage.contains("max_character_limit_exceeded") {
+                        throw ElevenLabsError.invalidInput("Text exceeds character limit. Please shorten your message.")
+                    } else if errorMessage.contains("voice_not_found") {
+                        throw ElevenLabsError.invalidInput("Voice not found. Please select a valid voice.")
+                    } else {
+                        throw ElevenLabsError.invalidInput("Invalid request: \(errorMessage)")
+                    }
+                case 401:
+                    if errorMessage.contains("invalid_api_key") {
+                        throw ElevenLabsError.apiError(statusCode: 401, message: "Invalid API key. Please check your configuration.")
+                    } else {
+                        throw ElevenLabsError.apiError(statusCode: 401, message: "Authentication failed: \(errorMessage)")
+                    }
+                case 403:
+                    if errorMessage.contains("only_for_creator+") {
+                        throw ElevenLabsError.apiError(statusCode: 403, message: "Professional voices require Creator+ subscription.")
+                    } else {
+                        throw ElevenLabsError.apiError(statusCode: 403, message: "Access forbidden: \(errorMessage)")
+                    }
+                case 429:
+                    if errorMessage.contains("too_many_concurrent_requests") {
+                        throw ElevenLabsError.rateLimitExceeded
+                    } else if errorMessage.contains("system_busy") {
+                        throw ElevenLabsError.apiError(statusCode: 429, message: "System busy. Please try again later.")
+                    } else {
+                        throw ElevenLabsError.rateLimitExceeded
+                    }
+                case 500...599:
+                    throw ElevenLabsError.apiError(statusCode: httpResponse.statusCode, message: "Server error. Please try again later.")
+                default:
+                    throw ElevenLabsError.apiError(statusCode: httpResponse.statusCode, message: errorMessage)
+                }
+            }
+            
+            // Validate audio data
+            let validationResult = validateAudioData(data)
+            if !validationResult.isValid {
+                throw ElevenLabsError.invalidAudioData
+            }
+            
+            print("DEBUG: Audio validation passed - Format: \(validationResult.format?.rawValue ?? "unknown"), Size: \(data.count) bytes")
+            print("DEBUG: ElevenLabs API Success - Generated \(data.count) bytes of audio data")
+            return data
+            
+        } catch let error as ElevenLabsError {
+            throw error
+        } catch {
+            throw ElevenLabsError.networkError(error)
+        }
+    }
+    
+    func getAvailableVoices() async throws -> [Voice] {
+        return try await getAvailableVoicesRequest()
+    }
+    
+    private func getAvailableVoicesRequest() async throws -> [Voice] {
+        guard let url = URL(string: "\(baseURL)/voices") else {
+            throw ElevenLabsError.invalidURL
+        }
+        
+        var urlRequest = URLRequest(url: url)
+        urlRequest.setValue(apiKey, forHTTPHeaderField: "xi-api-key")
+        
+        do {
+            let (data, response) = try await session.data(for: urlRequest)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw ElevenLabsError.networkError(URLError(.badServerResponse))
+            }
+            
+            if httpResponse.statusCode != 200 {
+                let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+                throw ElevenLabsError.apiError(statusCode: httpResponse.statusCode, message: errorMessage)
+            }
+            
+            let voicesResponse = try JSONDecoder().decode(VoicesResponse.self, from: data)
+            return voicesResponse.voices
+            
+        } catch let error as ElevenLabsError {
+            throw error
+        } catch {
+            throw ElevenLabsError.networkError(error)
+        }
+    }
+    
+    func testAPIConnection() async throws -> Bool {
+        do {
+            let _ = try await getAvailableVoices()
+            return true
+        } catch {
+            print("DEBUG: ElevenLabs API test failed: \(error)")
+            return false
+        }
+    }
+    
+    private func getVoiceSettings(for voiceId: String) -> VoiceSettings {
+        // Find matching voice configuration
+        for (_, config) in Self.voiceConfigurations {
+            if config.voiceId == voiceId {
+                return config.settings
+            }
+        }
+        
+        // Default settings if voice not found
+        return VoiceSettings(
+            stability: 0.5,
+            similarityBoost: 0.75,
+            style: 0.0,
+            useSpeakerBoost: true
+        )
+    }
+    
+    private func validateAudioData(_ data: Data) -> AudioValidationResult {
+        guard data.count > 0 else {
+            return AudioValidationResult(isValid: false, format: nil, error: "Empty audio data")
+        }
+        
+        // Check for common audio format headers
+        if data.starts(with: [0xFF, 0xFB]) || data.starts(with: [0xFF, 0xF3]) || data.starts(with: [0xFF, 0xF2]) {
+            return AudioValidationResult(isValid: true, format: .mp3, error: nil)
+        }
+        
+        if data.starts(with: [0x52, 0x49, 0x46, 0x46]) && data.count > 8 && data.subdata(in: 8..<12) == Data([0x57, 0x41, 0x56, 0x45]) {
+            return AudioValidationResult(isValid: true, format: .wav, error: nil)
+        }
+        
+        if data.starts(with: [0x4F, 0x67, 0x67, 0x53]) {
+            return AudioValidationResult(isValid: true, format: .ogg, error: nil)
+        }
+        
+        // If we can't identify the format but data exists, assume it's valid
+        return AudioValidationResult(isValid: true, format: .unknown, error: nil)
+    }
+    
+    // MARK: - Network Connectivity Helper
+    
+    private func isNetworkAvailable() async -> Bool {
+        // Simple connectivity check - try to reach a reliable endpoint
+        guard let url = URL(string: "https://www.google.com") else { return false }
+        
+        do {
+            var request = URLRequest(url: url)
+            request.httpMethod = "HEAD"
+            request.timeoutInterval = 5.0
+            
+            let (_, response) = try await session.data(for: request)
+            return (response as? HTTPURLResponse)?.statusCode == 200
+        } catch {
+            print("DEBUG: Network connectivity check failed: \(error)")
+            return false
+        }
+    }
+    
+    // MARK: - Voice Name Mapping Helper
+    
+    static func getVoiceKey(from voiceName: String) -> String {
+        switch voiceName.lowercased() {
+        case "drill sergeant drew":
+            return "drill_sergeant_drew"
+        case "girl bestie":
+            return "girl_bestie"
+        case "mrs. walker":
+            return "mrs_walker"
+        case "motivational mike":
+            return "motivational_mike"
+        case "calm kyle":
+            return "calm_kyle"
+        case "angry allen":
+            return "angry_allen"
+        default:
+            return "gentle" // Default fallback
+        }
+    }
+    
+    func generateVoicePreview(text: String, voiceName: String) async throws -> Data {
+        let voiceKey = Self.getVoiceKey(from: voiceName)
+        guard let config = Self.voiceConfigurations[voiceKey] else {
+            throw ElevenLabsError.invalidInput("Voice configuration not found for: \(voiceName)")
+        }
+        
+        print("DEBUG: Generating voice preview for: \(voiceName) (key: \(voiceKey), voiceId: \(config.voiceId))")
+        return try await generateSpeech(text: text, voiceId: config.voiceId)
+    }
+}
+
+// MARK: - Supporting Types
+private struct VoicesResponse: Codable {
+    let voices: [Voice]
+}
+
+// MARK: - Audio Validation Result
+struct AudioValidationResult {
+    let isValid: Bool
+    let format: AudioFormat?
+    let error: String?
+    
+    init(isValid: Bool, format: AudioFormat?, error: String?) {
+        self.isValid = isValid
+        self.format = format
+        self.error = error
+    }
+}
+
+enum AudioFormat: String {
+    case mp3 = "mp3"
+    case wav = "wav"
+    case ogg = "ogg"
+    case unknown = "unknown"
 }

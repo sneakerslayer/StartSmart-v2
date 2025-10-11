@@ -9,10 +9,12 @@ struct PaywallView: View {
     
     let configuration: PaywallConfiguration
     let source: String // Track where the paywall was presented from
+    let onDismiss: (() -> Void)? // Callback for when paywall is dismissed
     
-    init(configuration: PaywallConfiguration = .default, source: String = "unknown") {
+    init(configuration: PaywallConfiguration = .default, source: String = "unknown", onDismiss: (() -> Void)? = nil) {
         self.configuration = configuration
         self.source = source
+        self.onDismiss = onDismiss
         
         // TEMPORARY: Create a mock subscription service for testing
         let mockSubscriptionService = MockSubscriptionService()
@@ -67,7 +69,7 @@ struct PaywallView: View {
             Button("Continue") {
                 // Mark paywall as seen
                 UserDefaults.standard.set(true, forKey: "has_seen_paywall")
-                dismiss()
+                onDismiss?() // Call the dismiss callback
             }
         } message: {
             Text(subscriptionStateManager.successMessage)
@@ -377,7 +379,7 @@ struct PaywallView: View {
         Button {
             // Mark paywall as seen and continue with free version
             UserDefaults.standard.set(true, forKey: "has_seen_paywall")
-            dismiss()
+            onDismiss?() // Call the dismiss callback
         } label: {
             Text("Continue with Free Version")
                 .font(.caption)

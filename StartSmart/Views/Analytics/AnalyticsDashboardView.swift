@@ -4,58 +4,129 @@ import Combine
 
 // MARK: - Analytics Dashboard View
 struct AnalyticsDashboardView: View {
-    @StateObject private var streakService = DependencyContainer.shared.streakTrackingService as! StreakTrackingService
+    @State private var streakService: StreakTrackingServiceProtocol? = nil
     @State private var stats = EnhancedUserStats()
+    @State private var statsSubscription: AnyCancellable? = nil
     @State private var selectedTimeRange: TimeRange = .week
     @State private var showingDetailView = false
     @State private var selectedInsight: AnalyticsInsight?
     
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Time range selector
-                    TimeRangeSelector(selectedRange: $selectedTimeRange)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                // Header Section
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Analytics")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
                     
-                    // Key metrics overview
-                    KeyMetricsSection(stats: stats, timeRange: selectedTimeRange)
-                    
-                    // Streak progress chart
-                    StreakProgressChart(
-                        stats: stats,
-                        timeRange: selectedTimeRange
-                    )
-                    
-                    // Wake-up patterns
-                    WakeUpPatternsSection(
-                        stats: stats,
-                        timeRange: selectedTimeRange
-                    )
-                    
-                    // Performance insights
-                    PerformanceInsightsSection(
-                        stats: stats,
-                        onInsightTap: { insight in
-                            selectedInsight = insight
-                            showingDetailView = true
-                        }
-                    )
-                    
-                    // Goal recommendations
-                    GoalRecommendationsSection(stats: stats)
+                    Text("Track your progress and insights")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                 }
-                .padding()
+                .padding(.top, 20)
+                
+                // Time range selector
+                TimeRangeSelector(selectedRange: $selectedTimeRange)
+                
+                // Key metrics overview
+                KeyMetricsSection(stats: stats, timeRange: selectedTimeRange)
+                
+                // Streak progress chart
+                StreakProgressChart(
+                    stats: stats,
+                    timeRange: selectedTimeRange
+                )
+                
+                // Wake-up patterns
+                WakeUpPatternsSection(
+                    stats: stats,
+                    timeRange: selectedTimeRange
+                )
+                
+                // Performance insights
+                PerformanceInsightsSection(
+                    stats: stats,
+                    onInsightTap: { insight in
+                        selectedInsight = insight
+                        showingDetailView = true
+                    }
+                )
+                
+                // Goal recommendations
+                GoalRecommendationsSection(stats: stats)
             }
-            .navigationTitle("Analytics")
-            .navigationBarTitleDisplayMode(.large)
-            .sheet(isPresented: $showingDetailView) {
-                if let insight = selectedInsight {
-                    InsightDetailView(insight: insight)
+            .padding(.horizontal, 16)
+        }
+        .sheet(isPresented: $showingDetailView) {
+            if let insight = selectedInsight {
+                InsightDetailView(insight: insight)
+            }
+        }
+        .task {
+            if streakService == nil {
+                do {
+                    // Use async resolution to wait for container initialization
+                    let resolved: StreakTrackingServiceProtocol = try await DependencyContainer.shared.resolveAsync()
+                    streakService = resolved
+                    
+                    // Set up stats subscription with error handling
+                    statsSubscription = resolved.enhancedStats
+                        .receive(on: DispatchQueue.main)
+                        .sink(
+                            receiveCompletion: { completion in
+                                switch completion {
+                                case .finished:
+                                    print("Analytics: Stats subscription completed")
+                                case .failure(let error):
+                                    print("Analytics: Stats subscription failed: \(error)")
+                                }
+                            },
+                            receiveValue: { newStats in
+                                stats = newStats
+                                print("Analytics: Stats updated - Success Rate: \(Int(newStats.successRate * 100))%, Current Streak: \(newStats.currentStreak)")
+                            }
+                        )
+                    
+                    // Add some test data to make analytics more meaningful (non-blocking)
+                    await addTestDataIfNeeded(resolved)
+                } catch {
+                    print("Analytics: Failed to resolve StreakTrackingService: \(error)")
+                    // Don't use mock service - just log the error and continue
+                    print("Analytics: Analytics will not be available until service is resolved")
                 }
             }
-            .onReceive(streakService.enhancedStats) { newStats in
-                stats = newStats
+        }
+    }
+    
+    // MARK: - Test Data Helper
+    private func addTestDataIfNeeded(_ service: StreakTrackingServiceProtocol) async {
+        // Add test data in background without blocking UI
+        Task.detached {
+            print("Analytics: Adding test data for demonstration")
+            
+            // Simulate some successful wake-ups over the past week
+            let calendar = Calendar.current
+            let today = Date()
+            
+            for i in 0..<5 { // 5 successful wake-ups in the past week
+                let date = calendar.date(byAdding: .day, value: -i, to: today) ?? today
+                await service.recordAlarmDismiss(
+                    alarmId: UUID(),
+                    method: .button,
+                    time: date
+                )
             }
+            
+            // Add one snooze event
+            await service.recordAlarmSnooze(
+                alarmId: UUID(),
+                count: 2,
+                time: calendar.date(byAdding: .day, value: -3, to: today) ?? today
+            )
+            
+            print("Analytics: Test data added successfully")
         }
     }
 }

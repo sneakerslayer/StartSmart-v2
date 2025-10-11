@@ -8,6 +8,7 @@
 import SwiftUI
 import FirebaseCore
 import GoogleSignIn
+import UserNotifications
 
 @main
 struct StartSmartApp: App {
@@ -18,6 +19,12 @@ struct StartSmartApp: App {
         
         // Configure Google Sign In
         configureGoogleSignIn()
+        
+        // Configure notification categories for alarm actions
+        configureNotificationCategories()
+        
+        // NOTE: Defer heavy dependency initialization to avoid blocking UI responsiveness during startup.
+        // Full initialization is triggered later by specific features as needed.
     }
     
     var body: some Scene {
@@ -35,5 +42,13 @@ struct StartSmartApp: App {
         }
         
         GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientId)
+    }
+    
+    private func configureNotificationCategories() {
+        Task {
+            let categoryService = NotificationCategoryService()
+            await categoryService.setupAlarmNotificationCategories()
+            print("✅ Notification categories configured")
+        }
     }
 }

@@ -182,14 +182,16 @@ final class NotificationService: NotificationServiceProtocol, ObservableObject {
         content.title = "StartSmart Alarm"
         content.body = alarm.label.isEmpty ? "Time to wake up!" : alarm.label
         
-        // Set audio - use custom audio if available, otherwise default
-        if let audioURL = alarm.audioFileURL, FileManager.default.fileExists(atPath: audioURL.path) {
-            // For iOS notifications, we need to reference the audio file by name only
-            // The file should be accessible in the app's main bundle or Documents directory
+        // Set audio - use traditional sound for Phase 1 alarm
+        if alarm.useTraditionalSound {
+            // Use the selected traditional alarm sound
+            content.sound = alarm.traditionalSound.systemSound
+        } else if let audioURL = alarm.audioFileURL, FileManager.default.fileExists(atPath: audioURL.path) {
+            // Fallback to custom AI-generated audio if traditional sound is disabled
             let soundName = audioURL.lastPathComponent
             content.sound = UNNotificationSound(named: UNNotificationSoundName(soundName))
         } else {
-            // Fallback to default critical alarm sound
+            // Final fallback to default critical alarm sound
             content.sound = .defaultCritical
         }
         
@@ -200,6 +202,9 @@ final class NotificationService: NotificationServiceProtocol, ObservableObject {
         content.userInfo = [
             "alarmId": alarm.id.uuidString,
             "alarmTone": alarm.tone.rawValue,
+            "traditionalSound": alarm.traditionalSound.rawValue,
+            "useTraditionalSound": alarm.useTraditionalSound,
+            "useAIScript": alarm.useAIScript,
             "canSnooze": alarm.snoozeEnabled,
             "maxSnoozeCount": alarm.maxSnoozeCount,
             "snoozeDuration": alarm.snoozeDuration,

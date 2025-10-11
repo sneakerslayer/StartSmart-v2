@@ -18,13 +18,27 @@ struct ServiceConfiguration {
         }()
         
         static let elevenLabs: String = {
-            if let path = Bundle.main.path(forResource: "Config", ofType: "plist"),
-               let config = NSDictionary(contentsOfFile: path),
-               let key = config["ELEVENLABS_API_KEY"] as? String {
-                return key
+            print("DEBUG: Loading ElevenLabs API key...")
+            if let path = Bundle.main.path(forResource: "Config", ofType: "plist") {
+                print("DEBUG: Found Config.plist at: \(path)")
+                if let config = NSDictionary(contentsOfFile: path) {
+                    print("DEBUG: Successfully loaded Config.plist")
+                    if let key = config["ELEVENLABS_API_KEY"] as? String {
+                        print("DEBUG: Found ElevenLabs API key, length: \(key.count)")
+                        return key
+                    } else {
+                        print("DEBUG: ELEVENLABS_API_KEY not found in Config.plist")
+                    }
+                } else {
+                    print("DEBUG: Failed to load Config.plist")
+                }
+            } else {
+                print("DEBUG: Config.plist not found in bundle")
             }
             
-            return ProcessInfo.processInfo.environment["ELEVENLABS_API_KEY"] ?? ""
+            let envKey = ProcessInfo.processInfo.environment["ELEVENLABS_API_KEY"] ?? ""
+            print("DEBUG: Using environment variable, length: \(envKey.count)")
+            return envKey
         }()
         
         static let revenueCat: String = {
@@ -95,7 +109,9 @@ struct ServiceConfiguration {
             "offline_mode": FeatureFlags.enableOfflineMode,
             "content_caching": FeatureFlags.enableContentCaching,
             "max_tokens": ContentSettings.maxTokens,
-            "temperature": ContentSettings.temperature
+            "temperature": ContentSettings.temperature,
+            "grok4_key_length": APIKeys.grok4.count,
+            "elevenlabs_key_length": APIKeys.elevenLabs.count
         ]
     }
 }

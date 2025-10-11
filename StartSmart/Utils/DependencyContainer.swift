@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 // MARK: - Dependency Container Errors
 enum DependencyContainerError: Error, LocalizedError {
@@ -24,9 +25,13 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
     
     private var dependencies: [String: Any] = [:]
     private let queue = DispatchQueue(label: "dependency.container", attributes: .concurrent)
-    var isInitialized = false
-    private let initializationQueue = DispatchQueue(label: "dependency.initialization")
     
+    // ✅ Two-stage initialization
+    @Published var isInitialized = false        // Essential services (UI can proceed)
+    @Published var isFullyInitialized = false   // All services loaded
+    
+    private var isInitializing = false
+    private let initializationQueue = DispatchQueue(label: "dependency.initialization")
     
     // MARK: - Convenience Properties
     var firebaseService: FirebaseServiceProtocol {
@@ -62,9 +67,8 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
     }
     
     private init() {
-        print("🔥 DEBUG: DependencyContainer init() called")
-        // Initialize dependencies asynchronously on background thread to avoid blocking UI
-        Task.detached(priority: .high) { @MainActor in
+        // Start initialization immediately but don't block
+        Task.detached(priority: .userInitiated) {
             await self.setupDefaultDependencies()
         }
     }
@@ -77,154 +81,219 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
     }
     
     func resolve<T>() -> T {
-        // Wait for initialization to complete
-        initializationQueue.sync {
-            while !isInitialized {
-                Thread.sleep(forTimeInterval: 0.001) // Wait 1ms
-            }
+        let key = String(describing: T.self)
+        
+        let dependency = queue.sync { 
+            return dependencies[key] as? T 
         }
         
-        let key = String(describing: T.self)
-        return queue.sync {
-            guard let dependency = dependencies[key] as? T else {
-                fatalError("Dependency \(key) not registered")
-            }
+        if let dependency = dependency {
             return dependency
         }
-    }
-    
-    // MARK: - Async Initialization for Production
-    func initializeAsync() async throws {
-        if isInitialized {
-            return // Already initialized
+        
+        // Check initialization status
+        let initialized = initializationQueue.sync { 
+            return isInitialized 
         }
         
-        await setupDefaultDependencies()
+        if !initialized {
+            fatalError("Dependency \(key) requested before container initialized")
+        }
+        fatalError("Dependency \(key) not registered")
+    }
+    
+    // ✅ FIXED: Safe resolve that waits for full initialization
+    func resolveSafe<T>() async -> T? {
+        let key = String(describing: T.self)
         
-        // Verify initialization completed
-        if !isInitialized {
-            throw DependencyContainerError.initializationFailed
+        // If already available, return immediately
+        if let dependency = queue.sync(execute: { self.dependencies[key] as? T }) {
+            return dependency
+        }
+        
+        // Wait for full initialization
+        while !isFullyInitialized {
+            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+        }
+        
+        // Try again after full initialization
+        return queue.sync(execute: { self.dependencies[key] as? T })
+    }
+
+    // Async resolve variant
+    func resolveAsync<T>() async throws -> T {
+        let initialized = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
+            initializationQueue.async {
+                continuation.resume(returning: self.isInitialized)
+            }
+        }
+        
+        if initialized {
+            return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<T, Error>) in
+                queue.async { [weak self] in
+                    guard let self else { 
+                        continuation.resume(throwing: DependencyContainerError.initializationFailed)
+                        return 
+                    }
+                    let key = String(describing: T.self)
+                    if let dependency = self.dependencies[key] as? T {
+                        continuation.resume(returning: dependency)
+                    } else {
+                        continuation.resume(throwing: DependencyContainerError.initializationFailed)
+                    }
+                }
+            }
+        }
+        
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<T, Error>) in
+            Task {
+                while true {
+                    let initialized = await withCheckedContinuation { (initContinuation: CheckedContinuation<Bool, Never>) in
+                        initializationQueue.async {
+                            initContinuation.resume(returning: self.isInitialized)
+                        }
+                    }
+                    
+                    if initialized {
+                        let key = String(describing: T.self)
+                        if let dependency = await withCheckedContinuation({ (depContinuation: CheckedContinuation<T?, Never>) in
+                            self.queue.async {
+                                depContinuation.resume(returning: self.dependencies[key] as? T)
+                            }
+                        }) {
+                            continuation.resume(returning: dependency)
+                        } else {
+                            continuation.resume(throwing: DependencyContainerError.initializationFailed)
+                        }
+                        return
+                    }
+                    
+                    try? await Task.sleep(nanoseconds: 100_000_000)
+                }
+            }
         }
     }
     
+    // MARK: - ✅ OPTIMIZED: Two-Stage Initialization
     @MainActor
     private func setupDefaultDependencies() async {
-        print("DEBUG: Starting dependency setup...")
-        print("DEBUG: About to start Stage 1...")
+        let startTime = Date()
+        print("⚡ FAST STARTUP: Stage 1 - Essential Services Only")
         
+        var firebaseService: FirebaseServiceProtocol!
+        
+        // ========== STAGE 1: ESSENTIAL SERVICES (Fast) ==========
+        // These are needed for UI to function
+        
+        // 1. Firebase (needed for auth)
         do {
-            // Stage 1: Core Services
-            // Progress handled by ContentView
-            print("DEBUG: Creating FirebaseService...")
-            let firebaseService = FirebaseService()
+            firebaseService = FirebaseService()
             register(firebaseService, for: FirebaseServiceProtocol.self)
-            print("DEBUG: Successfully registered FirebaseService")
-            
-        } catch {
-            print("DEBUG: ERROR in Stage 1 - Firebase: \(error)")
-            // Continue with basic service for now
-            // updateProgress(1, stage: "Firebase Error - Using Fallback...")
+            print("✅ FirebaseService ready")
         }
         
+        // 2. Authentication (needed for login/signup)
         do {
-            // Stage 2: Authentication
-            // updateProgress(2, stage: "Setting up Authentication...")
-            print("DEBUG: Creating AuthenticationService...")
-            let authService = AuthenticationService()
+            let userViewModel = UserViewModel()
+            let authService = AuthenticationService(firebaseService: firebaseService, userViewModel: userViewModel)
             register(authService, for: AuthenticationServiceProtocol.self)
-            print("DEBUG: Successfully registered AuthenticationService")
-            
-        } catch {
-            print("DEBUG: ERROR in Stage 2 - Auth: \(error)")
-            // updateProgress(2, stage: "Auth Error - Using Fallback...")
+            register(userViewModel, for: UserViewModel.self)
+            print("✅ AuthenticationService ready")
         }
         
+        // 3. Storage (needed for user preferences)
         do {
-            // Stage 3: AI Services
-            // updateProgress(3, stage: "Connecting AI Services...")
-            print("DEBUG: Creating Grok4Service...")
+            let localStorage = UserDefaultsStorage()
+            register(localStorage, for: LocalStorageProtocol.self)
+            print("✅ Storage ready")
+        }
+        
+        // 4. Subscriptions (needed for paywall)
+        do {
+            let subscriptionService = SubscriptionService()
+            register(subscriptionService, for: SubscriptionServiceProtocol.self)
+            
+            let localStorage: LocalStorageProtocol = resolve()
+            let subscriptionManager = SubscriptionManager(
+                subscriptionService: subscriptionService,
+                localStorage: localStorage
+            )
+            register(subscriptionManager, for: SubscriptionManagerProtocol.self)
+            print("✅ Subscription services ready")
+        }
+        
+        // ✅ MARK STAGE 1 COMPLETE - UI CAN PROCEED
+        let stage1Time = Date().timeIntervalSince(startTime)
+        initializationQueue.sync {
+            self.isInitialized = true
+            self.isInitializing = false
+        }
+        
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
+        
+        print("⚡ STAGE 1 COMPLETE in \(Int(stage1Time * 1000))ms - UI READY")
+        print("🔄 Starting Stage 2 in background...")
+        
+        // ========== STAGE 2: HEAVY SERVICES (Background) ==========
+        // These load while user interacts with UI
+        
+        Task.detached(priority: .userInitiated) {
+            let stage2Start = Date()
+            
+            // AI Services (Grok4, ElevenLabs)
+            await self.initializeAIServices(firebaseService: firebaseService)
+            
+            // Audio Services (cache, playback, pipeline)
+            await self.initializeAudioServices()
+            
+            // Gamification (streaks, social)
+            await self.initializeGamificationServices()
+            
+            let stage2Time = Date().timeIntervalSince(stage2Start)
+            
+            // ✅ FIXED: Mark fully initialized on main thread
+            await MainActor.run {
+                self.isFullyInitialized = true
+                self.objectWillChange.send()
+            }
+            
+            let totalTime = Date().timeIntervalSince(startTime)
+            print("✅ STAGE 2 COMPLETE in \(Int(stage2Time * 1000))ms")
+            print("🎉 ALL SERVICES LOADED - Total time: \(Int(totalTime * 1000))ms")
+        }
+    }
+    
+    // MARK: - Background Service Initialization
+    @MainActor
+    private func initializeAIServices(firebaseService: FirebaseServiceProtocol) async {
+        do {
             let grok4Service = Grok4Service(apiKey: ServiceConfiguration.APIKeys.grok4)
             register(grok4Service, for: Grok4ServiceProtocol.self)
-            print("DEBUG: Successfully registered Grok4Service")
             
-        } catch {
-            print("DEBUG: ERROR in Stage 3 - Grok4: \(error)")
-            // updateProgress(3, stage: "AI Service Error - Using Fallback...")
-        }
-        
-        do {
-            // Stage 4: Voice Services
-            // updateProgress(4, stage: "Initializing Voice Engine...")
-            print("DEBUG: Creating ElevenLabsService...")
             let elevenLabsService = ElevenLabsService(apiKey: ServiceConfiguration.APIKeys.elevenLabs)
             register(elevenLabsService, for: ElevenLabsServiceProtocol.self)
-            print("DEBUG: Successfully registered ElevenLabsService")
             
-        } catch {
-            print("DEBUG: ERROR in Stage 4 - ElevenLabs: \(error)")
-            // updateProgress(4, stage: "Voice Service Error - Using Fallback...")
-        }
-        
-        #if DEBUG
-        do {
-            // Stage 4.5: Onboarding Demo Service (DEBUG only)
-            print("DEBUG: Creating OnboardingDemoService...")
-            let onboardingDemoService = OnboardingDemoService()
-            register(onboardingDemoService, for: OnboardingDemoServiceProtocol.self)
-            print("DEBUG: Successfully registered OnboardingDemoService")
-        } catch {
-            print("DEBUG: ERROR in Stage 4.5 - OnboardingDemo: \(error)")
-        }
-        #endif
-        
-        do {
-            // Register Content Generation Service (combines both)
-            print("DEBUG: Creating ContentGenerationService...")
-            let grok4Service: Grok4ServiceProtocol = resolve()
-            let elevenLabsService: ElevenLabsServiceProtocol = resolve()
             let contentService = ContentGenerationService(
                 aiService: grok4Service,
                 ttsService: elevenLabsService
             )
             register(contentService, for: ContentGenerationServiceProtocol.self)
-            print("DEBUG: Successfully registered ContentGenerationService")
             
-        } catch {
-            print("DEBUG: ERROR creating ContentGenerationService: \(error)")
+            print("✅ AI services ready")
         }
-        
+    }
+    
+    @MainActor
+    private func initializeAudioServices() async {
         do {
-            // Stage 5: Storage & Audio
-            // updateProgress(5, stage: "Setting up Storage & Audio...")
-            print("DEBUG: Creating UserDefaultsStorage...")
-            let localStorage = UserDefaultsStorage()
-            register(localStorage, for: LocalStorageProtocol.self)
-            print("DEBUG: Successfully registered UserDefaultsStorage")
-            
-        } catch {
-            print("DEBUG: ERROR in Stage 5 - Storage: \(error)")
-            // updateProgress(5, stage: "Storage Error - Using Fallback...")
-        }
-        
-        // MARK: - Phase 5 Audio Services Integration
-        
-        print("DEBUG: Starting Audio Services initialization...")
-        
-        // Register Audio Cache Service
-        do {
-            print("DEBUG: Creating AudioCacheService...")
             let audioCacheService = try AudioCacheService()
             register(audioCacheService, for: AudioCacheServiceProtocol.self)
-            print("DEBUG: Successfully registered AudioCacheService")
             
-            // Register Audio Playback Service
-            print("DEBUG: Creating AudioPlaybackService...")
             let audioPlaybackService = AudioPlaybackService()
             register(audioPlaybackService, for: AudioPlaybackServiceProtocol.self)
-            print("DEBUG: Successfully registered AudioPlaybackService")
             
-            // Register Audio Pipeline Service (depends on cache service)
-            print("DEBUG: Creating AudioPipelineService...")
             let grok4Service: Grok4ServiceProtocol = resolve()
             let elevenLabsService: ElevenLabsServiceProtocol = resolve()
             let audioPipelineService = AudioPipelineService(
@@ -233,10 +302,7 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
                 cacheService: audioCacheService
             )
             register(audioPipelineService, for: AudioPipelineServiceProtocol.self)
-            print("DEBUG: Successfully registered AudioPipelineService")
             
-            // Register Alarm Audio Service (orchestrates audio generation for alarms)
-            print("DEBUG: Creating AlarmAudioService...")
             let alarmAudioService = AlarmAudioService(
                 audioPipelineService: audioPipelineService,
                 intentRepository: IntentRepository(),
@@ -245,86 +311,34 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
                 )
             )
             register(alarmAudioService, for: AlarmAudioServiceProtocol.self)
-            print("DEBUG: Successfully registered AlarmAudioService")
             
-            // Register Speech Recognition Service
-            print("DEBUG: Creating SpeechRecognitionService...")
             let speechRecognitionService = SpeechRecognitionService()
             register(speechRecognitionService, for: SpeechRecognitionServiceProtocol.self)
-            print("DEBUG: Successfully registered SpeechRecognitionService")
             
+            print("✅ Audio services ready")
         } catch {
-            print("DEBUG: ERROR in Audio Services: \(error)")
-            print("DEBUG: Audio pipeline services will not be available.")
-            // Continue without audio services for now
+            print("❌ ERROR: Audio Services - \(error)")
         }
-        
-        // MARK: - Phase 7 Gamification Services
+    }
+    
+    @MainActor
+    private func initializeGamificationServices() async {
         do {
-            // updateProgress(6, stage: "Loading Gamification...")
-            print("DEBUG: Creating Gamification Services...")
-            
-            // Register User View Model
-            let userViewModel = UserViewModel()
-            register(userViewModel, for: UserViewModel.self)
-            print("DEBUG: Successfully registered UserViewModel")
-            
-            // Register Streak Tracking Service
             let localStorage: LocalStorageProtocol = resolve()
+            
             let streakTrackingService = StreakTrackingService(storage: localStorage)
             register(streakTrackingService, for: StreakTrackingServiceProtocol.self)
-            print("DEBUG: Successfully registered StreakTrackingService")
             
-            // Register Social Sharing Service
             let socialSharingService = SocialSharingService(storage: localStorage)
             register(socialSharingService, for: SocialSharingServiceProtocol.self)
-            print("DEBUG: Successfully registered SocialSharingService")
             
-        } catch {
-            print("DEBUG: ERROR in Stage 6 - Gamification: \(error)")
-            // updateProgress(6, stage: "Gamification Error - Using Fallback...")
+            print("✅ Gamification services ready")
         }
-        
-        // MARK: - Phase 8 Subscription Services
-        do {
-            // updateProgress(7, stage: "Configuring Subscriptions...")
-            print("DEBUG: Creating Subscription Services...")
-            
-            // Register Subscription Service
-            let subscriptionService = SubscriptionService()
-            register(subscriptionService, for: SubscriptionServiceProtocol.self)
-            print("DEBUG: Successfully registered SubscriptionService")
-            
-            // Register Subscription Manager
-            let localStorage: LocalStorageProtocol = resolve()
-            let subscriptionManager = SubscriptionManager(
-                subscriptionService: subscriptionService,
-                localStorage: localStorage
-            )
-            register(subscriptionManager, for: SubscriptionManagerProtocol.self)
-            print("DEBUG: Successfully registered SubscriptionManager")
-            
-        } catch {
-            print("DEBUG: ERROR in Stage 7 - Subscriptions: \(error)")
-            // updateProgress(7, stage: "Subscription Error - Using Fallback...")
-        }
-        
-        print("DEBUG: All dependencies registered successfully")
-        
-        // Stage 8: Finalization
-        // updateProgress(8, stage: "Ready!")
-        
-        // Mark initialization as complete
-        initializationQueue.sync {
-            self.isInitialized = true
-            print("DEBUG: isInitialized set to true")
-        }
-    } // End of setupDefaultDependencies
+    }
 }
 
 // MARK: - Convenience Properties
 extension DependencyContainer {
-    // Phase 7 Services
     var streakTrackingService: StreakTrackingServiceProtocol {
         resolve()
     }
@@ -333,12 +347,10 @@ extension DependencyContainer {
         resolve()
     }
     
-    // Existing services (for easy access in Phase 7 integration)
     var userViewModel: UserViewModel {
         resolve()
     }
     
-    // Phase 8 Services
     var subscriptionService: SubscriptionServiceProtocol {
         resolve()
     }
@@ -441,22 +453,19 @@ class ContentGenerationService: ContentGenerationServiceProtocol {
     }
     
     func generateAlarmContent(userIntent: String, tone: String, context: [String: String]) async throws -> AlarmContent {
-        // Generate text content using Grok4
         let text = try await aiService.generateMotivationalScript(
             userIntent: userIntent,
             tone: tone,
             context: context
         )
         
-        // Convert to speech using ElevenLabs
-        let voiceId = (ttsService as? ElevenLabsService)?.getVoiceId(for: tone) ?? "default"
+        let voiceId = "21m00Tcm4TlvDq8ikWAM"
         let audioData = try await ttsService.generateSpeech(text: text, voiceId: voiceId)
         
-        // Create metadata
         let metadata = AlarmContentMetadata(
             generatedAt: Date(),
             wordCount: text.split(separator: " ").count,
-            estimatedDuration: TimeInterval(text.count / 10), // Rough estimate: ~10 chars per second
+            estimatedDuration: TimeInterval(text.count / 10),
             voiceId: voiceId,
             tone: tone
         )
@@ -470,24 +479,19 @@ class ContentGenerationService: ContentGenerationServiceProtocol {
     
     func generateContentForIntent(_ intent: Intent) async throws -> GeneratedContent {
         let startTime = Date()
-        
-        // Update status
         currentStatus = .generating(intentId: intent.id, progress: 0.0)
         
         do {
-            // Step 1: Generate text content (60% of progress)
             currentStatus = .generating(intentId: intent.id, progress: 0.2)
             let textContent = try await aiService.generateContentForIntent(intent)
             
             currentStatus = .generating(intentId: intent.id, progress: 0.6)
             
-            // Step 2: Generate audio content (30% of progress)
-            let voiceId = (ttsService as? ElevenLabsService)?.getVoiceId(for: intent.tone.rawValue) ?? "default"
+            let voiceId = "21m00Tcm4TlvDq8ikWAM"
             let audioData = try await ttsService.generateSpeech(text: textContent, voiceId: voiceId)
             
             currentStatus = .generating(intentId: intent.id, progress: 0.9)
             
-            // Step 3: Create metadata and finalize (10% of progress)
             let generationTime = Date().timeIntervalSince(startTime)
             let metadata = ContentMetadata(
                 textContent: textContent,
@@ -506,9 +510,8 @@ class ContentGenerationService: ContentGenerationServiceProtocol {
             
             currentStatus = .completed(intentId: intent.id)
             
-            // Auto-reset status after delay
             Task {
-                try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+                try await Task.sleep(nanoseconds: 2_000_000_000)
                 if case .completed = currentStatus {
                     currentStatus = .idle
                 }
@@ -519,9 +522,8 @@ class ContentGenerationService: ContentGenerationServiceProtocol {
         } catch {
             currentStatus = .failed(intentId: intent.id, error: error)
             
-            // Auto-reset status after delay
             Task {
-                try await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
+                try await Task.sleep(nanoseconds: 5_000_000_000)
                 if case .failed = currentStatus {
                     currentStatus = .idle
                 }
@@ -532,8 +534,6 @@ class ContentGenerationService: ContentGenerationServiceProtocol {
     }
     
     func processIntentQueue() async throws {
-        // This would be implemented to process multiple intents
-        // For now, it's a placeholder for future batch processing
         currentStatus = .idle
     }
     

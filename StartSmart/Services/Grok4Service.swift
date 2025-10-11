@@ -107,7 +107,7 @@ class Grok4Service: Grok4ServiceProtocol {
             prompt: prompt,
             maxTokens: 200,
             temperature: 0.7,
-            model: "grok-beta"
+            model: "grok-4-fast-reasoning"
         )
         
         let response = try await sendRequest(request)
@@ -135,7 +135,7 @@ class Grok4Service: Grok4ServiceProtocol {
             prompt: prompt,
             maxTokens: 250, // Slightly more for persona-based scripts
             temperature: 0.8, // Higher creativity for personality
-            model: "grok-beta"
+            model: "grok-4-fast-reasoning"
         )
         
         let response = try await sendRequest(request)
@@ -163,7 +163,7 @@ class Grok4Service: Grok4ServiceProtocol {
                     prompt: prompt,
                     maxTokens: calculateTokensForTone(intent.tone),
                     temperature: getTemperatureForTone(intent.tone),
-                    model: "grok-beta"
+                    model: "grok-4-fast-reasoning"
                 )
                 
                 let response = try await sendRequestWithTimeout(request)

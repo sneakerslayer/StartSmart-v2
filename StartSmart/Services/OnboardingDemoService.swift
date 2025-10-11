@@ -65,8 +65,9 @@ class OnboardingDemoService: OnboardingDemoServiceProtocol {
         grok4Service: Grok4ServiceProtocol? = nil,
         elevenLabsService: ElevenLabsServiceProtocol? = nil
     ) {
-        self.grok4Service = grok4Service ?? DependencyContainer.shared.resolve()
-        self.elevenLabsService = elevenLabsService ?? DependencyContainer.shared.resolve()
+        // Use provided services or create new instances to avoid circular dependencies
+        self.grok4Service = grok4Service ?? Grok4Service(apiKey: ServiceConfiguration.APIKeys.grok4)
+        self.elevenLabsService = elevenLabsService ?? ElevenLabsService(apiKey: ServiceConfiguration.APIKeys.elevenLabs)
     }
     
     // MARK: - Demo Content Generation

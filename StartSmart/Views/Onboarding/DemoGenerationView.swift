@@ -65,6 +65,8 @@ struct DemoGenerationView: View {
             .scrollContentBackground(.hidden) // Hide default background for better bounce effect
         }
         .onAppear {
+            // Initialize demo service
+            demoService = OnboardingDemoService()
             startDemoGeneration()
         }
     }
@@ -182,7 +184,8 @@ struct DemoGenerationView: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 60, weight: .medium))
                     .foregroundColor(.green)
-                    .modifier(BounceAnimationModifier(animate: showContent))
+                    .scaleEffect(showContent ? 1.0 : 0.95)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: showContent)
             }
             .scaleEffect(showContent ? 1.0 : 0.5)
             .animation(.spring(response: 0.6, dampingFraction: 0.6), value: showContent)

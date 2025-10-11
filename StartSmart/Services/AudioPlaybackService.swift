@@ -68,7 +68,7 @@ enum AudioSessionConfiguration {
         case .preview:
             return [.mixWithOthers]
         case .background:
-            return [.allowBluetooth, .allowBluetoothA2DP]
+            return [.allowBluetoothHFP, .allowBluetoothA2DP]
         }
     }
 }
@@ -109,9 +109,8 @@ class AudioPlaybackService: NSObject, @preconcurrency AudioPlaybackServiceProtoc
     deinit {
         audioPlayer?.stop()
         audioPlayer = nil
-        Task { @MainActor [weak self] in
-            self?.stopPlaybackTimer()
-        }
+        playbackTimer?.invalidate()
+        playbackTimer = nil
         cancellables.removeAll()
     }
     
@@ -277,7 +276,6 @@ class AudioPlaybackService: NSObject, @preconcurrency AudioPlaybackServiceProtoc
         
         playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            
             Task { @MainActor in
                 self.currentTime = self.audioPlayer?.currentTime ?? 0
             }
@@ -338,7 +336,8 @@ class AudioPlaybackService: NSObject, @preconcurrency AudioPlaybackServiceProtoc
 extension AudioPlaybackService: AVAudioPlayerDelegate {
     
     nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
             if flag {
                 self.playbackState = .idle
             } else {
@@ -351,7 +350,8 @@ extension AudioPlaybackService: AVAudioPlayerDelegate {
     }
     
     nonisolated func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
             let errorMessage = error?.localizedDescription ?? "Unknown decode error"
             self.playbackState = .error(errorMessage)
             self.stopPlaybackTimer()

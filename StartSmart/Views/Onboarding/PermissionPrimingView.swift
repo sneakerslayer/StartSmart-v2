@@ -77,7 +77,8 @@ struct PermissionPrimingView: View {
                 Image(systemName: "bell.fill")
                     .font(.system(size: 24, weight: .medium)) // Standardized size
                     .foregroundColor(.white)
-                    .modifier(BounceAnimationModifier(animate: animateElements))
+                    .scaleEffect(animateElements ? 1.0 : 0.95)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: animateElements)
             }
             
             // Title

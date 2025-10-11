@@ -7,7 +7,7 @@ struct FeatureGateView<Content: View>: View {
     let source: String
     let onUpgrade: (() -> Void)?
     
-    @StateObject private var subscriptionManager = DependencyContainer.shared.resolve() as SubscriptionManager
+    @State private var subscriptionManager: SubscriptionManager? = nil
     @State private var showPaywall = false
     
     init(
@@ -24,8 +24,9 @@ struct FeatureGateView<Content: View>: View {
     
     var body: some View {
         Group {
-            if let startSmartFeature = feature.startSmartFeature,
-               subscriptionManager.canAccessFeature(startSmartFeature) {
+            if let manager = subscriptionManager,
+               let startSmartFeature = feature.startSmartFeature,
+               manager.canAccessFeature(startSmartFeature) {
                 content
             } else {
                 premiumFeatureOverlay
@@ -33,9 +34,19 @@ struct FeatureGateView<Content: View>: View {
         }
         .presentPaywall(
             isPresented: $showPaywall,
-            configuration: subscriptionManager.getOptimalPaywallConfiguration(for: feature, source: source),
+            configuration: subscriptionManager?.getOptimalPaywallConfiguration(for: feature, source: source) ?? .default,
             source: source
         )
+        .onAppear {
+            if subscriptionManager == nil {
+                DispatchQueue.global(qos: .userInitiated).async {
+                    let resolved: SubscriptionManager = DependencyContainer.shared.resolve()
+                    DispatchQueue.main.async {
+                        self.subscriptionManager = resolved
+                    }
+                }
+            }
+        }
     }
     
     private var premiumFeatureOverlay: some View {
@@ -59,8 +70,9 @@ struct FeatureGateView<Content: View>: View {
             
             // Upgrade Button
             Button {
-                if let startSmartFeature = feature.startSmartFeature,
-                   subscriptionManager.presentPaywallIfNeeded(for: startSmartFeature, source: source) {
+                if let manager = subscriptionManager,
+                   let startSmartFeature = feature.startSmartFeature,
+                   manager.presentPaywallIfNeeded(for: startSmartFeature, source: source) {
                     showPaywall = true
                     onUpgrade?()
                 }
@@ -100,7 +112,7 @@ struct InlineFeatureGate: View {
     let source: String
     let onUpgrade: (() -> Void)?
     
-    @StateObject private var subscriptionManager = DependencyContainer.shared.resolve() as SubscriptionManager
+    @State private var subscriptionManager: SubscriptionManager? = nil
     @State private var showPaywall = false
     
     init(
@@ -135,8 +147,9 @@ struct InlineFeatureGate: View {
             
             // Upgrade Button
             Button {
-                if let startSmartFeature = feature.startSmartFeature,
-                   subscriptionManager.presentPaywallIfNeeded(for: startSmartFeature, source: source) {
+                if let manager = subscriptionManager,
+                   let startSmartFeature = feature.startSmartFeature,
+                   manager.presentPaywallIfNeeded(for: startSmartFeature, source: source) {
                     showPaywall = true
                     onUpgrade?()
                 }
@@ -161,9 +174,19 @@ struct InlineFeatureGate: View {
         .cornerRadius(12)
         .presentPaywall(
             isPresented: $showPaywall,
-            configuration: subscriptionManager.getOptimalPaywallConfiguration(for: feature, source: source),
+            configuration: subscriptionManager?.getOptimalPaywallConfiguration(for: feature, source: source) ?? .default,
             source: source
         )
+        .onAppear {
+            if subscriptionManager == nil {
+                DispatchQueue.global(qos: .userInitiated).async {
+                    let resolved: SubscriptionManager = DependencyContainer.shared.resolve()
+                    DispatchQueue.main.async {
+                        self.subscriptionManager = resolved
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -174,7 +197,7 @@ struct FeatureToggle: View {
     let onToggle: (Bool) -> Void
     let source: String
     
-    @StateObject private var subscriptionManager = DependencyContainer.shared.resolve() as SubscriptionManager
+    @State private var subscriptionManager: SubscriptionManager? = nil
     @State private var showPaywall = false
     
     init(
@@ -197,7 +220,7 @@ struct FeatureToggle: View {
                         .font(.body)
                         .fontWeight(.medium)
                     
-                    if feature.isPremiumOnly && !subscriptionManager.canAccessFeature(feature.startSmartFeature ?? .unlimitedAlarms) {
+                    if feature.isPremiumOnly && !(subscriptionManager?.canAccessFeature(feature.startSmartFeature ?? .unlimitedAlarms) ?? false) {
                         Image(systemName: "crown.fill")
                             .foregroundColor(.yellow)
                             .font(.caption)
@@ -211,15 +234,16 @@ struct FeatureToggle: View {
             
             Spacer()
             
-            if subscriptionManager.canAccessFeature(feature.startSmartFeature ?? .unlimitedAlarms) {
+            if (subscriptionManager?.canAccessFeature(feature.startSmartFeature ?? .unlimitedAlarms) ?? false) {
                 Toggle("", isOn: Binding(
                     get: { isEnabled },
                     set: onToggle
                 ))
             } else {
                 Button {
-                    if let startSmartFeature = feature.startSmartFeature,
-                       subscriptionManager.presentPaywallIfNeeded(for: startSmartFeature, source: source) {
+                    if let manager = subscriptionManager,
+                       let startSmartFeature = feature.startSmartFeature,
+                       manager.presentPaywallIfNeeded(for: startSmartFeature, source: source) {
                         showPaywall = true
                     }
                 } label: {
@@ -236,7 +260,7 @@ struct FeatureToggle: View {
         }
         .presentPaywall(
             isPresented: $showPaywall,
-            configuration: subscriptionManager.getOptimalPaywallConfiguration(for: feature, source: source),
+            configuration: subscriptionManager?.getOptimalPaywallConfiguration(for: feature, source: source) ?? .default,
             source: source
         )
     }
@@ -244,14 +268,15 @@ struct FeatureToggle: View {
 
 // MARK: - Alarm Count Badge
 struct AlarmCountBadge: View {
-    @StateObject private var subscriptionManager = DependencyContainer.shared.resolve() as SubscriptionManager
+    @State private var subscriptionManager: SubscriptionManager? = nil
     @State private var showPaywall = false
     
     var body: some View {
-        if !subscriptionManager.currentSubscriptionStatus.isPremium {
-            HStack(spacing: 8) {
+        Group {
+            if let manager = subscriptionManager, !manager.currentSubscriptionStatus.isPremium {
+                HStack(spacing: 8) {
                 VStack(alignment: .leading, spacing: 2) {
-                    if let remaining = subscriptionManager.getRemainingAlarms() {
+                    if let remaining = manager.getRemainingAlarms() {
                         Text("\(remaining) alarms left")
                             .font(.caption)
                             .fontWeight(.medium)
@@ -284,19 +309,32 @@ struct AlarmCountBadge: View {
                     )
                     .cornerRadius(8)
                 }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color.gray.opacity(0.05))
-            .cornerRadius(10)
-            .presentPaywall(
-                isPresented: $showPaywall,
-                configuration: subscriptionManager.getOptimalPaywallConfiguration(
-                    for: .unlimitedAlarms,
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.gray.opacity(0.05))
+                .cornerRadius(10)
+                .presentPaywall(
+                    isPresented: $showPaywall,
+                    configuration: manager.getOptimalPaywallConfiguration(
+                        for: .unlimitedAlarms,
+                        source: "alarm_count_badge"
+                    ),
                     source: "alarm_count_badge"
-                ),
-                source: "alarm_count_badge"
-            )
+                )
+            } else {
+                EmptyView()
+            }
+        }
+        .onAppear {
+            if subscriptionManager == nil {
+                DispatchQueue.global(qos: .userInitiated).async {
+                    let resolved: SubscriptionManager = DependencyContainer.shared.resolve()
+                    DispatchQueue.main.async {
+                        self.subscriptionManager = resolved
+                    }
+                }
+            }
         }
     }
 }
@@ -306,7 +344,7 @@ struct VoiceSelectionGate: View {
     let selectedVoice: AlarmTone
     let onVoiceChange: (AlarmTone) -> Void
     
-    @StateObject private var subscriptionManager = DependencyContainer.shared.resolve() as SubscriptionManager
+    @State private var subscriptionManager: SubscriptionManager? = nil
     @State private var showPaywall = false
     
     var body: some View {
@@ -323,17 +361,30 @@ struct VoiceSelectionGate: View {
         }
         .presentPaywall(
             isPresented: $showPaywall,
-            configuration: subscriptionManager.getOptimalPaywallConfiguration(
+            configuration: subscriptionManager?.getOptimalPaywallConfiguration(
                 for: .allVoices,
                 source: "voice_selection"
-            ),
+            ) ?? .default,
             source: "voice_selection"
         )
+        .task {
+            if subscriptionManager == nil {
+                await withCheckedContinuation { continuation in
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        let resolved: SubscriptionManager = DependencyContainer.shared.resolve()
+                        DispatchQueue.main.async {
+                            self.subscriptionManager = resolved
+                            continuation.resume()
+                        }
+                    }
+                }
+            }
+        }
     }
     
     private func voiceOptionButton(_ tone: AlarmTone) -> some View {
         let isSelected = selectedVoice == tone
-        let hasAllVoicesAccess = subscriptionManager.canAccessFeature(.allVoices)
+        let hasAllVoicesAccess = subscriptionManager?.canAccessFeature(.allVoices) ?? false
         let isLocked = tone != .energetic && !hasAllVoicesAccess
         
         return Button(action: {

@@ -18,7 +18,7 @@ struct AccountCreationView: View {
     let onComplete: () -> Void
     
     @State private var animateElements = false
-    @State private var showAuthOptions = false
+    @State private var showAuthOptions = true // Set to true immediately for testing
     
     var body: some View {
         GeometryReader { geometry in
@@ -78,7 +78,8 @@ struct AccountCreationView: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 40, weight: .medium))
                     .foregroundColor(.green)
-                    .modifier(BounceAnimationModifier(animate: animateElements))
+                    .scaleEffect(animateElements ? 1.0 : 0.95)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: animateElements)
             }
             
             // Title
@@ -175,9 +176,12 @@ struct AccountCreationView: View {
             VStack(spacing: 12) {
                 // TEMPORARY: Skip sign-in button for testing
                 Button(action: {
-                    print("🚀 TEMPORARY: Skipping sign-in for paywall testing")
+                    print("🚀 TEMPORARY: Skip Sign-In button tapped!")
+                    print("🚀 About to call saveOnboardingData()")
                     saveOnboardingData()
+                    print("🚀 About to call onComplete()")
                     onComplete()
+                    print("🚀 Skip Sign-In flow completed")
                 }) {
                     HStack {
                         Image(systemName: "arrow.right.circle.fill")
@@ -524,21 +528,6 @@ struct AccountCreationView_Previews: PreviewProvider {
             )
         )
         .preferredColorScheme(.dark)
-    }
-}
-
-// MARK: - Bounce Animation Modifier
-
-struct BounceAnimationModifier: ViewModifier {
-    let animate: Bool
-    
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(animate ? 1.2 : 1.0)
-            .animation(
-                .spring(response: 0.6, dampingFraction: 0.6).repeatForever(autoreverses: true),
-                value: animate
-            )
     }
 }
 
