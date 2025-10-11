@@ -222,6 +222,22 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
             print("✅ Subscription services ready")
         }
         
+        // 5. Notifications & Alarms (needed for alarm functionality)
+        do {
+            let notificationService = NotificationService()
+            register(notificationService, for: NotificationServiceProtocol.self)
+            
+            // Note: AlarmRepository needs a simplified AlarmSchedulingService
+            // Full audio generation will be deferred to Stage 2
+            let alarmRepository = AlarmRepository(
+                notificationService: notificationService,
+                schedulingService: nil  // Will be set up properly in Stage 2
+            )
+            register(alarmRepository, for: AlarmRepositoryProtocol.self)
+            
+            print("✅ Notification & Alarm services ready")
+        }
+        
         // ✅ MARK STAGE 1 COMPLETE - UI CAN PROCEED
         let stage1Time = Date().timeIntervalSince(startTime)
         initializationQueue.sync {

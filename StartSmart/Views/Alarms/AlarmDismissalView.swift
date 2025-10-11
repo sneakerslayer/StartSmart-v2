@@ -238,10 +238,10 @@ class AlarmAudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
             label: "Wake Up!",
             isEnabled: true,
             repeatDays: [],
+            tone: .energetic,
             snoozeEnabled: true,
-            tone: .motivational,
-            useTraditionalSound: false,
             traditionalSound: .classic,
+            useTraditionalSound: false,
             useAIScript: true
         ),
         onDismiss: {}

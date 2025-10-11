@@ -26,10 +26,15 @@ struct DeferredView<Content: View>: View {
 struct MainAppView: View {
     private let logger = Logger(subsystem: "com.startsmart.mobile", category: "UI")
     @StateObject private var appState = AppState()
-    @StateObject private var alarmViewModel = AlarmViewModel()
     @StateObject private var container = DependencyContainer.shared
     @State private var showingAlarmDismissalSheet = false
     @State private var triggeredAlarmId: String?
+    
+    // Initialize AlarmViewModel with proper dependencies from container
+    @StateObject private var alarmViewModel: AlarmViewModel = {
+        let repository: AlarmRepositoryProtocol = DependencyContainer.shared.resolve()
+        return AlarmViewModel(alarmRepository: repository)
+    }()
 
     var body: some View {
         ZStack {
