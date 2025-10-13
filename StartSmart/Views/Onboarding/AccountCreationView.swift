@@ -174,35 +174,6 @@ struct AccountCreationView: View {
                 .foregroundColor(.white.opacity(0.9))
             
             VStack(spacing: 12) {
-                // TEMPORARY: Skip sign-in button for testing
-                Button(action: {
-                    print("🚀 TEMPORARY: Skip Sign-In button tapped!")
-                    print("🚀 About to call saveOnboardingData()")
-                    saveOnboardingData()
-                    print("🚀 About to call onComplete()")
-                    onComplete()
-                    print("🚀 Skip Sign-In flow completed")
-                }) {
-                    HStack {
-                        Image(systemName: "arrow.right.circle.fill")
-                            .font(.system(size: 20, weight: .medium))
-                        Text("Skip Sign-In (Testing)")
-                            .font(.system(size: 16, weight: .semibold))
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(
-                        LinearGradient(
-                            colors: [.orange, .red],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
-                .disabled(isSigningIn)
-                
                 // Sign in with Apple
                 SignInWithAppleButton(.signUp) { request in
                     // Configure request
