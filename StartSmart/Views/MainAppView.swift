@@ -27,8 +27,7 @@ struct MainAppView: View {
     private let logger = Logger(subsystem: "com.startsmart.mobile", category: "UI")
     @StateObject private var appState = AppState()
     @StateObject private var container = DependencyContainer.shared
-    @State private var showingAlarmDismissalSheet = false
-    @State private var triggeredAlarmId: String?
+    @StateObject private var alarmCoordinator = AlarmNotificationCoordinator.shared
     
     // Create AlarmViewModel lazily - it will use the repository from DependencyContainer once initialized
     @StateObject private var alarmViewModel: AlarmViewModel = {
@@ -72,17 +71,25 @@ struct MainAppView: View {
             }
             .accentColor(.blue)
             .environmentObject(appState)
-            .onReceive(NotificationCenter.default.publisher(for: .alarmDismissed)) { notification in
-                handleAlarmDismissed(notification)
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .alarmTriggered)) { notification in
-                handleAlarmTriggered(notification)
-            }
-            .sheet(isPresented: $showingAlarmDismissalSheet) {
-                if let alarmId = triggeredAlarmId {
-                    if let alarm = alarmViewModel.alarms.first(where: { $0.id.uuidString == alarmId }) {
+            .sheet(isPresented: $alarmCoordinator.shouldShowDismissalSheet) {
+                if let alarmId = alarmCoordinator.pendingAlarmId {
+                    // Ensure alarms are loaded
+                    if alarmViewModel.alarms.isEmpty {
+                        ProgressView("Loading alarm...")
+                            .onAppear {
+                                logger.info("⏳ Alarms not loaded, loading now...")
+                                alarmViewModel.loadAlarms()
+                                // Give it a moment to load
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    // Force refresh of sheet if still empty
+                                    if alarmViewModel.alarms.isEmpty {
+                                        logger.error("❌ Alarms still empty after loading")
+                                    }
+                                }
+                            }
+                    } else if let alarm = alarmViewModel.alarms.first(where: { $0.id.uuidString == alarmId }) {
                         AlarmDismissalView(alarm: alarm) {
-                            showingAlarmDismissalSheet = false
+                            alarmCoordinator.clearPendingAlarm()
                         }
                     } else {
                         // Fallback if alarm not found
@@ -99,7 +106,7 @@ struct MainAppView: View {
                                 .foregroundColor(.secondary)
                             
                             Button("Dismiss") {
-                                showingAlarmDismissalSheet = false
+                                alarmCoordinator.clearPendingAlarm()
                             }
                             .buttonStyle(.borderedProminent)
                         }
@@ -135,45 +142,6 @@ struct MainAppView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .animation(.easeInOut, value: container.isFullyInitialized)
             }
-        }
-    }
-    
-    // MARK: - Alarm Notification Handlers
-    private func handleAlarmDismissed(_ notification: Notification) {
-        guard let alarmId = notification.userInfo?["alarmId"] as? String else { return }
-        logger.info("🔔 Alarm dismissed: \(alarmId)")
-        
-        // Ensure alarms are loaded before showing dismissal sheet
-        if alarmViewModel.alarms.isEmpty {
-            logger.info("⏳ Alarms not loaded, loading now...")
-            alarmViewModel.loadAlarms()
-            // Wait a moment for alarms to load
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.triggeredAlarmId = alarmId
-                self.showingAlarmDismissalSheet = true
-            }
-        } else {
-            triggeredAlarmId = alarmId
-            showingAlarmDismissalSheet = true
-        }
-    }
-    
-    private func handleAlarmTriggered(_ notification: Notification) {
-        guard let alarmId = notification.userInfo?["alarmId"] as? String else { return }
-        logger.info("🔔 Alarm triggered: \(alarmId)")
-        
-        // Ensure alarms are loaded before showing dismissal sheet
-        if alarmViewModel.alarms.isEmpty {
-            logger.info("⏳ Alarms not loaded, loading now...")
-            alarmViewModel.loadAlarms()
-            // Wait a moment for alarms to load
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.triggeredAlarmId = alarmId
-                self.showingAlarmDismissalSheet = true
-            }
-        } else {
-            triggeredAlarmId = alarmId
-            showingAlarmDismissalSheet = true
         }
     }
 }

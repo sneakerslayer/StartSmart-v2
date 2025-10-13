@@ -101,7 +101,7 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
         }
         fatalError("Dependency \(key) not registered")
     }
-    
+
     // ✅ FIXED: Safe resolve that waits for full initialization
     func resolveSafe<T>() async -> T? {
         let key = String(describing: T.self)
@@ -292,9 +292,9 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
             register(elevenLabsService, for: ElevenLabsServiceProtocol.self)
             
             let contentService = ContentGenerationService(
-                aiService: grok4Service,
-                ttsService: elevenLabsService
-            )
+                    aiService: grok4Service,
+                    ttsService: elevenLabsService
+                )
             register(contentService, for: ContentGenerationServiceProtocol.self)
             
             print("✅ AI services ready")
@@ -313,19 +313,19 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
             let grok4Service: Grok4ServiceProtocol = resolve()
             let elevenLabsService: ElevenLabsServiceProtocol = resolve()
             let audioPipelineService = AudioPipelineService(
-                aiService: grok4Service,
-                ttsService: elevenLabsService,
-                cacheService: audioCacheService
-            )
+                    aiService: grok4Service,
+                    ttsService: elevenLabsService,
+                    cacheService: audioCacheService
+                )
             register(audioPipelineService, for: AudioPipelineServiceProtocol.self)
             
             let alarmAudioService = AlarmAudioService(
-                audioPipelineService: audioPipelineService,
-                intentRepository: IntentRepository(),
-                alarmRepository: AlarmRepository(
-                    notificationService: NotificationService()
+                    audioPipelineService: audioPipelineService,
+                    intentRepository: IntentRepository(),
+                    alarmRepository: AlarmRepository(
+                        notificationService: NotificationService()
+                    )
                 )
-            )
             register(alarmAudioService, for: AlarmAudioServiceProtocol.self)
             
             let speechRecognitionService = SpeechRecognitionService()

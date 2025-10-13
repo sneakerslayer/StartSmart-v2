@@ -23,6 +23,9 @@ struct StartSmartApp: App {
         // Configure notification categories for alarm actions
         configureNotificationCategories()
         
+        // Initialize alarm notification coordinator to handle notifications even when app is in background
+        _ = AlarmNotificationCoordinator.shared
+        
         // NOTE: Defer heavy dependency initialization to avoid blocking UI responsiveness during startup.
         // Full initialization is triggered later by specific features as needed.
     }
