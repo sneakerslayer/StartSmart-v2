@@ -330,12 +330,12 @@ enum TraditionalAlarmSound: String, CaseIterable, Codable {
     
     var soundFileName: String {
         switch self {
-        case .bark: return "Bark.mp3"
-        case .bells: return "Bells.mp3"
-        case .buzzer: return "Buzzer.mp3"
-        case .classic: return "Classic.mp3"
-        case .thunderstorm: return "Thunderstorm.mp3"
-        case .warning: return "Warning.mp3"
+        case .bark: return "Bark.caf"
+        case .bells: return "Bells.caf"
+        case .buzzer: return "Buzzer.caf"
+        case .classic: return "Classic.caf"
+        case .thunderstorm: return "Thunderstorm.caf"
+        case .warning: return "Warning.caf"
         }
     }
     
@@ -352,12 +352,12 @@ enum TraditionalAlarmSound: String, CaseIterable, Codable {
     
     var systemSound: UNNotificationSound {
         switch self {
-        case .bark: return UNNotificationSound(named: UNNotificationSoundName("Bark.mp3"))
-        case .bells: return UNNotificationSound(named: UNNotificationSoundName("Bells.mp3"))
-        case .buzzer: return UNNotificationSound(named: UNNotificationSoundName("Buzzer.mp3"))
-        case .classic: return UNNotificationSound(named: UNNotificationSoundName("Classic.mp3"))
-        case .thunderstorm: return UNNotificationSound(named: UNNotificationSoundName("Thunderstorm.mp3"))
-        case .warning: return UNNotificationSound(named: UNNotificationSoundName("Warning.mp3"))
+        case .bark: return UNNotificationSound(named: UNNotificationSoundName("Bark.caf"))
+        case .bells: return UNNotificationSound(named: UNNotificationSoundName("Bells.caf"))
+        case .buzzer: return UNNotificationSound(named: UNNotificationSoundName("Buzzer.caf"))
+        case .classic: return UNNotificationSound(named: UNNotificationSoundName("Classic.caf"))
+        case .thunderstorm: return UNNotificationSound(named: UNNotificationSoundName("Thunderstorm.caf"))
+        case .warning: return UNNotificationSound(named: UNNotificationSoundName("Warning.caf"))
         }
     }
 }

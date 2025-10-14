@@ -1,44 +1,45 @@
 import Foundation
 import Combine
+import AlarmKit
+import os.log
 
-/// Coordinates alarm notifications between the system and the app UI
-/// This ensures notification taps are handled even if the app wasn't running
+/// Coordinates AlarmKit alarm events with the app UI
+/// Handles alarm presentations and user interactions
 @MainActor
 class AlarmNotificationCoordinator: ObservableObject {
     static let shared = AlarmNotificationCoordinator()
     
+    private let logger = Logger(subsystem: "com.startsmart.mobile", category: "AlarmNotificationCoordinator")
+    private let alarmKitManager = AlarmKitManager.shared
+    
     @Published var pendingAlarmId: String?
     @Published var shouldShowDismissalSheet = false
     
+    private var cancellables = Set<AnyCancellable>()
+    
     private init() {
-        // Listen for alarm notifications from NotificationDelegate
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleAlarmTriggered(_:)),
-            name: .alarmTriggered,
-            object: nil
-        )
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleAlarmDismissed(_:)),
-            name: .alarmDismissed,
-            object: nil
-        )
+        logger.info("🔔 AlarmNotificationCoordinator initialized")
+        setupAlarmKitObservers()
     }
     
-    @objc private func handleAlarmTriggered(_ notification: Notification) {
-        guard let alarmId = notification.userInfo?["alarmId"] as? String else { return }
-        print("🔔 AlarmNotificationCoordinator: Alarm triggered: \(alarmId)")
-        
-        pendingAlarmId = alarmId
-        shouldShowDismissalSheet = true
+    private func setupAlarmKitObservers() {
+        // Observe AlarmKit alarm updates
+        Task {
+            for await _ in alarmKitManager.alarmManager.alarmUpdates {
+                // Handle alarm events (alert, snooze, dismiss)
+                await handleAlarmKitUpdates()
+            }
+        }
     }
     
-    @objc private func handleAlarmDismissed(_ notification: Notification) {
-        guard let alarmId = notification.userInfo?["alarmId"] as? String else { return }
-        print("🔔 AlarmNotificationCoordinator: Alarm dismissed: \(alarmId)")
-        
+    private func handleAlarmKitUpdates() async {
+        // This will be called when AlarmKit alarms trigger
+        // We can show the dismissal sheet when needed
+        logger.info("🔔 AlarmKit alarm update received")
+    }
+    
+    func showAlarmDismissal(for alarmId: String) {
+        logger.info("🔔 Showing alarm dismissal for: \(alarmId)")
         pendingAlarmId = alarmId
         shouldShowDismissalSheet = true
     }

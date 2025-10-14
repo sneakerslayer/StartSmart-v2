@@ -61,7 +61,6 @@ final class AlarmRepository: AlarmRepositoryProtocol, ObservableObject {
     
     // MARK: - Dependencies
     private let storageManager: StorageManager
-    private let notificationService: NotificationServiceProtocol?
     private let schedulingService: AlarmSchedulingServiceProtocol?
     private var cancellables = Set<AnyCancellable>()
     
@@ -72,13 +71,11 @@ final class AlarmRepository: AlarmRepositoryProtocol, ObservableObject {
     // MARK: - Initialization
     init(
         storageManager: StorageManager = StorageManager(),
-        notificationService: NotificationServiceProtocol? = nil,
         schedulingService: AlarmSchedulingServiceProtocol? = nil,
         maxAlarms: Int = 50,
         autoSyncEnabled: Bool = true
     ) {
         self.storageManager = storageManager
-        self.notificationService = notificationService
         self.schedulingService = schedulingService
         self.maxAlarms = maxAlarms
         self.autoSyncEnabled = autoSyncEnabled

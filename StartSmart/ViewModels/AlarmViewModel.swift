@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import AlarmKit
 
 // MARK: - Alarm View Model
 @MainActor
@@ -10,6 +11,7 @@ class AlarmViewModel: ObservableObject {
     @Published var selectedAlarm: Alarm?
     
     private let alarmRepository: AlarmRepositoryProtocol
+    private let alarmKitManager = AlarmKitManager.shared
     private var cancellables = Set<AnyCancellable>()
     
     @Injected private var contentService: ContentGenerationServiceProtocol
@@ -56,7 +58,13 @@ class AlarmViewModel: ObservableObject {
     func addAlarm(_ alarm: Alarm) {
         Task {
             do {
+                // Save to local repository first
                 try await alarmRepository.saveAlarm(alarm)
+                
+                // Schedule with AlarmKit for reliable lock screen alarms
+                if alarm.isEnabled {
+                    try await alarmKitManager.scheduleAlarm(for: alarm)
+                }
                 
                 // Record alarm creation for statistics
                 userViewModel.recordAlarmCreated()
@@ -72,7 +80,16 @@ class AlarmViewModel: ObservableObject {
     func updateAlarm(_ alarm: Alarm) {
         Task {
             do {
+                // Update local repository first
                 try await alarmRepository.updateAlarm(alarm)
+                
+                // Update AlarmKit scheduling
+                if alarm.isEnabled {
+                    try await alarmKitManager.scheduleAlarm(for: alarm)
+                } else {
+                    try await alarmKitManager.cancelAlarm(withId: alarm.id.uuidString)
+                }
+                
             } catch {
                 await MainActor.run {
                     errorMessage = "Failed to update alarm: \(error.localizedDescription)"
@@ -84,7 +101,12 @@ class AlarmViewModel: ObservableObject {
     func deleteAlarm(_ alarm: Alarm) {
         Task {
             do {
+                // Cancel AlarmKit alarm first
+                try await alarmKitManager.cancelAlarm(withId: alarm.id.uuidString)
+                
+                // Delete from local repository
                 try await alarmRepository.deleteAlarm(alarm)
+                
             } catch {
                 await MainActor.run {
                     errorMessage = "Failed to delete alarm: \(error.localizedDescription)"
@@ -111,7 +133,17 @@ class AlarmViewModel: ObservableObject {
     func toggleAlarm(_ alarm: Alarm) {
         Task {
             do {
+                // Update local repository first
                 try await alarmRepository.toggleAlarm(withId: alarm.id)
+                
+                // Update AlarmKit scheduling based on new state
+                let updatedAlarm = alarms.first { $0.id == alarm.id } ?? alarm
+                if updatedAlarm.isEnabled {
+                    try await alarmKitManager.scheduleAlarm(for: updatedAlarm)
+                } else {
+                    try await alarmKitManager.cancelAlarm(withId: alarm.id.uuidString)
+                }
+                
             } catch {
                 await MainActor.run {
                     errorMessage = "Failed to toggle alarm: \(error.localizedDescription)"
@@ -123,7 +155,12 @@ class AlarmViewModel: ObservableObject {
     func snoozeAlarm(_ alarm: Alarm) {
         Task {
             do {
+                // Update local repository first
                 try await alarmRepository.snoozeAlarm(withId: alarm.id)
+                
+                // Snooze AlarmKit alarm
+                try await alarmKitManager.snoozeAlarm(withId: alarm.id.uuidString, duration: alarm.snoozeDuration)
+                
             } catch {
                 await MainActor.run {
                     errorMessage = "Failed to snooze alarm: \(error.localizedDescription)"
@@ -135,7 +172,13 @@ class AlarmViewModel: ObservableObject {
     func snoozeAlarm(_ alarmId: UUID) {
         Task {
             do {
+                // Update local repository first
                 try await alarmRepository.snoozeAlarm(withId: alarmId)
+                
+                // Find alarm for snooze duration and snooze AlarmKit alarm
+                if let alarm = alarms.first(where: { $0.id == alarmId }) {
+                    try await alarmKitManager.snoozeAlarm(withId: alarmId.uuidString, duration: alarm.snoozeDuration)
+                }
                 
                 // Record snooze for statistics
                 userViewModel.recordSnooze()
@@ -160,7 +203,11 @@ class AlarmViewModel: ObservableObject {
     func dismissAlarm(_ alarmId: UUID, method: StreakEvent.DismissMethod = .button) {
         Task {
             do {
+                // Update local repository first
                 try await alarmRepository.dismissAlarm(withId: alarmId)
+                
+                // Dismiss AlarmKit alarm
+                try await alarmKitManager.dismissAlarm(withId: alarmId.uuidString)
                 
                 // Record successful wake-up for statistics
                 userViewModel.recordSuccessfulWakeUp()

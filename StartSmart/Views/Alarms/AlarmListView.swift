@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Alarm List View
 struct AlarmListView: View {
     @EnvironmentObject private var alarmViewModel: AlarmViewModel
-    @StateObject private var notificationService = NotificationService()
+    @StateObject private var alarmKitManager = AlarmKitManager.shared
     @State private var showingAddAlarm = false
     @State private var showingPermissionView = false
     @State private var selectedAlarm: Alarm?

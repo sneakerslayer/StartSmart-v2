@@ -31,10 +31,9 @@ struct MainAppView: View {
     
     // Create AlarmViewModel lazily - it will use the repository from DependencyContainer once initialized
     @StateObject private var alarmViewModel: AlarmViewModel = {
-        // Create with a repository that has NotificationService
-        let notificationService = NotificationService()
-        let repository = AlarmRepository(notificationService: notificationService)
-        return AlarmViewModel(alarmRepository: repository)
+        // Create with AlarmKit-based repository
+        let alarmRepository = AlarmRepository()  // AlarmKit handles scheduling
+        return AlarmViewModel(alarmRepository: alarmRepository)
     }()
 
     var body: some View {
@@ -77,6 +76,8 @@ struct MainAppView: View {
                     if alarmViewModel.alarms.isEmpty {
                         ProgressView("Loading alarm...")
                             .onAppear {
+                                logger.info("📢 ========== ALARM SHEET TRIGGERED ==========")
+                                logger.info("📋 Pending Alarm ID: \(alarmId)")
                                 logger.info("⏳ Alarms not loaded, loading now...")
                                 alarmViewModel.loadAlarms()
                                 // Give it a moment to load
@@ -88,9 +89,22 @@ struct MainAppView: View {
                                 }
                             }
                     } else if let alarm = alarmViewModel.alarms.first(where: { $0.id.uuidString == alarmId }) {
-                        AlarmDismissalView(alarm: alarm) {
-                            alarmCoordinator.clearPendingAlarm()
-                        }
+                        AlarmView(alarm: alarm)
+                            .onAppear {
+                                logger.info("📢 ========== ALARM SHEET TRIGGERED ==========")
+                                logger.info("✅ Found alarm: '\(alarm.label)'")
+                                logger.info("🔧 Alarm Settings:")
+                                logger.info("   - ID: \(alarm.id.uuidString)")
+                                logger.info("   - useTraditionalSound: \(alarm.useTraditionalSound)")
+                                logger.info("   - traditionalSound: \(alarm.traditionalSound.displayName)")
+                                logger.info("   - useAIScript: \(alarm.useAIScript)")
+                                logger.info("   - hasCustomAudio: \(alarm.hasCustomAudio)")
+                                logger.info("🎬 AlarmView appeared for alarm: \(alarm.label)")
+                            }
+                            .onDisappear {
+                                logger.info("👋 AlarmView disappeared")
+                                alarmCoordinator.clearPendingAlarm()
+                            }
                     } else {
                         // Fallback if alarm not found
                         VStack(spacing: 20) {

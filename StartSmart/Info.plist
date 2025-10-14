@@ -44,15 +44,8 @@
 	<string>StartSmart uses speech recognition to enable voice alarm dismissal. You can say commands like "I'm awake" to turn off alarms.</string>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>StartSmart needs notification permission to deliver your personalized wake-up alarms.</string>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>audio</string>
-		<string>background-processing</string>
-	</array>
-	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array>
-		<string>com.startsmart.app.content-generation</string>
-	</array>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>StartSmart needs access to AlarmKit to schedule reliable wake-up alarms that play sounds from the lock screen.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

@@ -68,6 +68,13 @@
 		0E41DCF32E74F96100358D55 /* OnboardingCompletionData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCF42E74F96100358D55 /* OnboardingCompletionData.swift */; };
 		0E709AEA2E9ADAAF00DB836C /* AlarmDismissalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E709AE92E9ADAAF00DB836C /* AlarmDismissalView.swift */; };
 		0E709AEC2E9AF5ED00DB836C /* AlarmNotificationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E709AEB2E9AF5ED00DB836C /* AlarmNotificationCoordinator.swift */; };
+		0E93CDB12E9EB0B2005E5758 /* Warning.caf in Resources */ = {isa = PBXBuildFile; fileRef = 0E93CDB02E9EB0B2005E5758 /* Warning.caf */; };
+		0E93CDB22E9EB0B2005E5758 /* Buzzer.caf in Resources */ = {isa = PBXBuildFile; fileRef = 0E93CDAD2E9EB0B2005E5758 /* Buzzer.caf */; };
+		0E93CDB32E9EB0B2005E5758 /* Thunderstorm.caf in Resources */ = {isa = PBXBuildFile; fileRef = 0E93CDAF2E9EB0B2005E5758 /* Thunderstorm.caf */; };
+		0E93CDB42E9EB0B2005E5758 /* Bark.caf in Resources */ = {isa = PBXBuildFile; fileRef = 0E93CDAB2E9EB0B2005E5758 /* Bark.caf */; };
+		0E93CDB52E9EB0B2005E5758 /* Bells.caf in Resources */ = {isa = PBXBuildFile; fileRef = 0E93CDAC2E9EB0B2005E5758 /* Bells.caf */; };
+		0E93CDB62E9EB0B2005E5758 /* Classic.caf in Resources */ = {isa = PBXBuildFile; fileRef = 0E93CDAE2E9EB0B2005E5758 /* Classic.caf */; };
+		0E93CDB82E9EE874005E5758 /* BackgroundAudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E93CDB72E9EE874005E5758 /* BackgroundAudioManager.swift */; };
 		0EF353F52E74A76500B66B53 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F42E74A76500B66B53 /* FirebaseAnalytics */; };
 		0EF353F72E74A76500B66B53 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F62E74A76500B66B53 /* FirebaseAuth */; };
 		0EF353F92E74A76500B66B53 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F82E74A76500B66B53 /* FirebaseCore */; };
@@ -167,6 +174,13 @@
 		0E41DCF42E74F96100358D55 /* OnboardingCompletionData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCompletionData.swift; sourceTree = "<group>"; };
 		0E709AE92E9ADAAF00DB836C /* AlarmDismissalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmDismissalView.swift; sourceTree = "<group>"; };
 		0E709AEB2E9AF5ED00DB836C /* AlarmNotificationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmNotificationCoordinator.swift; sourceTree = "<group>"; };
+		0E93CDAB2E9EB0B2005E5758 /* Bark.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Bark.caf; sourceTree = "<group>"; };
+		0E93CDAC2E9EB0B2005E5758 /* Bells.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Bells.caf; sourceTree = "<group>"; };
+		0E93CDAD2E9EB0B2005E5758 /* Buzzer.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Buzzer.caf; sourceTree = "<group>"; };
+		0E93CDAE2E9EB0B2005E5758 /* Classic.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Classic.caf; sourceTree = "<group>"; };
+		0E93CDAF2E9EB0B2005E5758 /* Thunderstorm.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Thunderstorm.caf; sourceTree = "<group>"; };
+		0E93CDB02E9EB0B2005E5758 /* Warning.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Warning.caf; sourceTree = "<group>"; };
+		0E93CDB72E9EE874005E5758 /* BackgroundAudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundAudioManager.swift; sourceTree = "<group>"; };
 		0EF3EC0E2E984D630006E382 /* Bark.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Bark.mp3; sourceTree = "<group>"; };
 		0EF3EC0F2E984D630006E382 /* Bells.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Bells.mp3; sourceTree = "<group>"; };
 		0EF3EC102E984D630006E382 /* Buzzer.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Buzzer.mp3; sourceTree = "<group>"; };
@@ -259,6 +273,7 @@
 		0E41DC8B2E74F96000358D55 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				0E93CDB72E9EE874005E5758 /* BackgroundAudioManager.swift */,
 				0E709AEB2E9AF5ED00DB836C /* AlarmNotificationCoordinator.swift */,
 				0E41DC772E74F96000358D55 /* AlarmAudioService.swift */,
 				0E41DC782E74F96000358D55 /* AlarmRepository.swift */,
@@ -522,6 +537,12 @@
 		D0000001000000000000005F /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				0E93CDAB2E9EB0B2005E5758 /* Bark.caf */,
+				0E93CDAC2E9EB0B2005E5758 /* Bells.caf */,
+				0E93CDAD2E9EB0B2005E5758 /* Buzzer.caf */,
+				0E93CDAE2E9EB0B2005E5758 /* Classic.caf */,
+				0E93CDAF2E9EB0B2005E5758 /* Thunderstorm.caf */,
+				0E93CDB02E9EB0B2005E5758 /* Warning.caf */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -630,6 +651,12 @@
 				0EF3EC152E984D630006E382 /* Buzzer.mp3 in Resources */,
 				0EF3EC162E984D630006E382 /* Warning.mp3 in Resources */,
 				0EF3EC172E984D630006E382 /* Classic.mp3 in Resources */,
+				0E93CDB12E9EB0B2005E5758 /* Warning.caf in Resources */,
+				0E93CDB22E9EB0B2005E5758 /* Buzzer.caf in Resources */,
+				0E93CDB32E9EB0B2005E5758 /* Thunderstorm.caf in Resources */,
+				0E93CDB42E9EB0B2005E5758 /* Bark.caf in Resources */,
+				0E93CDB52E9EB0B2005E5758 /* Bells.caf in Resources */,
+				0E93CDB62E9EB0B2005E5758 /* Classic.caf in Resources */,
 				0EF3EC182E984D630006E382 /* Bells.mp3 in Resources */,
 				0EF3EC192E984D630006E382 /* Thunderstorm.mp3 in Resources */,
 				D0000001000000000000000E /* Assets.xcassets in Resources */,
@@ -718,6 +745,7 @@
 				D18AFF8EBD864888931C3442 /* StartSmart/Views/Onboarding/AccountCreationView.swift in Sources */,
 				CF5D655054BC48F7BD603B62 /* StartSmart/Services/OnboardingDemoService.swift in Sources */,
 				E05ED718CB114E329263DFD8 /* StartSmart/Services/OnboardingDemoServiceProtocol.swift in Sources */,
+				0E93CDB82E9EE874005E5758 /* BackgroundAudioManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

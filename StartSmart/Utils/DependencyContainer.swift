@@ -222,20 +222,15 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
             print("✅ Subscription services ready")
         }
         
-        // 5. Notifications & Alarms (needed for alarm functionality)
+        // 5. Alarms (using AlarmKit for reliable alarm functionality)
         do {
-            let notificationService = NotificationService()
-            register(notificationService, for: NotificationServiceProtocol.self)
-            
-            // Note: AlarmRepository needs a simplified AlarmSchedulingService
-            // Full audio generation will be deferred to Stage 2
+            // AlarmRepository no longer needs NotificationService - AlarmKit handles scheduling
             let alarmRepository = AlarmRepository(
-                notificationService: notificationService,
-                schedulingService: nil  // Will be set up properly in Stage 2
+                schedulingService: nil     // Will be set up properly in Stage 2
             )
             register(alarmRepository, for: AlarmRepositoryProtocol.self)
             
-            print("✅ Notification & Alarm services ready")
+            print("✅ Alarm services ready (AlarmKit)")
         }
         
         // ✅ MARK STAGE 1 COMPLETE - UI CAN PROCEED
@@ -322,9 +317,7 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
             let alarmAudioService = AlarmAudioService(
                     audioPipelineService: audioPipelineService,
                     intentRepository: IntentRepository(),
-                    alarmRepository: AlarmRepository(
-                        notificationService: NotificationService()
-                    )
+                    alarmRepository: AlarmRepository()
                 )
             register(alarmAudioService, for: AlarmAudioServiceProtocol.self)
             

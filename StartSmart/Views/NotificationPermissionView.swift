@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Notification Permission View
 struct NotificationPermissionView: View {
-    @StateObject private var notificationService = NotificationService()
+    @StateObject private var alarmKitManager = AlarmKitManager.shared
     @State private var isRequestingPermission = false
     @State private var showingSettings = false
     
@@ -32,7 +32,7 @@ struct NotificationPermissionView: View {
         )
         .onAppear {
             Task {
-                await notificationService.getPermissionStatus()
+                await alarmKitManager.checkAuthorization()
             }
         }
         .sheet(isPresented: $showingSettings) {
@@ -88,7 +88,7 @@ struct NotificationPermissionView: View {
                     .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
             )
             
-            if notificationService.permissionStatus == .denied {
+            if alarmKitManager.authorizationState == .denied {
                 deniedPermissionHelpText
             }
         }
@@ -119,13 +119,15 @@ struct NotificationPermissionView: View {
     // MARK: - Action Button Section
     private var actionButtonSection: some View {
         VStack(spacing: 12) {
-            switch notificationService.permissionStatus {
+            switch alarmKitManager.authorizationState {
             case .notDetermined:
                 requestPermissionButton
             case .denied:
                 openSettingsButton
-            case .authorized, .provisional:
+            case .authorized:
                 continueButton
+            @unknown default:
+                requestPermissionButton
             }
         }
     }
@@ -190,37 +192,41 @@ struct NotificationPermissionView: View {
     
     // MARK: - Computed Properties
     private var permissionStatusIcon: String {
-        switch notificationService.permissionStatus {
+        switch alarmKitManager.authorizationState {
         case .notDetermined:
             return "questionmark.circle"
         case .denied:
             return "xmark.circle.fill"
-        case .authorized, .provisional:
+        case .authorized:
             return "checkmark.circle.fill"
+        @unknown default:
+            return "questionmark.circle"
         }
     }
     
     private var permissionStatusColor: Color {
-        switch notificationService.permissionStatus {
+        switch alarmKitManager.authorizationState {
         case .notDetermined:
             return .orange
         case .denied:
             return .red
-        case .authorized, .provisional:
+        case .authorized:
             return .green
+        @unknown default:
+            return .orange
         }
     }
     
     private var permissionStatusText: String {
-        switch notificationService.permissionStatus {
+        switch alarmKitManager.authorizationState {
         case .notDetermined:
             return "Permission not requested"
         case .denied:
-            return "Notifications disabled"
+            return "AlarmKit access denied"
         case .authorized:
-            return "Notifications enabled"
-        case .provisional:
-            return "Provisional access granted"
+            return "AlarmKit access granted"
+        @unknown default:
+            return "Permission not requested"
         }
     }
     
@@ -232,7 +238,7 @@ struct NotificationPermissionView: View {
         
         Task {
             do {
-                let status = try await notificationService.requestPermission()
+                let status = try await alarmKitManager.requestAuthorization()
                 await MainActor.run {
                     isRequestingPermission = false
                     if status == .authorized {
