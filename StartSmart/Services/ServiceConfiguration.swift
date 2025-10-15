@@ -18,26 +18,18 @@ struct ServiceConfiguration {
         }()
         
         static let elevenLabs: String = {
-            print("DEBUG: Loading ElevenLabs API key...")
             if let path = Bundle.main.path(forResource: "Config", ofType: "plist") {
-                print("DEBUG: Found Config.plist at: \(path)")
                 if let config = NSDictionary(contentsOfFile: path) {
-                    print("DEBUG: Successfully loaded Config.plist")
                     if let key = config["ELEVENLABS_API_KEY"] as? String {
-                        print("DEBUG: Found ElevenLabs API key, length: \(key.count)")
                         return key
                     } else {
-                        print("DEBUG: ELEVENLABS_API_KEY not found in Config.plist")
                     }
                 } else {
-                    print("DEBUG: Failed to load Config.plist")
                 }
             } else {
-                print("DEBUG: Config.plist not found in bundle")
             }
             
             let envKey = ProcessInfo.processInfo.environment["ELEVENLABS_API_KEY"] ?? ""
-            print("DEBUG: Using environment variable, length: \(envKey.count)")
             return envKey
         }()
         

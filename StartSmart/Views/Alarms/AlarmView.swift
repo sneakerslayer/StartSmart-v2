@@ -342,39 +342,23 @@ struct AlarmView: View {
     
     // MARK: - Private Methods
     private func setupAlarmExperience() {
-        print("DEBUG: 🚀 ========== ALARM VIEW SETUP STARTED ==========")
-        print("DEBUG: 📋 Alarm ID: \(alarm.id.uuidString)")
-        print("DEBUG: 📋 Alarm Label: \(alarm.label)")
-        print("DEBUG: 🔧 useTraditionalSound: \(alarm.useTraditionalSound)")
-        print("DEBUG: 🔧 traditionalSound: \(alarm.traditionalSound.displayName)")
-        print("DEBUG: 🔧 useAIScript: \(alarm.useAIScript)")
-        print("DEBUG: 🔧 hasCustomAudio: \(alarm.hasCustomAudio)")
-        print("DEBUG: 🔧 audioFileURL: \(alarm.audioFileURL?.path ?? "nil")")
         
         // IMPORTANT: iOS Notification Limitations
-        print("DEBUG: ⚠️ iOS LIMITATION: Third-party apps cannot reliably play alarm sounds from lock screen")
-        print("DEBUG: 💡 SOLUTION: Play traditional alarm sound FIRST in foreground, then AI script")
         
         // FIXED APPROACH: Always play traditional alarm first in foreground (reliable)
         // iOS notifications cannot reliably play loud alarm sounds
         // Play traditional alarm in app, then transition to AI script
         if alarm.useTraditionalSound {
-            print("DEBUG: 🔊 Starting TRADITIONAL ALARM PHASE (foreground audio - reliable)")
             alarmPhase = .traditionalAlarm
             startTraditionalAlarmPhase()
             
             // Set up transition to AI script after user interaction
             if alarm.useAIScript {
-                print("DEBUG: ⏳ Traditional sound playing, AI script will start after user interaction")
             }
         } else if alarm.useAIScript, let audioURL = alarm.audioFileURL {
-            print("DEBUG: ✅ No traditional sound, going directly to AI Script")
-            print("DEBUG: 📁 Audio file path: \(audioURL.path)")
-            print("DEBUG: 📂 File exists: \(FileManager.default.fileExists(atPath: audioURL.path))")
             alarmPhase = .aiScriptPlayback
             startAIScriptPhase(audioURL: audioURL)
         } else {
-            print("DEBUG: ⚠️ No alarm sound configured - showing dismissed state")
             alarmPhase = .dismissed
         }
         
@@ -393,7 +377,6 @@ struct AlarmView: View {
             }
         }
         
-        print("DEBUG: 🏁 ========== ALARM VIEW SETUP COMPLETE ==========")
     }
     
     private func startTraditionalAlarmPhase() {
@@ -403,22 +386,15 @@ struct AlarmView: View {
             // Set category to playback with options to allow mixing and override silent mode
             try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try audioSession.setActive(true, options: [])
-            print("DEBUG: ✅ Audio session activated successfully")
         } catch {
-            print("DEBUG: ❌ Failed to activate audio session: \(error)")
         }
         
         // Load and play the traditional alarm sound with looping
         let fileName = alarm.traditionalSound.soundFileName.replacingOccurrences(of: ".caf", with: "")
         guard let soundURL = Bundle.main.url(forResource: fileName, withExtension: "caf") else {
-            print("DEBUG: ❌ Could not find traditional alarm sound file: \(alarm.traditionalSound.soundFileName)")
-            print("DEBUG: 🔍 Searched for: \(fileName).caf")
-            print("DEBUG: 🔍 In bundle: \(Bundle.main.bundlePath)")
             return
         }
         
-        print("DEBUG: 📁 Loading traditional alarm sound: \(fileName).caf from \(soundURL.path)")
-        print("DEBUG: 🔧 Alarm settings - useTraditionalSound: \(alarm.useTraditionalSound), sound: \(alarm.traditionalSound.displayName)")
         
         do {
             traditionalAlarmPlayer = try AVAudioPlayer(contentsOf: soundURL)
@@ -431,10 +407,7 @@ struct AlarmView: View {
             // Play the alarm
             let didPlay = traditionalAlarmPlayer?.play() ?? false
             
-            print("DEBUG: 🔊 Traditional alarm playback started: \(didPlay)")
-            print("DEBUG: 📊 Player state - isPlaying: \(traditionalAlarmPlayer?.isPlaying ?? false), volume: \(traditionalAlarmPlayer?.volume ?? 0), loops: \(traditionalAlarmPlayer?.numberOfLoops ?? 0)")
         } catch {
-            print("DEBUG: ❌ Error creating/playing traditional alarm sound: \(error)")
         }
     }
     
@@ -447,38 +420,25 @@ struct AlarmView: View {
         traditionalAlarmTimer?.invalidate()
         traditionalAlarmTimer = nil
         
-        print("DEBUG: 🎬 ========== STARTING AI SCRIPT PHASE ==========")
-        print("DEBUG: 📁 Audio URL: \(audioURL.path)")
-        print("DEBUG: 📂 File exists: \(FileManager.default.fileExists(atPath: audioURL.path))")
         
         if FileManager.default.fileExists(atPath: audioURL.path) {
             // Get file size for debugging
             if let attributes = try? FileManager.default.attributesOfItem(atPath: audioURL.path),
                let fileSize = attributes[.size] as? UInt64 {
-                print("DEBUG: 📊 File size: \(fileSize) bytes")
             }
             
-            print("DEBUG: ✅ Audio file found, starting playback...")
             
             // Configure audio session for ALARM playback (bypasses silent mode)
-            print("DEBUG: 🔊 Configuring audio session for alarm playback...")
             audioPlaybackService.configureForAlarm()
             
             // Start AI script playback
             Task {
                 do {
-                    print("DEBUG: 🎵 Calling audioPlaybackService.play()...")
                     try await audioPlaybackService.play(from: audioURL)
-                    print("DEBUG: ✅ Audio playback started successfully")
-                    print("DEBUG: 🔊 Audio state: \(audioPlaybackService.isPlaying ? "PLAYING" : "NOT PLAYING")")
-                    print("DEBUG: 🔊 Volume: \(audioPlaybackService.volume)")
                 } catch {
-                    print("DEBUG: ❌ Error playing audio: \(error)")
                 }
             }
         } else {
-            print("DEBUG: ❌ ERROR: Audio file does NOT exist at path!")
-            print("DEBUG: ⚠️ Cannot play AI script - file missing")
         }
     }
     
