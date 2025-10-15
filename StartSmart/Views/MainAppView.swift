@@ -29,6 +29,11 @@ struct MainAppView: View {
     @StateObject private var container = DependencyContainer.shared
     @StateObject private var alarmCoordinator = AlarmNotificationCoordinator.shared
     
+    // State for WakeUpIntent-triggered alarm dismissal
+    @State private var shouldShowWakeUpSheet = false
+    @State private var wakeUpAlarmId: String?
+    @State private var wakeUpUserGoal: String?
+    
     // Create AlarmViewModel lazily - it will use the repository from DependencyContainer once initialized
     @StateObject private var alarmViewModel: AlarmViewModel = {
         // Create with AlarmKit-based repository
@@ -70,6 +75,17 @@ struct MainAppView: View {
             }
             .accentColor(.blue)
             .environmentObject(appState)
+            .onReceive(NotificationCenter.default.publisher(for: .showAlarmView)) { notification in
+                logger.info("🎯 WakeUpIntent notification received in MainAppView")
+                if let userInfo = notification.userInfo,
+                   let alarmID = userInfo["alarmID"] as? String,
+                   let userGoal = userInfo["userGoal"] as? String {
+                    wakeUpAlarmId = alarmID
+                    wakeUpUserGoal = userGoal
+                    shouldShowWakeUpSheet = true
+                    logger.info("🎯 Showing WakeUpIntent sheet for alarm: \(alarmID)")
+                }
+            }
             .sheet(isPresented: $alarmCoordinator.shouldShowDismissalSheet) {
                 if let alarmId = alarmCoordinator.pendingAlarmId {
                     // Ensure alarms are loaded
@@ -129,6 +145,46 @@ struct MainAppView: View {
                             logger.error("❌ Could not find alarm with ID: \(alarmId)")
                             logger.info("Available alarms: \(alarmViewModel.alarms.map { $0.id.uuidString })")
                         }
+                    }
+                }
+            }
+            .sheet(isPresented: $shouldShowWakeUpSheet) {
+                if let alarmId = wakeUpAlarmId,
+                   let alarm = alarmViewModel.alarms.first(where: { $0.id.uuidString == alarmId }) {
+                    AlarmDismissalView(alarm: alarm) {
+                        shouldShowWakeUpSheet = false
+                        wakeUpAlarmId = nil
+                        wakeUpUserGoal = nil
+                        logger.info("🎯 WakeUpIntent sheet dismissed")
+                    }
+                    .onAppear {
+                        logger.info("🎯 WakeUpIntent sheet appeared for alarm: \(alarm.label)")
+                        logger.info("🎯 User goal: \(wakeUpUserGoal ?? "No goal")")
+                    }
+                } else {
+                    // Fallback if alarm not found
+                    VStack(spacing: 20) {
+                        Image(systemName: "sun.max.fill")
+                            .font(.system(size: 60))
+                            .foregroundColor(.orange)
+                        
+                        Text("Wake Up!")
+                            .font(.title.bold())
+                        
+                        Text("Ready to start your day?")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Button("Dismiss") {
+                            shouldShowWakeUpSheet = false
+                            wakeUpAlarmId = nil
+                            wakeUpUserGoal = nil
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .padding()
+                    .onAppear {
+                        logger.error("❌ Could not find alarm with ID: \(wakeUpAlarmId ?? "nil")")
                     }
                 }
             }

@@ -96,43 +96,39 @@ class AlarmKitManager: ObservableObject {
             // Create alarm using the correct AlarmKit API based on ADHDAlarms implementation
             // Reference: https://github.com/jacobsapps/ADHDAlarms
             
-            // 1. Create AlarmPresentation for how the alarm appears
+            // 1. Create WakeUpIntent for the secondary button
+            let wakeUpIntent = WakeUpIntent(
+                alarmID: alarm.id.uuidString,
+                userGoal: alarm.label
+            )
+            
+            // 2. Create AlarmPresentation for how the alarm appears
             let alertPresentation = AlarmPresentation.Alert(
-                title: LocalizedStringResource(stringLiteral: alarm.label),
+                title: LocalizedStringResource(stringLiteral: "⏰ Wake Up!"),
                 stopButton: AlarmButton(
                     text: "Done",
                     textColor: .white,
-                    systemImageName: "checkmark.seal.fill"
+                    systemImageName: "checkmark.circle.fill"
                 ),
                 secondaryButton: AlarmButton(
-                    text: "Snooze",
+                    text: "I'm Awake!",
                     textColor: .white,
-                    systemImageName: "repeat.circle.fill"
-                ),
-                secondaryButtonBehavior: .countdown
-            )
-            
-            let countdownPresentation = AlarmPresentation.Countdown(
-                title: LocalizedStringResource(stringLiteral: "Snoozing - \(Int(alarm.snoozeDuration/60)) minutes remaining"),
-                pauseButton: AlarmButton(
-                    text: "Snooze",
-                    textColor: .white,
-                    systemImageName: "repeat.circle.fill"
+                    systemImageName: "sun.max.fill"
                 )
             )
             
             let presentation = AlarmPresentation(
                 alert: alertPresentation,
-                countdown: countdownPresentation
+                countdown: nil
             )
             
-            // 2. Create countdown duration for snooze
+            // 3. Create countdown duration (no snooze with WakeUpIntent approach)
             let countdownDuration = AlarmKit.Alarm.CountdownDuration(
                 preAlert: nil,
-                postAlert: alarm.snoozeEnabled ? alarm.snoozeDuration : nil
+                postAlert: nil
             )
             
-            // 3. Create schedule using the correct AlarmKit API
+            // 4. Create schedule using the correct AlarmKit API
             let schedule = AlarmKit.Alarm.Schedule.relative(AlarmKit.Alarm.Schedule.Relative(
                 time: AlarmKit.Alarm.Schedule.Relative.Time(
                     hour: Calendar.current.component(.hour, from: alarm.time),
@@ -141,7 +137,7 @@ class AlarmKitManager: ObservableObject {
                 repeats: alarm.isRepeating ? AlarmKit.Alarm.Schedule.Relative.Recurrence.weekly(convertToAlarmKitWeekdays(alarm.repeatDays)) : AlarmKit.Alarm.Schedule.Relative.Recurrence.never
             ))
             
-            // 4. Create alarm attributes with proper metadata
+            // 5. Create alarm attributes with proper metadata
             let metadata = StartSmartAlarmMetadata()
             let attributes = AlarmAttributes(
                 presentation: presentation,
@@ -149,7 +145,7 @@ class AlarmKitManager: ObservableObject {
                 tintColor: .blue
             )
             
-            // 5. Create complete configuration
+            // 6. Create complete configuration
             let alarmConfiguration = AlarmManager.AlarmConfiguration<StartSmartAlarmMetadata>(
                 countdownDuration: countdownDuration,
                 schedule: schedule,
@@ -157,7 +153,7 @@ class AlarmKitManager: ObservableObject {
                 sound: .default
             )
             
-            // 6. Schedule the alarm
+            // 7. Schedule the alarm
             let alarmKitAlarm = try await alarmManager.schedule(
                 id: alarm.id,
                 configuration: alarmConfiguration as AlarmManager.AlarmConfiguration<StartSmartAlarmMetadata>

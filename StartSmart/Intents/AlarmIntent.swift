@@ -2,7 +2,10 @@ import Foundation
 import AppIntents
 import AlarmKit
 
-// MARK: - Alarm Intent for App Intents Integration
+// MARK: - Wake Up Intent for Reliable Alarm Dismissal
+// Note: WakeUpIntent is defined in WakeUpIntent.swift
+
+// MARK: - Legacy Dismiss Intent (kept for compatibility)
 
 /// App Intent for dismissing StartSmart alarms
 @available(iOS 26.0, *)
