@@ -88,7 +88,7 @@ class AlarmAudioService: AlarmAudioServiceProtocol, ObservableObject {
     
     func preGenerateAudioForUpcomingAlarms() async throws {
         try await alarmRepository.loadAlarms()
-        let alarms = alarmRepository.alarmsValue
+        let alarms = await MainActor.run { alarmRepository.alarmsValue }
         let upcomingAlarms = alarms.filter { alarm in
             guard alarm.isEnabled else { return false }
             
