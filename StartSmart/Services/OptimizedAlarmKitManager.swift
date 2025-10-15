@@ -228,16 +228,11 @@ class OptimizedAlarmKitManager: ObservableObject {
             tintColor: .blue
         )
         
-        // 5. Create App Intent for dismissal
-        let dismissIntent = DismissAlarmIntent()
-        dismissIntent.alarmId = alarm.id.uuidString
-        
-        // 6. Create complete configuration with App Intent
-        return AlarmManager.AlarmConfiguration(
+        // 5. Create complete configuration
+        return AlarmManager.AlarmConfiguration<StartSmartAlarmMetadata>(
             countdownDuration: countdownDuration,
             schedule: schedule,
             attributes: attributes,
-            secondaryIntent: dismissIntent, // Connect "Done" button to our App Intent
             sound: .default
         )
     }

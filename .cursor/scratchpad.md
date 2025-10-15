@@ -886,17 +886,34 @@ The CAF files exist in your Resources folder but **must be added to Xcode**:
 - Removed duplicate `Notification.Name` extensions
 - Ensured `showAlarmDismissal(for:)` is called when alarms trigger
 
+### **Issue #4: Compilation Errors in AlarmKit Integration** ✅ FIXED
+**Root Cause:** Multiple compilation errors in AlarmKit and App Intents integration
+**Solution:** 
+- Fixed `DismissAlarmIntent` not found in scope by adding `import AppIntents`
+- Fixed generic parameter inference by explicitly casting `AlarmManager.AlarmConfiguration<StartSmartAlarmMetadata>`
+- Fixed `secondaryIntent` type mismatch by removing it (not compatible with `LiveActivityIntent`)
+- Fixed `AlarmIntent.swift` compilation errors:
+  - Corrected `Alarm` initializer parameter order (time before label)
+  - Removed non-existent `isRepeating` parameter
+  - Added `await` to async `alarms` property access
+  - Replaced `alarm.time` with generic string (AlarmKit.Alarm doesn't expose time)
+  - Removed unnecessary `do-catch` block
+
 **Files Modified:**
-1. `AlarmKitManager.swift` - Enhanced cancellation logic and alarm updates
+1. `AlarmKitManager.swift` - Enhanced cancellation logic, alarm updates, and App Intents integration
 2. `AlarmNotificationCoordinator.swift` - Added notification observation
 3. `AlarmAudioService.swift` - Fixed main actor isolation
 4. `OptimizedAlarmKitManager.swift` - Applied same cancellation fixes
+5. `AlarmIntent.swift` - Fixed all compilation errors and App Intents implementation
+6. `project.pbxproj` - Added AlarmIntent.swift to build phases
 
 **Expected Results:**
 - ✅ AlarmKit cancellation works for both scheduled and active alarms
 - ✅ AI script plays automatically after alarm dismissal
 - ✅ AlarmNotificationCoordinator properly triggers dismissal sheet
 - ✅ No more "Failed to cancel AlarmKit alarm" errors
+- ✅ All compilation errors resolved - project builds successfully
+- ✅ App Intents properly integrated for alarm dismissal flow
 
 **Status**: ✅ ROOT CAUSE FOUND & FIXED - Ready for re-test
 

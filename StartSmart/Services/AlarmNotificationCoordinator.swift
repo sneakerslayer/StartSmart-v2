@@ -32,9 +32,9 @@ class AlarmNotificationCoordinator: ObservableObject {
             }
         }
         
-        // Also observe our custom alarm fired notifications
+        // Observe alarm dismissal notifications
         NotificationCenter.default.addObserver(
-            forName: .startSmartAlarmFired,
+            forName: .startSmartAlarmDismissed,
             object: nil,
             queue: .main
         ) { [weak self] notification in

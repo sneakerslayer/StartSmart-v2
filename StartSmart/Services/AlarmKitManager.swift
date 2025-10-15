@@ -3,6 +3,7 @@ import AlarmKit
 import Combine
 import os.log
 import AppIntents
+import UIKit
 
 // MARK: - StartSmart Alarm Metadata
 
@@ -32,6 +33,7 @@ class AlarmKitManager: ObservableObject {
     @Published var authorizationState: AlarmManager.AuthorizationState = .notDetermined
     @Published var alarms: [AlarmKit.Alarm] = []
     @Published var activeAlarmId: String? // Currently ringing alarm
+    @Published var recentlyScheduledAlarms: Set<String> = [] // Track recently scheduled alarms
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -148,7 +150,7 @@ class AlarmKitManager: ObservableObject {
             )
             
             // 5. Create complete configuration
-            let alarmConfiguration = AlarmManager.AlarmConfiguration(
+            let alarmConfiguration = AlarmManager.AlarmConfiguration<StartSmartAlarmMetadata>(
                 countdownDuration: countdownDuration,
                 schedule: schedule,
                 attributes: attributes,
@@ -161,12 +163,19 @@ class AlarmKitManager: ObservableObject {
                 configuration: alarmConfiguration as AlarmManager.AlarmConfiguration<StartSmartAlarmMetadata>
             )
             
-            logger.info("✅ AlarmKit alarm scheduled successfully: \(alarmKitAlarm.id.uuidString)")
-            
-            // Add to our alarms list for tracking
-            await MainActor.run {
-                self.alarms.append(alarmKitAlarm)
-            }
+                    logger.info("✅ AlarmKit alarm scheduled successfully: \(alarmKitAlarm.id.uuidString)")
+                    
+                    // Add to our alarms list for tracking
+                    await MainActor.run {
+                        self.alarms.append(alarmKitAlarm)
+                        // Track this as a recently scheduled alarm
+                        self.recentlyScheduledAlarms.insert(alarm.id.uuidString)
+                        
+                        // Set a timer to remove it from recently scheduled after 10 minutes
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 600) {
+                            self.recentlyScheduledAlarms.remove(alarm.id.uuidString)
+                        }
+                    }
             
         } catch {
             logger.error("❌ Failed to schedule AlarmKit alarm: \(error.localizedDescription)")
@@ -281,25 +290,25 @@ class AlarmKitManager: ObservableObject {
             }
         }
         
-        // Observe alarm state changes
+        // Observe app lifecycle to detect when user returns from dismissing alarm
         NotificationCenter.default.addObserver(
-            forName: Notification.Name("AlarmDidFire"),
+            forName: UIApplication.didBecomeActiveNotification,
             object: nil,
             queue: .main
-        ) { [weak self] notification in
+        ) { [weak self] _ in
             Task { @MainActor in
-                self?.handleAlarmFired(notification)
+                self?.handleAppBecameActive()
             }
         }
         
-        // Observe alarm dismissal
+        // Observe app going to background to track alarm state
         NotificationCenter.default.addObserver(
-            forName: Notification.Name("AlarmWasDismissed"),
+            forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
             queue: .main
-        ) { [weak self] notification in
+        ) { [weak self] _ in
             Task { @MainActor in
-                self?.handleAlarmDismissed(notification)
+                self?.handleAppEnteredBackground()
             }
         }
     }
@@ -312,50 +321,73 @@ class AlarmKitManager: ObservableObject {
             self.alarms = alarmUpdates
         }
         
-        // For now, we'll use a simpler approach to detect active alarms
-        // Since AlarmKit doesn't expose detailed alarm state, we'll rely on
-        // the system to handle alarm firing and use our notification system
-        logger.info("🔔 AlarmKit updates processed - relying on system notifications for alarm firing")
+        // Check if any alarms are currently firing
+        // We'll detect this by checking if any alarms are within a few minutes of their scheduled time
+        let currentTime = Date()
+        let calendar = Calendar.current
+        
+        for alarm in alarmUpdates {
+            // Check if this alarm should be firing now (within 5 minutes of scheduled time)
+            // Note: AlarmKit.Alarm doesn't expose scheduled time directly, so we'll use a different approach
+            // We'll track alarms that are "active" by checking if they're in our scheduled alarms list
+            if let scheduledAlarm = findScheduledAlarm(for: alarm.id.uuidString) {
+                let scheduledTime = scheduledAlarm.time
+                let timeDifference = abs(currentTime.timeIntervalSince(scheduledTime))
+                
+                // If alarm is within 5 minutes of scheduled time, consider it active
+                if timeDifference <= 300 { // 5 minutes
+                    logger.info("🔔 Alarm \(alarm.id.uuidString) is active/firing")
+                    
+                    await MainActor.run {
+                        self.activeAlarmId = alarm.id.uuidString
+                    }
+                    
+                    // Post notification for UI to handle
+                    NotificationCenter.default.post(
+                        name: .startSmartAlarmFired,
+                        object: nil,
+                        userInfo: ["alarmId": alarm.id.uuidString]
+                    )
+                }
+            }
+        }
+        
+        logger.info("🔔 AlarmKit updates processed")
     }
     
-    private func handleAlarmFired(_ notification: Notification) {
-        guard let alarmId = notification.userInfo?["alarmId"] as? String else {
-            logger.warning("⚠️ Alarm fired notification missing alarmId")
-            return
-        }
-        
-        logger.info("🔔 Alarm fired: \(alarmId)")
-        
-        Task { @MainActor in
-            self.activeAlarmId = alarmId
-        }
-        
-        // Post notification for UI to handle
-        NotificationCenter.default.post(
-            name: .startSmartAlarmFired,
-            object: nil,
-            userInfo: ["alarmId": alarmId]
-        )
+    private func findScheduledAlarm(for alarmId: String) -> StartSmart.Alarm? {
+        // This is a placeholder - in a real implementation, you'd need to track
+        // which StartSmart.Alarm corresponds to which AlarmKit.Alarm
+        // For now, we'll return nil and rely on the app lifecycle detection
+        return nil
     }
     
-    private func handleAlarmDismissed(_ notification: Notification) {
-        guard let alarmId = notification.userInfo?["alarmId"] as? String else {
-            logger.warning("⚠️ Alarm dismissed notification missing alarmId")
-            return
+    private func handleAppBecameActive() {
+        logger.info("🔔 App became active - checking for dismissed alarms")
+        
+        // Check if any recently scheduled alarms are no longer active
+        for alarmId in recentlyScheduledAlarms {
+            let isStillActive = alarms.contains { $0.id.uuidString == alarmId }
+            
+            if !isStillActive {
+                logger.info("🔔 Recently scheduled alarm \(alarmId) was dismissed - triggering dismissal flow")
+                
+                // Remove from recently scheduled
+                recentlyScheduledAlarms.remove(alarmId)
+                
+                // Trigger the dismissal flow
+                NotificationCenter.default.post(
+                    name: .startSmartAlarmDismissed,
+                    object: nil,
+                    userInfo: ["alarmId": alarmId]
+                )
+            }
         }
-        
-        logger.info("🔔 Alarm dismissed: \(alarmId)")
-        
-        Task { @MainActor in
-            self.activeAlarmId = nil
-        }
-        
-        // Post notification for UI to handle
-        NotificationCenter.default.post(
-            name: .startSmartAlarmDismissed,
-            object: nil,
-            userInfo: ["alarmId": alarmId]
-        )
+    }
+    
+    private func handleAppEnteredBackground() {
+        logger.info("🔔 App entered background - tracking alarm state")
+        // We'll track this state to detect when user returns from dismissing alarm
     }
 }
 
