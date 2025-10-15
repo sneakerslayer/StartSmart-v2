@@ -237,7 +237,7 @@ final class EnhancedNotificationDelegate: NSObject, UNUserNotificationCenterDele
         // Post notification for app to handle alarm presentation
         await MainActor.run {
             NotificationCenter.default.post(
-                name: .alarmTriggered,
+                name: Notification.Name("alarmTriggered"),
                 object: nil,
                 userInfo: ["alarmId": alarmId.uuidString, "source": "tap"]
             )
@@ -263,7 +263,7 @@ final class EnhancedNotificationDelegate: NSObject, UNUserNotificationCenterDele
         
         await MainActor.run {
             NotificationCenter.default.post(
-                name: .alarmSnoozed,
+                name: Notification.Name("alarmSnoozed"),
                 object: nil,
                 userInfo: ["alarmId": alarmId.uuidString, "duration": snoozeDuration]
             )
@@ -286,7 +286,7 @@ final class EnhancedNotificationDelegate: NSObject, UNUserNotificationCenterDele
         
         await MainActor.run {
             NotificationCenter.default.post(
-                name: .alarmSnoozed,
+                name: Notification.Name("alarmSnoozed"),
                 object: nil,
                 userInfo: ["alarmId": alarmId.uuidString, "duration": snoozeDuration]
             )
@@ -301,7 +301,7 @@ final class EnhancedNotificationDelegate: NSObject, UNUserNotificationCenterDele
         
         await MainActor.run {
             NotificationCenter.default.post(
-                name: .alarmDismissed,
+                name: Notification.Name("alarmDismissed"),
                 object: nil,
                 userInfo: ["alarmId": alarmId.uuidString, "method": "notification"]
             )

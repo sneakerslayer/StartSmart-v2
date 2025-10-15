@@ -4,11 +4,17 @@ import SwiftUI
 struct AlarmListView: View {
     @EnvironmentObject private var alarmViewModel: AlarmViewModel
     @StateObject private var alarmKitManager = AlarmKitManager.shared
+    // Note: Advanced services will be integrated once they're properly added to the Xcode project
+    // @StateObject private var dynamicIslandService = DynamicIslandAlarmService.shared
+    // @StateObject private var customizationService = AdvancedAlarmCustomizationService.shared
+    // @StateObject private var recommendationsService = SmartAlarmRecommendationsService.shared
     @State private var showingAddAlarm = false
     @State private var showingPermissionView = false
     @State private var selectedAlarm: Alarm?
     @State private var showingDeleteConfirmation = false
     @State private var alarmToDelete: Alarm?
+    @State private var showingCustomization = false
+    @State private var showingRecommendations = false
     
     var body: some View {
         NavigationView {
@@ -48,6 +54,25 @@ struct AlarmListView: View {
                 showingPermissionView = false
             }
         }
+        // Note: Advanced features will be integrated once services are properly added to Xcode project
+        // .sheet(isPresented: $showingCustomization) {
+        //     AlarmCustomizationView()
+        // }
+        // .sheet(isPresented: $showingRecommendations) {
+        //     SmartRecommendationsView()
+        // }
+        // .onAppear {
+        //     // Start Dynamic Island activity for active alarms
+        //     Task {
+        //         await startDynamicIslandForActiveAlarms()
+        //     }
+        // }
+        // .onChange(of: alarmViewModel.alarms) { alarms in
+        //     // Update Dynamic Island when alarms change
+        //     Task {
+        //         await updateDynamicIslandForAlarms(alarms)
+        //     }
+        // }
         .alert("Delete Alarm", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) {
                 alarmToDelete = nil
@@ -199,7 +224,7 @@ struct AlarmListView: View {
     // MARK: - Helper Methods
     private func checkNotificationPermission() {
         Task {
-            let status = await notificationService.getPermissionStatus()
+            let status = await alarmKitManager.authorizationState
             if status != .authorized {
                 await MainActor.run {
                     showingPermissionView = true
@@ -207,6 +232,36 @@ struct AlarmListView: View {
             }
         }
     }
+    
+    // MARK: - Dynamic Island Integration
+    // Note: These methods will be enabled once DynamicIslandAlarmService is properly added to Xcode project
+    
+    // private func startDynamicIslandForActiveAlarms() async {
+    //     let activeAlarms = alarmViewModel.alarms.filter { $0.isEnabled }
+    //     
+    //     for alarm in activeAlarms {
+    //         await dynamicIslandService.startAlarmActivity(for: alarm)
+    //     }
+    // }
+    // 
+    // private func updateDynamicIslandForAlarms(_ alarms: [Alarm]) async {
+    //     let activeAlarms = alarms.filter { $0.isEnabled }
+    //     
+    //     // End current Dynamic Island activity
+    //     await dynamicIslandService.endAlarmActivity()
+    //     
+    //     // Start new activity for the next alarm
+    //     if let nextAlarm = getNextAlarm(from: activeAlarms) {
+    //         await dynamicIslandService.startAlarmActivity(for: nextAlarm)
+    //     }
+    // }
+    // 
+    // private func getNextAlarm(from alarms: [Alarm]) -> Alarm? {
+    //     let now = Date()
+    //     let sortedAlarms = alarms.sorted { $0.time < $1.time }
+    //     
+    //     return sortedAlarms.first { $0.time > now }
+    // }
 }
 
 // MARK: - Error Banner View

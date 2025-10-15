@@ -46,6 +46,10 @@
 	<string>StartSmart needs notification permission to deliver your personalized wake-up alarms.</string>
 	<key>NSAlarmKitUsageDescription</key>
 	<string>StartSmart needs access to AlarmKit to schedule reliable wake-up alarms that play sounds from the lock screen.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>alarm</string>
+	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

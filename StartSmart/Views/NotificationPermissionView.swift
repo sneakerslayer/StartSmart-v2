@@ -32,7 +32,11 @@ struct NotificationPermissionView: View {
         )
         .onAppear {
             Task {
-                await alarmKitManager.checkAuthorization()
+                do {
+                    try await alarmKitManager.checkAuthorization()
+                } catch {
+                    print("Failed to check authorization: \(error)")
+                }
             }
         }
         .sheet(isPresented: $showingSettings) {

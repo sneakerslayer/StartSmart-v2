@@ -173,8 +173,8 @@ final class AlarmRepository: AlarmRepositoryProtocol, ObservableObject {
         
         try await persistAlarms()
         
-        // Remove all notifications
-        await notificationService?.removeAllNotifications()
+        // Remove all notifications - handled by AlarmKit
+        // await notificationService?.removeAllNotifications()
     }
     
     func getAlarm(withId id: UUID) async -> Alarm? {
@@ -359,13 +359,9 @@ final class AlarmRepository: AlarmRepositoryProtocol, ObservableObject {
                 // Log error but don't fail the alarm save operation
                 print("Failed to schedule alarm \(alarm.id): \(error)")
             }
-        } else if let notificationService = notificationService {
-            do {
-                try await notificationService.scheduleNotification(for: alarm)
-            } catch {
-                // Log error but don't fail the alarm save operation
-                print("Failed to schedule notification for alarm \(alarm.id): \(error)")
-            }
+        } else {
+            // AlarmKit handles scheduling - no direct notification service needed
+            print("AlarmKit will handle scheduling for alarm \(alarm.id)")
         }
     }
     
@@ -373,8 +369,9 @@ final class AlarmRepository: AlarmRepositoryProtocol, ObservableObject {
         // Prefer scheduling service over direct notification service
         if let schedulingService = schedulingService {
             await schedulingService.removeScheduledAlarm(alarm)
-        } else if let notificationService = notificationService {
-            await notificationService.removeNotification(with: alarm.id.uuidString)
+        } else {
+            // AlarmKit handles notification removal
+            print("AlarmKit will handle removal for alarm \(alarm.id)")
         }
     }
 }

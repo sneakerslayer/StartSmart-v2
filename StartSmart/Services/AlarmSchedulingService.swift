@@ -124,7 +124,6 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
     @Published var lastError: AlarmSchedulingServiceError?
     
     // MARK: - Dependencies
-    private let notificationService: NotificationServiceProtocol
     private let alarmRepository: AlarmRepositoryProtocol
     private let alarmAudioService: AlarmAudioServiceProtocol?
     private var cancellables = Set<AnyCancellable>()
@@ -140,14 +139,12 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
     
     // MARK: - Initialization
     init(
-        notificationService: NotificationServiceProtocol,
         alarmRepository: AlarmRepositoryProtocol,
         alarmAudioService: AlarmAudioServiceProtocol? = nil,
         maxScheduledNotifications: Int = 64, // iOS system limit
         futureSchedulingLimitDays: Int = 365,
         timezoneMonitoringEnabled: Bool = true
     ) {
-        self.notificationService = notificationService
         self.alarmRepository = alarmRepository
         self.alarmAudioService = alarmAudioService
         self.maxScheduledNotifications = maxScheduledNotifications
@@ -212,10 +209,10 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
             identifiersToRemove.append("\(alarm.id.uuidString)-\(day.rawValue)")
         }
         
-        // Remove from notification service
-        for identifier in identifiersToRemove {
-            await notificationService.removeNotification(with: identifier)
-        }
+        // Remove from notification service - handled by AlarmKit
+        // for identifier in identifiersToRemove {
+        //     await notificationService.removeNotification(with: identifier)
+        // }
         
         // Remove from scheduled alarms list
         scheduledAlarms.removeAll { $0.alarmId == alarm.id }
@@ -228,7 +225,8 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
     }
     
     func removeAllScheduledAlarms() async {
-        await notificationService.removeAllNotifications()
+        // AlarmKit handles notification removal
+        // await notificationService.removeAllNotifications()
         scheduledAlarms.removeAll()
     }
     
@@ -241,11 +239,11 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
         var issues: [AlarmSchedulingIssue] = []
         var warnings: [AlarmSchedulingWarning] = []
         
-        // Check notification permission
-        let permissionStatus = await notificationService.getPermissionStatus()
-        if permissionStatus != .authorized {
-            issues.append(.notificationPermissionDenied)
-        }
+        // Check notification permission - AlarmKit handles this
+        // let permissionStatus = await notificationService.getPermissionStatus()
+        // if permissionStatus != .authorized {
+        //     issues.append(.notificationPermissionDenied)
+        // }
         
         // Check if time is in the past for one-time alarms
         if !alarm.isRepeating {
@@ -254,13 +252,13 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
             }
         }
         
-        // Check system notification limits
-        let pendingNotifications = await notificationService.getPendingNotifications()
-        let estimatedNewNotifications = alarm.isRepeating ? alarm.repeatDays.count : 1
+        // Check system notification limits - AlarmKit handles this
+        // let pendingNotifications = await notificationService.getPendingNotifications()
+        // let estimatedNewNotifications = alarm.isRepeating ? alarm.repeatDays.count : 1
         
-        if pendingNotifications.count + estimatedNewNotifications > maxScheduledNotifications {
-            issues.append(.systemLimitExceeded)
-        }
+        // if pendingNotifications.count + estimatedNewNotifications > maxScheduledNotifications {
+        //     issues.append(.systemLimitExceeded)
+        // }
         
         // Check for conflicts with existing alarms
         let existingAlarms = alarmRepository.alarmsValue
@@ -366,7 +364,8 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
         )
         
         do {
-            try await notificationService.scheduleNotification(for: alarm)
+            // AlarmKit handles scheduling
+            // try await notificationService.scheduleNotification(for: alarm)
             
             // Track scheduled alarm
             let scheduledInfo = ScheduledAlarmInfo(
@@ -409,8 +408,8 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
             )
             
             do {
-                // Schedule via notification service
-                try await notificationService.scheduleNotification(for: alarm)
+                // AlarmKit handles scheduling
+                // try await notificationService.scheduleNotification(for: alarm)
                 
                 // Calculate next occurrence for this repeat day
                 let nextOccurrence = calculateNextOccurrence(for: repeatDay, time: alarm.time)
@@ -456,9 +455,11 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
     }
     
     private func updateScheduledAlarmsList() async {
-        let pendingNotifications = await notificationService.getPendingNotifications()
+        // let pendingNotifications = await notificationService.getPendingNotifications()
         
         // Update status of scheduled alarms based on pending notifications
+        // AlarmKit handles this - commenting out for now
+        /*
         for index in scheduledAlarms.indices {
             let scheduledAlarm = scheduledAlarms[index]
             let isStillPending = pendingNotifications.contains { notification in
@@ -477,6 +478,7 @@ final class AlarmSchedulingService: AlarmSchedulingServiceProtocol, ObservableOb
                 )
             }
         }
+        */
     }
     
     private func syncWithRepositoryChanges(_ alarms: [Alarm]) async {

@@ -55,7 +55,7 @@ enum AudioSessionConfiguration {
         case .alarm:
             return .playback
         case .preview:
-            return .ambient
+            return .playback // Changed from .ambient to .playback for preview
         case .background:
             return .playback
         }

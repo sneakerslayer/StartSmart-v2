@@ -51,7 +51,6 @@
 		0E41DCD92E74F96100358D55 /* StreakTrackingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC882E74F96000358D55 /* StreakTrackingService.swift */; };
 		0E41DCDA2E74F96100358D55 /* Subscription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC6E2E74F96000358D55 /* Subscription.swift */; };
 		0E41DCDB2E74F96100358D55 /* AlarmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC9A2E74F96000358D55 /* AlarmView.swift */; };
-		0E41DCDC2E74F96100358D55 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC842E74F96000358D55 /* NotificationService.swift */; };
 		0E41DCDD2E74F96100358D55 /* PerformanceOptimizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC902E74F96000358D55 /* PerformanceOptimizer.swift */; };
 		0E41DCDE2E74F96100358D55 /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC6D2E74F96000358D55 /* Intent.swift */; };
 		0E41DCDF2E74F96100358D55 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC6F2E74F96000358D55 /* User.swift */; };
@@ -74,7 +73,7 @@
 		0E93CDB42E9EB0B2005E5758 /* Bark.caf in Resources */ = {isa = PBXBuildFile; fileRef = 0E93CDAB2E9EB0B2005E5758 /* Bark.caf */; };
 		0E93CDB52E9EB0B2005E5758 /* Bells.caf in Resources */ = {isa = PBXBuildFile; fileRef = 0E93CDAC2E9EB0B2005E5758 /* Bells.caf */; };
 		0E93CDB62E9EB0B2005E5758 /* Classic.caf in Resources */ = {isa = PBXBuildFile; fileRef = 0E93CDAE2E9EB0B2005E5758 /* Classic.caf */; };
-		0E93CDB82E9EE874005E5758 /* BackgroundAudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E93CDB72E9EE874005E5758 /* BackgroundAudioManager.swift */; };
+		0E93CDBA2E9F0C5C005E5758 /* AlarmKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E93CDB92E9F0C5C005E5758 /* AlarmKitManager.swift */; };
 		0EF353F52E74A76500B66B53 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F42E74A76500B66B53 /* FirebaseAnalytics */; };
 		0EF353F72E74A76500B66B53 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F62E74A76500B66B53 /* FirebaseAuth */; };
 		0EF353F92E74A76500B66B53 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F82E74A76500B66B53 /* FirebaseCore */; };
@@ -137,7 +136,6 @@
 		0E41DC812E74F96000358D55 /* Grok4Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grok4Service.swift; sourceTree = "<group>"; };
 		0E41DC822E74F96000358D55 /* IntentRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentRepository.swift; sourceTree = "<group>"; };
 		0E41DC832E74F96000358D55 /* NotificationCategoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCategoryService.swift; sourceTree = "<group>"; };
-		0E41DC842E74F96000358D55 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		0E41DC852E74F96000358D55 /* ServiceConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceConfiguration.swift; sourceTree = "<group>"; };
 		0E41DC862E74F96000358D55 /* SocialSharingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialSharingService.swift; sourceTree = "<group>"; };
 		0E41DC872E74F96000358D55 /* SpeechRecognitionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognitionService.swift; sourceTree = "<group>"; };
@@ -180,7 +178,7 @@
 		0E93CDAE2E9EB0B2005E5758 /* Classic.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Classic.caf; sourceTree = "<group>"; };
 		0E93CDAF2E9EB0B2005E5758 /* Thunderstorm.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Thunderstorm.caf; sourceTree = "<group>"; };
 		0E93CDB02E9EB0B2005E5758 /* Warning.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Warning.caf; sourceTree = "<group>"; };
-		0E93CDB72E9EE874005E5758 /* BackgroundAudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundAudioManager.swift; sourceTree = "<group>"; };
+		0E93CDB92E9F0C5C005E5758 /* AlarmKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmKitManager.swift; sourceTree = "<group>"; };
 		0EF3EC0E2E984D630006E382 /* Bark.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Bark.mp3; sourceTree = "<group>"; };
 		0EF3EC0F2E984D630006E382 /* Bells.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Bells.mp3; sourceTree = "<group>"; };
 		0EF3EC102E984D630006E382 /* Buzzer.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Buzzer.mp3; sourceTree = "<group>"; };
@@ -273,7 +271,7 @@
 		0E41DC8B2E74F96000358D55 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				0E93CDB72E9EE874005E5758 /* BackgroundAudioManager.swift */,
+				0E93CDB92E9F0C5C005E5758 /* AlarmKitManager.swift */,
 				0E709AEB2E9AF5ED00DB836C /* AlarmNotificationCoordinator.swift */,
 				0E41DC772E74F96000358D55 /* AlarmAudioService.swift */,
 				0E41DC782E74F96000358D55 /* AlarmRepository.swift */,
@@ -290,7 +288,6 @@
 				0E41DCEF2E74F96100358D55 /* PersonaManager.swift */,
 				0E41DC822E74F96000358D55 /* IntentRepository.swift */,
 				0E41DC832E74F96000358D55 /* NotificationCategoryService.swift */,
-				0E41DC842E74F96000358D55 /* NotificationService.swift */,
 				0E41DC852E74F96000358D55 /* ServiceConfiguration.swift */,
 				0E41DC862E74F96000358D55 /* SocialSharingService.swift */,
 				0E41DC872E74F96000358D55 /* SpeechRecognitionService.swift */,
@@ -713,6 +710,7 @@
 				0E709AEC2E9AF5ED00DB836C /* AlarmNotificationCoordinator.swift in Sources */,
 				0E41DCD12E74F96100358D55 /* NotificationCategoryService.swift in Sources */,
 				0E41DCD22E74F96100358D55 /* AuthenticationLoadingView.swift in Sources */,
+				0E93CDBA2E9F0C5C005E5758 /* AlarmKitManager.swift in Sources */,
 				0E41DCD32E74F96100358D55 /* AlarmDetailView.swift in Sources */,
 				0E41DCD42E74F96100358D55 /* AudioCacheService.swift in Sources */,
 				0E41DCD52E74F96100358D55 /* ElevenLabsService.swift in Sources */,
@@ -721,7 +719,6 @@
 				0E41DCD92E74F96100358D55 /* StreakTrackingService.swift in Sources */,
 				0E41DCDA2E74F96100358D55 /* Subscription.swift in Sources */,
 				0E41DCDB2E74F96100358D55 /* AlarmView.swift in Sources */,
-				0E41DCDC2E74F96100358D55 /* NotificationService.swift in Sources */,
 				0E41DCDD2E74F96100358D55 /* PerformanceOptimizer.swift in Sources */,
 				0E41DCDE2E74F96100358D55 /* Intent.swift in Sources */,
 				0E41DCDF2E74F96100358D55 /* User.swift in Sources */,
@@ -745,7 +742,6 @@
 				D18AFF8EBD864888931C3442 /* StartSmart/Views/Onboarding/AccountCreationView.swift in Sources */,
 				CF5D655054BC48F7BD603B62 /* StartSmart/Services/OnboardingDemoService.swift in Sources */,
 				E05ED718CB114E329263DFD8 /* StartSmart/Services/OnboardingDemoServiceProtocol.swift in Sources */,
-				0E93CDB82E9EE874005E5758 /* BackgroundAudioManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -820,7 +816,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -878,7 +874,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -908,7 +904,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -945,7 +941,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -971,7 +967,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.startsmart.mobile.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -990,7 +986,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.startsmart.mobile.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";

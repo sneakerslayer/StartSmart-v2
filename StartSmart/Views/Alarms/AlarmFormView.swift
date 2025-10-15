@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 // MARK: - Alarm Form View with Step-by-Step Restoration
 struct AlarmFormView: View {
@@ -290,15 +291,49 @@ struct AlarmFormView: View {
                 )
                 alarm.setGeneratedContent(content)
             }
-            // Persist alarm directly via StorageManager to ensure list updates
+            
+            // Create alarm using AlarmRepository (supports both StartSmart and AlarmKit)
             Task { @MainActor in
                 do {
-                    let storage = StorageManager()
-                    var all = try storage.loadAlarms()
-                    all.append(alarm)
-                    try storage.saveAlarms(all)
-                } catch { print("Storage save failed: \(error)") }
-                onSave(alarm)
+                    let alarmRepository = AlarmRepository()
+                    
+                    if let editingAlarm = editingAlarm {
+                        // Update existing alarm using AlarmRepository
+                        try await alarmRepository.updateAlarm(alarm)
+                        print("✅ Alarm updated successfully using AlarmRepository")
+                    } else {
+                        // Create new alarm using AlarmRepository
+                        try await alarmRepository.saveAlarm(alarm)
+                        print("✅ Alarm created successfully using AlarmRepository")
+                    }
+                    
+                    // Call the onSave callback to update UI
+                    onSave(alarm)
+                    
+                } catch {
+                    print("❌ AlarmRepository save failed: \(error)")
+                    // Fallback to old system if AlarmRepository fails
+                    do {
+                        let storage = StorageManager()
+                        var all = try storage.loadAlarms()
+                        if let editingAlarm = editingAlarm {
+                            // Update existing alarm
+                            if let index = all.firstIndex(where: { $0.id == editingAlarm.id }) {
+                                all[index] = alarm
+                            }
+                        } else {
+                            // Add new alarm
+                            all.append(alarm)
+                        }
+                        try storage.saveAlarms(all)
+                        print("✅ Fallback to StorageManager successful")
+                        onSave(alarm)
+                    } catch {
+                        print("❌ Fallback save failed: \(error)")
+                    }
+                }
+                
+                // Navigate to alarms tab after successful save
                 appState.selectedTab = 2
             }
         }
@@ -663,6 +698,7 @@ struct AlarmFormView: View {
             print("DEBUG: Starting audio playback")
             // Start playback
             audioPlaybackService = AudioPlaybackService()
+            audioPlaybackService?.configureForPreview() // Ensure proper audio session
             Task {
                 do {
                     print("DEBUG: Attempting to play audio from: \(audioURL.path)")

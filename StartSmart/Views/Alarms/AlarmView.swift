@@ -355,19 +355,10 @@ struct AlarmView: View {
         print("DEBUG: ⚠️ iOS LIMITATION: Third-party apps cannot reliably play alarm sounds from lock screen")
         print("DEBUG: 💡 SOLUTION: Play traditional alarm sound FIRST in foreground, then AI script")
         
-        // NEW APPROACH: When coming from notification tap, skip traditional sound
-        // The notification should have already played the traditional alarm sound
-        // Start AI script immediately since user already heard the traditional sound
-        if alarm.useTraditionalSound && alarm.useAIScript {
-            print("DEBUG: 🔔 Coming from notification - traditional sound already played")
-            print("DEBUG: 🎬 Starting AI script immediately")
-            alarmPhase = .aiScriptPlayback
-            if let audioURL = alarm.audioFileURL {
-                startAIScriptPhase(audioURL: audioURL)
-            } else {
-                alarmPhase = .dismissed
-            }
-        } else if alarm.useTraditionalSound {
+        // FIXED APPROACH: Always play traditional alarm first in foreground (reliable)
+        // iOS notifications cannot reliably play loud alarm sounds
+        // Play traditional alarm in app, then transition to AI script
+        if alarm.useTraditionalSound {
             print("DEBUG: 🔊 Starting TRADITIONAL ALARM PHASE (foreground audio - reliable)")
             alarmPhase = .traditionalAlarm
             startTraditionalAlarmPhase()
