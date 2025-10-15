@@ -170,10 +170,18 @@ class AlarmKitManager: ObservableObject {
         logger.info("🔔 Canceling AlarmKit alarm: \(id)")
         
         do {
-            // Use the correct AlarmManager.stop method based on ADHDAlarms implementation
-            // Reference: https://github.com/jacobsapps/ADHDAlarms
-            try await alarmManager.stop(id: UUID(uuidString: id)!)
-            logger.info("✅ AlarmKit alarm canceled successfully: \(id)")
+            // Check if alarm is currently active/ringing
+            let isActiveAlarm = activeAlarmId == id
+            
+            if isActiveAlarm {
+                logger.info("🔔 Alarm is currently active - dismissing instead of canceling")
+                // For active alarms, we dismiss them instead of canceling
+                try await dismissAlarm(withId: id)
+            } else {
+                // For scheduled alarms, we can cancel them
+                try await alarmManager.stop(id: UUID(uuidString: id)!)
+                logger.info("✅ AlarmKit alarm canceled successfully: \(id)")
+            }
             
             // Remove from our alarms list
             await MainActor.run {
@@ -182,7 +190,15 @@ class AlarmKitManager: ObservableObject {
             
         } catch {
             logger.error("❌ Failed to cancel AlarmKit alarm: \(error.localizedDescription)")
-            throw AlarmKitError.cancellationFailed(error.localizedDescription)
+            // Don't throw error for active alarms - just log and continue
+            if activeAlarmId == id {
+                logger.info("🔔 Alarm was active - treating as dismissed")
+                await MainActor.run {
+                    self.activeAlarmId = nil
+                }
+            } else {
+                throw AlarmKitError.cancellationFailed(error.localizedDescription)
+            }
         }
     }
     
@@ -251,6 +267,13 @@ class AlarmKitManager: ObservableObject {
     private func setupObservers() {
         logger.info("🔔 Setting up AlarmKit observers")
         
+        // Observe AlarmKit alarm updates to detect firing
+        Task {
+            for await alarmUpdates in alarmManager.alarmUpdates {
+                await handleAlarmKitUpdates(alarmUpdates)
+            }
+        }
+        
         // Observe alarm state changes
         NotificationCenter.default.addObserver(
             forName: Notification.Name("AlarmDidFire"),
@@ -272,6 +295,20 @@ class AlarmKitManager: ObservableObject {
                 self?.handleAlarmDismissed(notification)
             }
         }
+    }
+    
+    private func handleAlarmKitUpdates(_ alarmUpdates: [AlarmKit.Alarm]) async {
+        logger.info("🔔 AlarmKit alarm updates received: \(alarmUpdates.count) alarms")
+        
+        // Update our alarms list
+        await MainActor.run {
+            self.alarms = alarmUpdates
+        }
+        
+        // For now, we'll use a simpler approach to detect active alarms
+        // Since AlarmKit doesn't expose detailed alarm state, we'll rely on
+        // the system to handle alarm firing and use our notification system
+        logger.info("🔔 AlarmKit updates processed - relying on system notifications for alarm firing")
     }
     
     private func handleAlarmFired(_ notification: Notification) {

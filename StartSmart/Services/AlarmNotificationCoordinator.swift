@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import AlarmKit
 import os.log
+import NotificationCenter
 
 /// Coordinates AlarmKit alarm events with the app UI
 /// Handles alarm presentations and user interactions
@@ -28,6 +29,19 @@ class AlarmNotificationCoordinator: ObservableObject {
             for await _ in alarmKitManager.alarmManager.alarmUpdates {
                 // Handle alarm events (alert, snooze, dismiss)
                 await handleAlarmKitUpdates()
+            }
+        }
+        
+        // Also observe our custom alarm fired notifications
+        NotificationCenter.default.addObserver(
+            forName: .startSmartAlarmFired,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            Task { @MainActor in
+                if let alarmId = notification.userInfo?["alarmId"] as? String {
+                    self?.showAlarmDismissal(for: alarmId)
+                }
             }
         }
     }

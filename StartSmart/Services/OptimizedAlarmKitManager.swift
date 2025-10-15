@@ -302,7 +302,18 @@ class OptimizedAlarmKitManager: ObservableObject {
         logger.info("🔔 Canceling AlarmKit alarm (optimized): \(id)")
         
         do {
-            try await alarmManager.stop(id: UUID(uuidString: id)!)
+            // Check if alarm is currently active/ringing
+            let isActiveAlarm = activeAlarmId == id
+            
+            if isActiveAlarm {
+                logger.info("🔔 Alarm is currently active - dismissing instead of canceling")
+                // For active alarms, we dismiss them instead of canceling
+                try await dismissAlarm(withId: id)
+            } else {
+                // For scheduled alarms, we can cancel them
+                try await alarmManager.stop(id: UUID(uuidString: id)!)
+                logger.info("✅ AlarmKit alarm canceled successfully: \(id)")
+            }
             
             // Remove from cache
             alarmConfigurationCache.removeValue(forKey: id)
@@ -311,11 +322,17 @@ class OptimizedAlarmKitManager: ObservableObject {
                 self.alarms.removeAll { $0.id.uuidString == id }
             }
             
-            logger.info("✅ AlarmKit alarm canceled successfully: \(id)")
-            
         } catch {
             logger.error("❌ Failed to cancel AlarmKit alarm: \(error.localizedDescription)")
-            throw AlarmKitError.cancellationFailed(error.localizedDescription)
+            // Don't throw error for active alarms - just log and continue
+            if activeAlarmId == id {
+                logger.info("🔔 Alarm was active - treating as dismissed")
+                await MainActor.run {
+                    self.activeAlarmId = nil
+                }
+            } else {
+                throw AlarmKitError.cancellationFailed(error.localizedDescription)
+            }
         }
     }
     
