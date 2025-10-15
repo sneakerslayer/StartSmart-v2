@@ -13,7 +13,15 @@ struct StartSmartAlarmMetadata: AlarmMetadata {
 }
 
 /// AlarmKit Manager - Handles all alarm operations using Apple's AlarmKit framework
-/// This provides reliable alarm sounds that play from the lock screen
+/// 
+/// This manager provides a high-level interface to AlarmKit, handling:
+/// - Alarm scheduling and cancellation
+/// - Permission management  
+/// - Alarm state synchronization
+/// - Integration with StartSmart's alarm data model
+/// 
+/// AlarmKit provides reliable alarm sounds that play from the lock screen,
+/// ensuring alarms work even when the app is force-quit.
 @MainActor
 class AlarmKitManager: ObservableObject {
     static let shared = AlarmKitManager()

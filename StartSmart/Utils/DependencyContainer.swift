@@ -14,12 +14,30 @@ enum DependencyContainerError: Error, LocalizedError {
 }
 
 // MARK: - Dependency Container Protocol
+
+/// Protocol defining the dependency injection container interface.
+/// Provides methods for registering and resolving dependencies throughout the application.
 protocol DependencyContainerProtocol {
+    /// Resolves a dependency of the specified type.
+    /// - Returns: An instance of the requested type
+    /// - Throws: DependencyContainerError if the dependency is not registered
     func resolve<T>() -> T
+    
+    /// Registers a dependency instance for a specific type.
+    /// - Parameters:
+    ///   - dependency: The instance to register
+    ///   - type: The type to register the dependency for
     func register<T>(_ dependency: T, for type: T.Type)
 }
 
 // MARK: - Dependency Container Implementation
+
+/// Centralized dependency injection container for the StartSmart application.
+/// 
+/// This container manages the lifecycle and resolution of all application dependencies,
+/// using a two-stage initialization process for optimal startup performance:
+/// - Stage 1: Essential services needed for UI functionality
+/// - Stage 2: Heavy services loaded in background
 class DependencyContainer: DependencyContainerProtocol, ObservableObject {
     static let shared = DependencyContainer()
     

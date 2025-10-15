@@ -2,23 +2,80 @@ import Foundation
 import Combine
 
 // MARK: - Alarm Repository Protocol
+
+/// Protocol defining the alarm data management interface.
+/// 
+/// Provides methods for CRUD operations on alarm data, with support for:
+/// - Reactive updates via Combine publishers
+/// - Async/await pattern for modern Swift concurrency
+/// - Alarm state management (enable/disable, snooze, dismiss)
 @MainActor
 protocol AlarmRepositoryProtocol {
+    /// Publisher for reactive alarm updates
     var alarms: Published<[Alarm]>.Publisher { get }
+    
+    /// Current array of all alarms
     var alarmsValue: [Alarm] { get }
     
+    /// Loads all alarms from storage
+    /// - Throws: AlarmRepositoryError if loading fails
     func loadAlarms() async throws
+    
+    /// Saves a new alarm to storage
+    /// - Parameter alarm: The alarm to save
+    /// - Throws: AlarmRepositoryError if saving fails
     func saveAlarm(_ alarm: Alarm) async throws
+    
+    /// Updates an existing alarm in storage
+    /// - Parameter alarm: The alarm to update
+    /// - Throws: AlarmRepositoryError if update fails
     func updateAlarm(_ alarm: Alarm) async throws
+    
+    /// Deletes an alarm by its ID
+    /// - Parameter id: The UUID of the alarm to delete
+    /// - Throws: AlarmRepositoryError if deletion fails
     func deleteAlarm(withId id: UUID) async throws
+    
+    /// Deletes an alarm instance
+    /// - Parameter alarm: The alarm to delete
+    /// - Throws: AlarmRepositoryError if deletion fails
     func deleteAlarm(_ alarm: Alarm) async throws
+    
+    /// Deletes all alarms from storage
+    /// - Throws: AlarmRepositoryError if deletion fails
     func deleteAllAlarms() async throws
+    
+    /// Retrieves an alarm by its ID
+    /// - Parameter id: The UUID of the alarm to retrieve
+    /// - Returns: The alarm if found, nil otherwise
     func getAlarm(withId id: UUID) async -> Alarm?
+    
+    /// Retrieves all enabled alarms
+    /// - Returns: Array of enabled alarms
     func getEnabledAlarms() async -> [Alarm]
+    
+    /// Retrieves the next scheduled alarm
+    /// - Returns: The next alarm to trigger, nil if none
     func getNextAlarm() async -> Alarm?
+    
+    /// Toggles the enabled state of an alarm
+    /// - Parameter id: The UUID of the alarm to toggle
+    /// - Throws: AlarmRepositoryError if toggle fails
     func toggleAlarm(withId id: UUID) async throws
+    
+    /// Snoozes an alarm for its configured duration
+    /// - Parameter id: The UUID of the alarm to snooze
+    /// - Throws: AlarmRepositoryError if snooze fails
     func snoozeAlarm(withId id: UUID) async throws
+    
+    /// Dismisses an alarm permanently
+    /// - Parameter id: The UUID of the alarm to dismiss
+    /// - Throws: AlarmRepositoryError if dismissal fails
     func dismissAlarm(withId id: UUID) async throws
+    
+    /// Marks an alarm as triggered
+    /// - Parameter id: The UUID of the alarm to mark as triggered
+    /// - Throws: AlarmRepositoryError if marking fails
     func markAlarmAsTriggered(withId id: UUID) async throws
 }
 
@@ -47,6 +104,12 @@ enum AlarmRepositoryError: LocalizedError {
 }
 
 // MARK: - Alarm Repository Implementation
+
+/// Concrete implementation of AlarmRepositoryProtocol using AlarmKit for scheduling.
+/// 
+/// This repository manages alarm data persistence and integrates with AlarmKit for
+/// system-level alarm scheduling. It provides reactive updates via Combine publishers
+/// and handles all CRUD operations for alarm management.
 @MainActor
 final class AlarmRepository: AlarmRepositoryProtocol, ObservableObject {
     
