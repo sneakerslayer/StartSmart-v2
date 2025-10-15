@@ -96,7 +96,6 @@ struct AlarmFormView: View {
             }
             .onAppear {
                 // Services will be resolved lazily when needed
-                print("DEBUG: AlarmFormView appeared, services will be resolved on demand")
             }
         }
     }
@@ -375,14 +374,9 @@ struct AlarmFormView: View {
         
         do {
             // Resolve services lazily without blocking
-            print("DEBUG: Resolving Grok4Service...")
             let grokService: Grok4ServiceProtocol = try await DependencyContainer.shared.resolveAsync()
-            print("DEBUG: Grok4Service resolved successfully")
             
-            print("DEBUG: Resolving ElevenLabsService...")
             let elevenLabsService: ElevenLabsServiceProtocol = try await DependencyContainer.shared.resolveAsync()
-            print("DEBUG: ElevenLabsService resolved successfully")
-            print("DEBUG: ElevenLabsService type: \(type(of: elevenLabsService))")
             
             // Convert tone slider to tone string
             let toneString: String = {
@@ -406,7 +400,6 @@ struct AlarmFormView: View {
             
             // Get voice ID for selected voice
             let voiceId = getVoiceIdForSelectedVoice()
-            print("DEBUG: Using voice ID: \(voiceId)")
             
             // Try to generate audio with multiple attempts and fallback
             var audioGenerated = false
@@ -415,16 +408,12 @@ struct AlarmFormView: View {
             // Try up to 3 times with progressive backoff (reduced from 5)
             for attempt in 1...3 {
                 do {
-                    print("DEBUG: Attempting audio generation (attempt \(attempt)) with voice ID: \(voiceId)")
-                    print("DEBUG: Script text length: \(script.count) characters")
-                    print("DEBUG: ElevenLabsService instance: \(elevenLabsService)")
                     
                     let audioData = try await elevenLabsService.generateSpeech(
                         text: script,
                         voiceId: voiceId
                     )
                     
-                    print("DEBUG: Audio generation successful - data size: \(audioData.count) bytes")
                     
                     
                     // Save audio to documents
@@ -441,19 +430,16 @@ struct AlarmFormView: View {
                     
                 } catch {
                     lastError = error
-                    print("DEBUG: Audio generation attempt \(attempt) failed: \(error)")
                     
                     // Check if this is a retryable error
                     let shouldRetry = shouldRetryAudioError(error)
                     if !shouldRetry {
-                        print("DEBUG: Error is not retryable, stopping attempts")
                         break
                     }
                     
                     // If this isn't the last attempt, wait with progressive backoff
                     if attempt < 3 {
                         let delay = min(pow(2.0, Double(attempt - 1)) * 1.0, 8.0) // Max 8 seconds
-                        print("DEBUG: Waiting \(delay) seconds before retry...")
                         try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                     }
                 }
@@ -461,7 +447,6 @@ struct AlarmFormView: View {
             
             // If all attempts failed, automatically fall back to traditional sound
             if !audioGenerated {
-                print("DEBUG: All audio generation attempts failed - falling back to traditional sound")
                 await MainActor.run {
                     // Automatically disable AI script and enable traditional sound
                     useAIScript = false
@@ -486,7 +471,6 @@ struct AlarmFormView: View {
             }
             
         } catch {
-            print("DEBUG: Error in generateScriptAndAudio (script generation failed): \(error)")
             await MainActor.run { 
                 generationErrorMessage = "Failed to generate script: \(error.localizedDescription)"
             }
@@ -566,11 +550,9 @@ struct AlarmFormView: View {
             return
         }
         
-        print("DEBUG: Retrying audio generation for existing script...")
         
         // Get voice ID for selected voice
         let voiceId = getVoiceIdForSelectedVoice()
-        print("DEBUG: Using voice ID: \(voiceId)")
         
         // Try to generate audio with multiple attempts
         var audioGenerated = false
@@ -601,19 +583,16 @@ struct AlarmFormView: View {
                     
                 } catch {
                     lastError = error
-                    print("DEBUG: Audio retry attempt \(attempt) failed: \(error)")
                     
                     // Check if this is a retryable error
                     let shouldRetry = shouldRetryAudioError(error)
                     if !shouldRetry {
-                        print("DEBUG: Error is not retryable, stopping attempts")
                         break
                     }
                     
                     // If this isn't the last attempt, wait with progressive backoff
                     if attempt < 5 {
                         let delay = min(pow(2.0, Double(attempt - 1)) * 1.0, 8.0) // Max 8 seconds
-                        print("DEBUG: Waiting \(delay) seconds before retry...")
                         do {
                             try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                         } catch {
@@ -625,7 +604,6 @@ struct AlarmFormView: View {
         
         // If all attempts failed, show a helpful message
         if !audioGenerated {
-            print("DEBUG: All audio retry attempts failed")
             await MainActor.run {
                 if let error = lastError {
                     let nsError = error as NSError
@@ -648,23 +626,18 @@ struct AlarmFormView: View {
     
     // MARK: - Audio Playback Functions
     private func previewVoice() {
-        print("DEBUG: previewVoice() called")
-        print("DEBUG: generatedAudioURL = \(generatedAudioURL?.path ?? "nil")")
         
         guard let audioURL = generatedAudioURL else { 
-            print("DEBUG: No audio URL available for preview")
             Task { @MainActor in
                 generationErrorMessage = "No audio available to preview. Please generate audio first."
             }
             return 
         }
         
-        print("DEBUG: Audio URL exists: \(audioURL.path)")
         
         // Check if file exists
         let fileManager = FileManager.default
         if !fileManager.fileExists(atPath: audioURL.path) {
-            print("DEBUG: Audio file does not exist at path: \(audioURL.path)")
             Task { @MainActor in
                 generationErrorMessage = "Audio file not found. Please regenerate audio."
             }
@@ -675,40 +648,32 @@ struct AlarmFormView: View {
         do {
             let attributes = try fileManager.attributesOfItem(atPath: audioURL.path)
             let fileSize = attributes[.size] as? Int64 ?? 0
-            print("DEBUG: Audio file size: \(fileSize) bytes")
             
             if fileSize == 0 {
-                print("DEBUG: Audio file is empty")
                 Task { @MainActor in
                     generationErrorMessage = "Audio file is empty. Please regenerate audio."
                 }
                 return
             }
         } catch {
-            print("DEBUG: Could not read audio file attributes: \(error)")
         }
         
         if isPlayingAudio {
-            print("DEBUG: Stopping current playback")
             // Stop current playback
             audioPlaybackService?.stop()
             audioPlaybackService = nil
             isPlayingAudio = false
         } else {
-            print("DEBUG: Starting audio playback")
             // Start playback
             audioPlaybackService = AudioPlaybackService()
             audioPlaybackService?.configureForPreview() // Ensure proper audio session
             Task {
                 do {
-                    print("DEBUG: Attempting to play audio from: \(audioURL.path)")
                     try await audioPlaybackService?.play(from: audioURL)
-                    print("DEBUG: Audio playback started successfully")
                     await MainActor.run {
                         isPlayingAudio = true
                     }
                 } catch {
-                    print("DEBUG: Error playing audio: \(error)")
                     await MainActor.run {
                         isPlayingAudio = false
                         generationErrorMessage = "Audio playback failed: \(error.localizedDescription)"

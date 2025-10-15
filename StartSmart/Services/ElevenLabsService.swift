@@ -186,8 +186,6 @@ class ElevenLabsService: ElevenLabsServiceProtocol {
     init(apiKey: String) {
         self.apiKey = apiKey
         self.defaultOptions = TTSGenerationOptions.default
-        print("DEBUG: ElevenLabsService init - API key length: \(apiKey.count)")
-        print("DEBUG: ElevenLabsService init - API key starts with: \(String(apiKey.prefix(10)))")
         
         // Configure URLSession with appropriate timeout and retry policy
         let config = URLSessionConfiguration.default
@@ -200,8 +198,6 @@ class ElevenLabsService: ElevenLabsServiceProtocol {
     
     convenience init() {
         let apiKey = ServiceConfiguration.APIKeys.elevenLabs
-        print("DEBUG: ElevenLabsService convenience init - API key length: \(apiKey.count)")
-        print("DEBUG: ElevenLabsService convenience init - API key starts with: \(String(apiKey.prefix(10)))")
         self.init(apiKey: apiKey)
     }
     
@@ -253,22 +249,16 @@ class ElevenLabsService: ElevenLabsServiceProtocol {
         }
         
         do {
-            print("DEBUG: ElevenLabs API Request - URL: \(url)")
-            print("DEBUG: ElevenLabs API Request - Voice ID: \(voiceId)")
-            print("DEBUG: ElevenLabs API Request - Text length: \(text.count)")
             
             let (data, response) = try await session.data(for: urlRequest)
             
             guard let httpResponse = response as? HTTPURLResponse else {
-                print("DEBUG: ElevenLabs API Error - Invalid response type")
                 throw ElevenLabsError.networkError(URLError(.badServerResponse))
             }
             
-            print("DEBUG: ElevenLabs API Response - Status: \(httpResponse.statusCode)")
             
             if httpResponse.statusCode != 200 {
                 let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
-                print("DEBUG: ElevenLabs API Error Response: \(errorMessage)")
                 
                 switch httpResponse.statusCode {
                 case 400:
@@ -312,8 +302,6 @@ class ElevenLabsService: ElevenLabsServiceProtocol {
                 throw ElevenLabsError.invalidAudioData
             }
             
-            print("DEBUG: Audio validation passed - Format: \(validationResult.format?.rawValue ?? "unknown"), Size: \(data.count) bytes")
-            print("DEBUG: ElevenLabs API Success - Generated \(data.count) bytes of audio data")
             return data
             
         } catch let error as ElevenLabsError {
@@ -362,7 +350,6 @@ class ElevenLabsService: ElevenLabsServiceProtocol {
             let _ = try await getAvailableVoices()
             return true
         } catch {
-            print("DEBUG: ElevenLabs API test failed: \(error)")
             return false
         }
     }
@@ -420,7 +407,6 @@ class ElevenLabsService: ElevenLabsServiceProtocol {
             let (_, response) = try await session.data(for: request)
             return (response as? HTTPURLResponse)?.statusCode == 200
         } catch {
-            print("DEBUG: Network connectivity check failed: \(error)")
             return false
         }
     }
@@ -452,7 +438,6 @@ class ElevenLabsService: ElevenLabsServiceProtocol {
             throw ElevenLabsError.invalidInput("Voice configuration not found for: \(voiceName)")
         }
         
-        print("DEBUG: Generating voice preview for: \(voiceName) (key: \(voiceKey), voiceId: \(config.voiceId))")
         return try await generateSpeech(text: text, voiceId: config.voiceId)
     }
 }
