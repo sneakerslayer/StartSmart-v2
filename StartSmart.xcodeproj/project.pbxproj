@@ -17,7 +17,6 @@
 		0E41DCB62E74F96100358D55 /* AnalyticsDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC9C2E74F96000358D55 /* AnalyticsDashboardView.swift */; };
 		0E41DCB72E74F96100358D55 /* SharingPrivacyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCA72E74F96000358D55 /* SharingPrivacyView.swift */; };
 		0E41DCB82E74F96100358D55 /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8E2E74F96000358D55 /* DependencyContainer.swift */; };
-		0E41DCB92E74F96100358D55 /* ContentGenerationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC7E2E74F96000358D55 /* ContentGenerationManager.swift */; };
 		0E41DCBA2E74F96100358D55 /* AlarmListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC982E74F96000358D55 /* AlarmListView.swift */; };
 		0E41DCBB2E74F96100358D55 /* AuthenticationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC7D2E74F96000358D55 /* AuthenticationService.swift */; };
 		0E41DCBC2E74F96100358D55 /* Grok4Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC812E74F96000358D55 /* Grok4Service.swift */; };
@@ -127,7 +126,6 @@
 		0E41DC7B2E74F96000358D55 /* AudioPipelineService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPipelineService.swift; sourceTree = "<group>"; };
 		0E41DC7C2E74F96000358D55 /* AudioPlaybackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackService.swift; sourceTree = "<group>"; };
 		0E41DC7D2E74F96000358D55 /* AuthenticationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationService.swift; sourceTree = "<group>"; };
-		0E41DC7E2E74F96000358D55 /* ContentGenerationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentGenerationManager.swift; sourceTree = "<group>"; };
 		0E41DC7F2E74F96000358D55 /* ElevenLabsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsService.swift; sourceTree = "<group>"; };
 		0E41DC802E74F96000358D55 /* FirebaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseService.swift; sourceTree = "<group>"; };
 		0E41DC812E74F96000358D55 /* Grok4Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grok4Service.swift; sourceTree = "<group>"; };
@@ -276,7 +274,6 @@
 				0E41DC7C2E74F96000358D55 /* AudioPlaybackService.swift */,
 				0E41DC7D2E74F96000358D55 /* AuthenticationService.swift */,
 				0A3AA4E3E9234D72B21F181E /* SimpleAuthenticationService.swift */,
-				0E41DC7E2E74F96000358D55 /* ContentGenerationManager.swift */,
 				0E41DC7F2E74F96000358D55 /* ElevenLabsService.swift */,
 				0E41DC802E74F96000358D55 /* FirebaseService.swift */,
 				0E41DC812E74F96000358D55 /* Grok4Service.swift */,
@@ -673,7 +670,6 @@
 				0E41DCB62E74F96100358D55 /* AnalyticsDashboardView.swift in Sources */,
 				0E41DCB72E74F96100358D55 /* SharingPrivacyView.swift in Sources */,
 				0E41DCB82E74F96100358D55 /* DependencyContainer.swift in Sources */,
-				0E41DCB92E74F96100358D55 /* ContentGenerationManager.swift in Sources */,
 				0E41DCBA2E74F96100358D55 /* AlarmListView.swift in Sources */,
 				0E41DCBB2E74F96100358D55 /* AuthenticationService.swift in Sources */,
 				0A3AA4E3E9234D72B21F181D /* SimpleAuthenticationService.swift in Sources */,
