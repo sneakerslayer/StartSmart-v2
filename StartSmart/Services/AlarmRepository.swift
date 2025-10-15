@@ -61,7 +61,6 @@ final class AlarmRepository: AlarmRepositoryProtocol, ObservableObject {
     
     // MARK: - Dependencies
     private let storageManager: StorageManager
-    private let schedulingService: AlarmSchedulingServiceProtocol?
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Configuration
@@ -71,12 +70,10 @@ final class AlarmRepository: AlarmRepositoryProtocol, ObservableObject {
     // MARK: - Initialization
     init(
         storageManager: StorageManager = StorageManager(),
-        schedulingService: AlarmSchedulingServiceProtocol? = nil,
         maxAlarms: Int = 50,
         autoSyncEnabled: Bool = true
     ) {
         self.storageManager = storageManager
-        self.schedulingService = schedulingService
         self.maxAlarms = maxAlarms
         self.autoSyncEnabled = autoSyncEnabled
         
@@ -351,28 +348,13 @@ final class AlarmRepository: AlarmRepositoryProtocol, ObservableObject {
     }
     
     private func scheduleNotification(for alarm: Alarm) async throws {
-        // Prefer scheduling service over direct notification service
-        if let schedulingService = schedulingService {
-            do {
-                try await schedulingService.scheduleAlarm(alarm)
-            } catch {
-                // Log error but don't fail the alarm save operation
-                print("Failed to schedule alarm \(alarm.id): \(error)")
-            }
-        } else {
-            // AlarmKit handles scheduling - no direct notification service needed
-            print("AlarmKit will handle scheduling for alarm \(alarm.id)")
-        }
+        // AlarmKit handles scheduling automatically - no manual scheduling needed
+        print("AlarmKit will handle scheduling for alarm \(alarm.id)")
     }
     
     private func removeNotification(for alarm: Alarm) async {
-        // Prefer scheduling service over direct notification service
-        if let schedulingService = schedulingService {
-            await schedulingService.removeScheduledAlarm(alarm)
-        } else {
-            // AlarmKit handles notification removal
-            print("AlarmKit will handle removal for alarm \(alarm.id)")
-        }
+        // AlarmKit handles removal automatically - no manual removal needed
+        print("AlarmKit will handle removal for alarm \(alarm.id)")
     }
 }
 

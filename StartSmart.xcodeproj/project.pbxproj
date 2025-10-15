@@ -34,13 +34,11 @@
 		0E41DCC72E74F96100358D55 /* StreakView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCAA2E74F96000358D55 /* StreakView.swift */; };
 		0E41DCC82E74F96100358D55 /* NotificationPermissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCAF2E74F96000358D55 /* NotificationPermissionView.swift */; };
 		0E41DCC92E74F96100358D55 /* AlarmRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC992E74F96000358D55 /* AlarmRowView.swift */; };
-		0E41DCCA2E74F96100358D55 /* AlarmSchedulingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC792E74F96000358D55 /* AlarmSchedulingService.swift */; };
 		0E41DCCB2E74F96100358D55 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DCA12E74F96000358D55 /* OnboardingView.swift */; };
 		0E41DCCC2E74F96100358D55 /* AlarmViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC922E74F96000358D55 /* AlarmViewModel.swift */; };
 		0E41DCCD2E74F96100358D55 /* LocalStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8F2E74F96000358D55 /* LocalStorage.swift */; };
 		0E41DCCE2E74F96100358D55 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC892E74F96000358D55 /* SubscriptionManager.swift */; };
 		0E41DCD02E74F96100358D55 /* SubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8A2E74F96000358D55 /* SubscriptionService.swift */; };
-		0E41DCD12E74F96100358D55 /* NotificationCategoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC832E74F96000358D55 /* NotificationCategoryService.swift */; };
 		0E41DCD12E74F96200358D55 /* SubscriptionStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC8B2E74F96100358D55 /* SubscriptionStateManager.swift */; };
 		0E41DCD22E74F96100358D55 /* AuthenticationLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC9F2E74F96000358D55 /* AuthenticationLoadingView.swift */; };
 		0E41DCD32E74F96100358D55 /* AlarmDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E41DC962E74F96000358D55 /* AlarmDetailView.swift */; };
@@ -125,7 +123,6 @@
 		0E41DC752E74F96000358D55 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		0E41DC772E74F96000358D55 /* AlarmAudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmAudioService.swift; sourceTree = "<group>"; };
 		0E41DC782E74F96000358D55 /* AlarmRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmRepository.swift; sourceTree = "<group>"; };
-		0E41DC792E74F96000358D55 /* AlarmSchedulingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmSchedulingService.swift; sourceTree = "<group>"; };
 		0E41DC7A2E74F96000358D55 /* AudioCacheService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCacheService.swift; sourceTree = "<group>"; };
 		0E41DC7B2E74F96000358D55 /* AudioPipelineService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPipelineService.swift; sourceTree = "<group>"; };
 		0E41DC7C2E74F96000358D55 /* AudioPlaybackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackService.swift; sourceTree = "<group>"; };
@@ -135,7 +132,6 @@
 		0E41DC802E74F96000358D55 /* FirebaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseService.swift; sourceTree = "<group>"; };
 		0E41DC812E74F96000358D55 /* Grok4Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grok4Service.swift; sourceTree = "<group>"; };
 		0E41DC822E74F96000358D55 /* IntentRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentRepository.swift; sourceTree = "<group>"; };
-		0E41DC832E74F96000358D55 /* NotificationCategoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCategoryService.swift; sourceTree = "<group>"; };
 		0E41DC852E74F96000358D55 /* ServiceConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceConfiguration.swift; sourceTree = "<group>"; };
 		0E41DC862E74F96000358D55 /* SocialSharingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialSharingService.swift; sourceTree = "<group>"; };
 		0E41DC872E74F96000358D55 /* SpeechRecognitionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognitionService.swift; sourceTree = "<group>"; };
@@ -275,7 +271,6 @@
 				0E709AEB2E9AF5ED00DB836C /* AlarmNotificationCoordinator.swift */,
 				0E41DC772E74F96000358D55 /* AlarmAudioService.swift */,
 				0E41DC782E74F96000358D55 /* AlarmRepository.swift */,
-				0E41DC792E74F96000358D55 /* AlarmSchedulingService.swift */,
 				0E41DC7A2E74F96000358D55 /* AudioCacheService.swift */,
 				0E41DC7B2E74F96000358D55 /* AudioPipelineService.swift */,
 				0E41DC7C2E74F96000358D55 /* AudioPlaybackService.swift */,
@@ -287,7 +282,6 @@
 				0E41DC812E74F96000358D55 /* Grok4Service.swift */,
 				0E41DCEF2E74F96100358D55 /* PersonaManager.swift */,
 				0E41DC822E74F96000358D55 /* IntentRepository.swift */,
-				0E41DC832E74F96000358D55 /* NotificationCategoryService.swift */,
 				0E41DC852E74F96000358D55 /* ServiceConfiguration.swift */,
 				0E41DC862E74F96000358D55 /* SocialSharingService.swift */,
 				0E41DC872E74F96000358D55 /* SpeechRecognitionService.swift */,
@@ -700,7 +694,6 @@
 				0E41DCC72E74F96100358D55 /* StreakView.swift in Sources */,
 				0E41DCC82E74F96100358D55 /* NotificationPermissionView.swift in Sources */,
 				0E41DCC92E74F96100358D55 /* AlarmRowView.swift in Sources */,
-				0E41DCCA2E74F96100358D55 /* AlarmSchedulingService.swift in Sources */,
 				0E41DCCB2E74F96100358D55 /* OnboardingView.swift in Sources */,
 				0E41DCCC2E74F96100358D55 /* AlarmViewModel.swift in Sources */,
 				0E41DCCD2E74F96100358D55 /* LocalStorage.swift in Sources */,
@@ -708,7 +701,6 @@
 				0E41DCD02E74F96100358D55 /* SubscriptionService.swift in Sources */,
 				0E41DCD12E74F96200358D55 /* SubscriptionStateManager.swift in Sources */,
 				0E709AEC2E9AF5ED00DB836C /* AlarmNotificationCoordinator.swift in Sources */,
-				0E41DCD12E74F96100358D55 /* NotificationCategoryService.swift in Sources */,
 				0E41DCD22E74F96100358D55 /* AuthenticationLoadingView.swift in Sources */,
 				0E93CDBA2E9F0C5C005E5758 /* AlarmKitManager.swift in Sources */,
 				0E41DCD32E74F96100358D55 /* AlarmDetailView.swift in Sources */,

@@ -224,10 +224,7 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
         
         // 5. Alarms (using AlarmKit for reliable alarm functionality)
         do {
-            // AlarmRepository no longer needs NotificationService - AlarmKit handles scheduling
-            let alarmRepository = AlarmRepository(
-                schedulingService: nil     // Will be set up properly in Stage 2
-            )
+            let alarmRepository = AlarmRepository()
             register(alarmRepository, for: AlarmRepositoryProtocol.self)
             
             print("✅ Alarm services ready (AlarmKit)")

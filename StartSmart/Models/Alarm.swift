@@ -1,5 +1,4 @@
 import Foundation
-import UserNotifications
 
 // MARK: - Alarm Generated Content
 struct AlarmGeneratedContent: Codable, Equatable {
@@ -347,17 +346,6 @@ enum TraditionalAlarmSound: String, CaseIterable, Codable {
         case .classic: return "alarm.fill"
         case .thunderstorm: return "cloud.bolt.fill"
         case .warning: return "exclamationmark.octagon.fill"
-        }
-    }
-    
-    var systemSound: UNNotificationSound {
-        switch self {
-        case .bark: return UNNotificationSound(named: UNNotificationSoundName("Bark.caf"))
-        case .bells: return UNNotificationSound(named: UNNotificationSoundName("Bells.caf"))
-        case .buzzer: return UNNotificationSound(named: UNNotificationSoundName("Buzzer.caf"))
-        case .classic: return UNNotificationSound(named: UNNotificationSoundName("Classic.caf"))
-        case .thunderstorm: return UNNotificationSound(named: UNNotificationSoundName("Thunderstorm.caf"))
-        case .warning: return UNNotificationSound(named: UNNotificationSoundName("Warning.caf"))
         }
     }
 }
