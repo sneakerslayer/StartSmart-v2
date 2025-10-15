@@ -18,6 +18,11 @@ struct DismissAlarmIntent: AppIntent {
             // Dismiss the alarm using AlarmKit Manager
             try await AlarmKitManager.shared.dismissAlarm(withId: alarmId)
             
+            // Trigger the dismissal flow in our app
+            await MainActor.run {
+                AlarmNotificationCoordinator.shared.showAlarmDismissal(for: alarmId)
+            }
+            
             return .result()
         } catch {
             throw IntentError.failedToDismissAlarm(error.localizedDescription)
@@ -71,9 +76,8 @@ struct CreateAlarmIntent: AppIntent {
         do {
             // Create a new StartSmart alarm
             let alarm = StartSmart.Alarm(
-                label: alarmLabel,
                 time: alarmTime,
-                isRepeating: isRepeating,
+                label: alarmLabel,
                 snoozeEnabled: true,
                 snoozeDuration: snoozeDuration
             )
@@ -95,19 +99,15 @@ struct ListAlarmsIntent: AppIntent {
     static var description: IntentDescription = IntentDescription("List all StartSmart alarms")
     
     func perform() async throws -> some IntentResult & ReturnsValue<[String]> {
-        do {
-            // Get all alarms from AlarmKit Manager
-            let alarms = AlarmKitManager.shared.alarms
-            
-            // Convert to string array for display
-            let alarmStrings = alarms.map { alarm in
-                "\(alarm.id.uuidString): \(alarm.time)"
-            }
-            
-            return .result(value: alarmStrings)
-        } catch {
-            throw IntentError.failedToListAlarms(error.localizedDescription)
+        // Get all alarms from AlarmKit Manager
+        let alarms = await AlarmKitManager.shared.alarms
+        
+        // Convert to string array for display
+        let alarmStrings = alarms.map { alarm in
+            "\(alarm.id.uuidString): Scheduled alarm"
         }
+        
+        return .result(value: alarmStrings)
     }
 }
 
@@ -134,13 +134,5 @@ enum IntentError: Error, LocalizedError {
 }
 
 // MARK: - App Intents Configuration
-
-@available(iOS 26.0, *)
-struct StartSmartAppIntents: AppIntents {
-    static var supportedIntents: [any AppIntent.Type] = [
-        DismissAlarmIntent.self,
-        SnoozeAlarmIntent.self,
-        CreateAlarmIntent.self,
-        ListAlarmsIntent.self
-    ]
-}
+// Note: App Intents are automatically discovered by the system
+// No additional configuration struct is needed

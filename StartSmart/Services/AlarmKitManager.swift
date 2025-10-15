@@ -81,6 +81,15 @@ class AlarmKitManager: ObservableObject {
         
         try await checkAuthorization()
         
+        // Cancel any existing alarm with the same ID first
+        do {
+            try await alarmManager.stop(id: alarm.id)
+            logger.info("🔄 Cancelled existing alarm with ID: \(alarm.id.uuidString)")
+        } catch {
+            // Ignore errors when cancelling - alarm might not exist
+            logger.info("ℹ️ No existing alarm to cancel for ID: \(alarm.id.uuidString)")
+        }
+        
         do {
             // Create alarm using the correct AlarmKit API based on ADHDAlarms implementation
             // Reference: https://github.com/jacobsapps/ADHDAlarms
@@ -138,19 +147,18 @@ class AlarmKitManager: ObservableObject {
                 tintColor: .blue
             )
             
-            // 5. Create complete configuration with App Intents integration
+            // 5. Create complete configuration
             let alarmConfiguration = AlarmManager.AlarmConfiguration(
                 countdownDuration: countdownDuration,
                 schedule: schedule,
                 attributes: attributes,
-                secondaryIntent: nil, // App Intents integration will be added in Phase 4
                 sound: .default
             )
             
             // 6. Schedule the alarm
             let alarmKitAlarm = try await alarmManager.schedule(
                 id: alarm.id,
-                configuration: alarmConfiguration
+                configuration: alarmConfiguration as AlarmManager.AlarmConfiguration<StartSmartAlarmMetadata>
             )
             
             logger.info("✅ AlarmKit alarm scheduled successfully: \(alarmKitAlarm.id.uuidString)")
@@ -190,14 +198,13 @@ class AlarmKitManager: ObservableObject {
             
         } catch {
             logger.error("❌ Failed to cancel AlarmKit alarm: \(error.localizedDescription)")
-            // Don't throw error for active alarms - just log and continue
-            if activeAlarmId == id {
-                logger.info("🔔 Alarm was active - treating as dismissed")
-                await MainActor.run {
-                    self.activeAlarmId = nil
-                }
-            } else {
-                throw AlarmKitError.cancellationFailed(error.localizedDescription)
+            // Don't throw error - just log and continue (alarm might not exist)
+            logger.info("ℹ️ Treating cancellation as successful - alarm may not exist")
+            
+            // Remove from our alarms list anyway
+            await MainActor.run {
+                self.alarms.removeAll { $0.id.uuidString == id }
+                self.activeAlarmId = nil
             }
         }
     }

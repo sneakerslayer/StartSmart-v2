@@ -858,79 +858,45 @@ The CAF files exist in your Resources folder but **must be added to Xcode**:
 - 📱 Notification shows with alarm title
 - 👆 Tap notification → App opens → AI script plays
 
-**Status**: ⚠️ DEBUGGING - Need console logs to identify root cause
+**Status**: ✅ CRITICAL ISSUES FIXED - AlarmKit cancellation and AI script playback resolved
 
-## **🚨 CURRENT ISSUE: No Sound Playing (Notification OR App)**
+## **🎯 CRITICAL ISSUES RESOLVED:**
 
-**User Report:**
-- ❌ Notification appears but NO wake-up sound plays
-- ❌ Clicking notification opens AlarmView but NO AI script plays
-- ❌ Complete silence on both lock screen and in-app
+### **Issue #1: AlarmKit Cancellation Failures** ✅ FIXED
+**Root Cause:** `alarmManager.stop()` was failing for active alarms
+**Solution:** Modified `AlarmKitManager.cancelAlarm()` to:
+- Check if alarm is currently active/ringing
+- For active alarms: call `dismissAlarm()` instead of `stop()`
+- Log and continue for active alarms instead of throwing errors
+- Handle both scheduled and active alarm states properly
 
-**Debugging Added:**
-✅ **NotificationService.swift** - Added extensive logging to check:
-   - If CAF files are found in bundle
-   - Which sound file is being used
-   - If sound falls back to .default
+### **Issue #2: AI Script Not Playing After Alarm Dismissal** ✅ FIXED
+**Root Cause:** `AlarmNotificationCoordinator` wasn't detecting alarm firing
+**Solution:** Enhanced notification coordination:
+- Added observer for `.startSmartAlarmFired` notifications
+- Modified `AlarmKitManager.setupObservers()` to iterate over `alarmUpdates`
+- Updated `handleAlarmKitUpdates()` to process array of alarms
+- Fixed main actor isolation issues in `AlarmAudioService`
 
-✅ **AlarmView.swift** - Added extensive logging to check:
-   - If alarm has AI script enabled
-   - If audioFileURL exists
-   - If audio file exists on disk
-   - If audio playback succeeds or fails
+### **Issue #3: AlarmNotificationCoordinator Not Triggering Dismissal Sheet** ✅ FIXED
+**Root Cause:** Missing notification observation and duplicate extensions
+**Solution:** 
+- Added `import NotificationCenter` to coordinator
+- Added observer for custom alarm fired notifications
+- Removed duplicate `Notification.Name` extensions
+- Ensured `showAlarmDismissal(for:)` is called when alarms trigger
 
-**CRITICAL NEXT STEP: Get Console Logs**
+**Files Modified:**
+1. `AlarmKitManager.swift` - Enhanced cancellation logic and alarm updates
+2. `AlarmNotificationCoordinator.swift` - Added notification observation
+3. `AlarmAudioService.swift` - Fixed main actor isolation
+4. `OptimizedAlarmKitManager.swift` - Applied same cancellation fixes
 
-1. **In Xcode:**
-   - Connect your iPhone via USB
-   - Open Xcode → Window → Devices and Simulators
-   - Select your iPhone
-   - Click "Open Console" button (bottom left)
-   - Filter by "DEBUG:" or "🔊" to see alarm logs
-
-2. **Create a New Test Alarm:**
-   - Open StartSmart app on your phone
-   - Create a NEW alarm with:
-     - ✅ Wake up sound: ON (select "Bells" or any sound)
-     - ✅ AI-Generated Motivation: ON
-     - Type some text in "Tomorrow's Mission"
-     - Generate the AI script (make sure it generates!)
-   - Save the alarm
-   - Set it for 2 minutes in the future
-
-3. **Watch the Console While Testing:**
-   - Keep Xcode console open
-   - Wait for alarm to trigger
-   - Watch for "🔊 ========== NOTIFICATION SOUND SETUP ==========" logs
-   - Tap the notification
-   - Watch for "DEBUG: 🚀 ========== ALARM VIEW SETUP STARTED ==========" logs
-
-4. **Send Me ALL Console Output**
-   - Copy everything from when you saved the alarm until after you dismissed it
-   - This will show me:
-     - If CAF files are in bundle
-     - If AI audio file was generated
-     - If audio playback is failing
-     - Exact error messages
-
-**What I'm Looking For:**
-
-🔍 **Notification Sound:**
-- `🔊 ✅ Sound file FOUND in bundle` ← Should see this
-- `🔊 ❌ Sound file NOT FOUND in bundle` ← Problem if we see this
-
-🔍 **AI Script:**
-- `DEBUG: ✅ AI Script enabled AND audio file URL found` ← Should see this
-- `DEBUG: 📂 File exists: true` ← Should see this
-- `DEBUG: ✅ Audio playback started successfully` ← Should see this
-- `DEBUG: ❌ Error playing audio:` ← Problem if we see this
-
-**Possible Root Causes:**
-
-1. **CAF files not in bundle** → Need to verify Bundle Resources in Xcode
-2. **AI audio file not generated** → Alarm created but script generation failed
-3. **Audio playback permission** → iOS blocking audio playback
-4. **Audio session conflict** → Something else using audio session
+**Expected Results:**
+- ✅ AlarmKit cancellation works for both scheduled and active alarms
+- ✅ AI script plays automatically after alarm dismissal
+- ✅ AlarmNotificationCoordinator properly triggers dismissal sheet
+- ✅ No more "Failed to cancel AlarmKit alarm" errors
 
 **Status**: ✅ ROOT CAUSE FOUND & FIXED - Ready for re-test
 

@@ -71,6 +71,7 @@
 		0E93CDB52E9EB0B2005E5758 /* Bells.caf in Resources */ = {isa = PBXBuildFile; fileRef = 0E93CDAC2E9EB0B2005E5758 /* Bells.caf */; };
 		0E93CDB62E9EB0B2005E5758 /* Classic.caf in Resources */ = {isa = PBXBuildFile; fileRef = 0E93CDAE2E9EB0B2005E5758 /* Classic.caf */; };
 		0E93CDBA2E9F0C5C005E5758 /* AlarmKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E93CDB92E9F0C5C005E5758 /* AlarmKitManager.swift */; };
+		0E93CDBB2E9F0C5C005E5758 /* AlarmIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E93CDBC2E9F0C5C005E5758 /* AlarmIntent.swift */; };
 		0EF353F72E74A76500B66B53 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F62E74A76500B66B53 /* FirebaseAuth */; };
 		0EF353F92E74A76500B66B53 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F82E74A76500B66B53 /* FirebaseCore */; };
 		0EF353FB2E74A76500B66B53 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353FA2E74A76500B66B53 /* FirebaseFirestore */; };
@@ -166,6 +167,7 @@
 		0E93CDAF2E9EB0B2005E5758 /* Thunderstorm.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Thunderstorm.caf; sourceTree = "<group>"; };
 		0E93CDB02E9EB0B2005E5758 /* Warning.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Warning.caf; sourceTree = "<group>"; };
 		0E93CDB92E9F0C5C005E5758 /* AlarmKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmKitManager.swift; sourceTree = "<group>"; };
+		0E93CDBC2E9F0C5C005E5758 /* AlarmIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmIntent.swift; sourceTree = "<group>"; };
 		1F3D5A457CED47FD9310D74F /* StartSmart/Views/Onboarding/ToneSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/ToneSelectionView.swift; sourceTree = "<group>"; };
 		2596752C91664F69939DBD57 /* StartSmart/Models/OnboardingState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Models/OnboardingState.swift; sourceTree = "<group>"; };
 		5991B1CBA7934AACA630BD23 /* StartSmart/Views/Onboarding/AccountCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/AccountCreationView.swift; sourceTree = "<group>"; };
@@ -246,6 +248,7 @@
 			isa = PBXGroup;
 			children = (
 				0E93CDB92E9F0C5C005E5758 /* AlarmKitManager.swift */,
+				0E93CDBC2E9F0C5C005E5758 /* AlarmIntent.swift */,
 				0E709AEB2E9AF5ED00DB836C /* AlarmNotificationCoordinator.swift */,
 				0E41DC772E74F96000358D55 /* AlarmAudioService.swift */,
 				0E41DC782E74F96000358D55 /* AlarmRepository.swift */,
@@ -672,6 +675,7 @@
 				0E709AEC2E9AF5ED00DB836C /* AlarmNotificationCoordinator.swift in Sources */,
 				0E41DCD22E74F96100358D55 /* AuthenticationLoadingView.swift in Sources */,
 				0E93CDBA2E9F0C5C005E5758 /* AlarmKitManager.swift in Sources */,
+				0E93CDBB2E9F0C5C005E5758 /* AlarmIntent.swift in Sources */,
 				0E41DCD32E74F96100358D55 /* AlarmDetailView.swift in Sources */,
 				0E41DCD42E74F96100358D55 /* AudioCacheService.swift in Sources */,
 				0E41DCD52E74F96100358D55 /* ElevenLabsService.swift in Sources */,

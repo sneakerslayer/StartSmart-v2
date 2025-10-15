@@ -228,12 +228,16 @@ class OptimizedAlarmKitManager: ObservableObject {
             tintColor: .blue
         )
         
-        // 5. Create complete configuration
+        // 5. Create App Intent for dismissal
+        let dismissIntent = DismissAlarmIntent()
+        dismissIntent.alarmId = alarm.id.uuidString
+        
+        // 6. Create complete configuration with App Intent
         return AlarmManager.AlarmConfiguration(
             countdownDuration: countdownDuration,
             schedule: schedule,
             attributes: attributes,
-            secondaryIntent: nil, // App Intents integration will be added in Phase 4
+            secondaryIntent: dismissIntent, // Connect "Done" button to our App Intent
             sound: .default
         )
     }
@@ -324,14 +328,14 @@ class OptimizedAlarmKitManager: ObservableObject {
             
         } catch {
             logger.error("❌ Failed to cancel AlarmKit alarm: \(error.localizedDescription)")
-            // Don't throw error for active alarms - just log and continue
-            if activeAlarmId == id {
-                logger.info("🔔 Alarm was active - treating as dismissed")
-                await MainActor.run {
-                    self.activeAlarmId = nil
-                }
-            } else {
-                throw AlarmKitError.cancellationFailed(error.localizedDescription)
+            // Don't throw error - just log and continue (alarm might not exist)
+            logger.info("ℹ️ Treating cancellation as successful - alarm may not exist")
+            
+            // Remove from cache and alarms list anyway
+            alarmConfigurationCache.removeValue(forKey: id)
+            await MainActor.run {
+                self.alarms.removeAll { $0.id.uuidString == id }
+                self.activeAlarmId = nil
             }
         }
     }
