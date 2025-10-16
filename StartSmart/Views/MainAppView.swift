@@ -111,9 +111,6 @@ struct MainAppView: View {
                                 logger.info("✅ Found alarm: '\(alarm.label)'")
                                 logger.info("🔧 Alarm Settings:")
                                 logger.info("   - ID: \(alarm.id.uuidString)")
-                                logger.info("   - useTraditionalSound: \(alarm.useTraditionalSound)")
-                                logger.info("   - traditionalSound: \(alarm.traditionalSound.displayName)")
-                                logger.info("   - useAIScript: \(alarm.useAIScript)")
                                 logger.info("   - hasCustomAudio: \(alarm.hasCustomAudio)")
                                 logger.info("🎬 AlarmView appeared for alarm: \(alarm.label)")
                             }
@@ -530,8 +527,6 @@ struct HomeView: View {
 // ✅ FIXED: VoicesView with proper service loading handling
 struct VoicesView: View {
     @StateObject private var container = DependencyContainer.shared
-    @State private var currentlyPlayingSound: TraditionalAlarmSound? = nil
-    @State private var audioPlayer: AVAudioPlayer? = nil
     
     // Voice preview state
     @State private var currentlyPlayingVoice: String?
@@ -632,73 +627,12 @@ struct VoicesView: View {
                         )
                     }
                 }
-
-                // Wake-up Sounds Section (doesn't need AI services)
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Wake-up Sounds")
-                        .font(.headline)
-
-                    Text("Preview traditional alarm sounds")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-
-                    LazyVGrid(columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ], spacing: 12) {
-                        ForEach(TraditionalAlarmSound.allCases, id: \.self) { sound in
-                            WakeUpSoundCard(
-                                sound: sound,
-                                isPlaying: currentlyPlayingSound == sound,
-                                onPlay: { playSound(sound) },
-                                onStop: { stopSound() }
-                            )
-                        }
-                    }
-                }
             }
             .padding(.horizontal, 16)
         }
         .onDisappear {
-            stopSound()
             stopVoicePreview()
         }
-    }
-    
-    private func playSound(_ sound: TraditionalAlarmSound) {
-        // Stop any currently playing sound
-        stopSound()
-        
-        // Load and play the custom MP3 file
-        let fileName = sound.soundFileName.replacingOccurrences(of: ".mp3", with: "")
-        guard let soundURL = Bundle.main.url(forResource: fileName, withExtension: "mp3") else {
-            return
-        }
-        
-        do {
-            audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
-            audioPlayer?.numberOfLoops = -1 // Loop indefinitely
-            audioPlayer?.volume = 0.7 // Set volume for preview
-            audioPlayer?.play()
-            currentlyPlayingSound = sound
-            
-            // Auto-stop after 3 seconds for preview
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                if currentlyPlayingSound == sound {
-                    currentlyPlayingSound = nil
-                    audioPlayer?.stop()
-                    audioPlayer = nil
-                }
-            }
-        } catch {
-            // Handle error silently in production
-        }
-    }
-    
-    private func stopSound() {
-        currentlyPlayingSound = nil
-        audioPlayer?.stop()
-        audioPlayer = nil
     }
     
     // MARK: - ✅ FIXED: Voice Preview Functions with Service Check
@@ -829,53 +763,6 @@ struct ActivityItem: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-    }
-}
-
-struct WakeUpSoundCard: View {
-    let sound: TraditionalAlarmSound
-    let isPlaying: Bool
-    let onPlay: () -> Void
-    let onStop: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            // Icon
-            Image(systemName: sound.iconName)
-                .font(.system(size: 24))
-                .foregroundColor(.blue)
-                .frame(width: 40, height: 40)
-                .background(
-                    Circle()
-                        .fill(Color.blue.opacity(0.1))
-                )
-            
-            // Name
-            Text(sound.displayName)
-                .font(.caption)
-                .fontWeight(.semibold)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-            
-            // Play button
-            Button(action: isPlaying ? onStop : onPlay) {
-                Image(systemName: isPlaying ? "stop.circle.fill" : "play.circle.fill")
-                    .font(.system(size: 20))
-                    .foregroundColor(isPlaying ? .red : .blue)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 8)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(isPlaying ? Color.blue : Color.clear, lineWidth: 2)
-                )
-        )
     }
 }
 

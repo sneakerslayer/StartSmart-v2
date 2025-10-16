@@ -14,7 +14,6 @@ class AdvancedAlarmCustomizationService: ObservableObject {
     // MARK: - Customization Options
     
     @Published var availableThemes: [AlarmTheme] = []
-    @Published var availableSounds: [AlarmSound] = []
     @Published var availableAnimations: [AlarmAnimation] = []
     @Published var availableGestures: [AlarmGesture] = []
     @Published var availableEffects: [AlarmEffect] = []
@@ -22,7 +21,6 @@ class AdvancedAlarmCustomizationService: ObservableObject {
     // MARK: - User Preferences
     
     @Published var selectedTheme: AlarmTheme?
-    @Published var selectedSound: AlarmSound?
     @Published var selectedAnimation: AlarmAnimation?
     @Published var selectedGesture: AlarmGesture?
     @Published var selectedEffects: Set<AlarmEffect> = []
@@ -45,7 +43,6 @@ class AdvancedAlarmCustomizationService: ObservableObject {
     
     private func loadDefaultCustomizations() {
         loadDefaultThemes()
-        loadDefaultSounds()
         loadDefaultAnimations()
         loadDefaultGestures()
         loadDefaultEffects()
@@ -102,56 +99,6 @@ class AdvancedAlarmCustomizationService: ObservableObject {
                 backgroundColor: .red,
                 textColor: .white,
                 iconName: "sun.max.fill"
-            )
-        ]
-    }
-    
-    private func loadDefaultSounds() {
-        availableSounds = [
-            AlarmSound(
-                id: "classic",
-                name: "Classic",
-                description: "Traditional alarm sound",
-                fileName: "Classic.caf",
-                category: .traditional,
-                duration: 30.0,
-                volume: 1.0
-            ),
-            AlarmSound(
-                id: "gentle",
-                name: "Gentle",
-                description: "Soft and gentle wake-up sound",
-                fileName: "Gentle.caf",
-                category: .gentle,
-                duration: 45.0,
-                volume: 0.8
-            ),
-            AlarmSound(
-                id: "energetic",
-                name: "Energetic",
-                description: "High-energy wake-up sound",
-                fileName: "Energetic.caf",
-                category: .energetic,
-                duration: 25.0,
-                volume: 1.0
-            ),
-            AlarmSound(
-                id: "nature",
-                name: "Nature",
-                description: "Natural sounds for peaceful wake-up",
-                fileName: "Nature.caf",
-                category: .nature,
-                duration: 60.0,
-                volume: 0.9
-            ),
-            AlarmSound(
-                id: "melodic",
-                name: "Melodic",
-                description: "Musical wake-up sound",
-                fileName: "Melodic.caf",
-                category: .melodic,
-                duration: 40.0,
-                volume: 0.9
             )
         ]
     }
@@ -486,24 +433,6 @@ struct AlarmTheme: Codable, Identifiable, Hashable {
     let backgroundColor: Color
     let textColor: Color
     let iconName: String
-}
-
-struct AlarmSound: Codable, Identifiable, Hashable {
-    let id: String
-    let name: String
-    let description: String
-    let fileName: String
-    let category: SoundCategory
-    let duration: TimeInterval
-    let volume: Float
-    
-    enum SoundCategory: String, Codable, CaseIterable {
-        case traditional = "traditional"
-        case gentle = "gentle"
-        case energetic = "energetic"
-        case nature = "nature"
-        case melodic = "melodic"
-    }
 }
 
 struct AlarmAnimation: Codable, Identifiable, Hashable {

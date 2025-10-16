@@ -13,10 +13,6 @@ struct AlarmFormView: View {
     @State private var isPlayingAudio = false
     @State private var audioPlaybackService: AudioPlaybackService? = nil
     
-    // Traditional alarm sound selection
-    @State private var selectedTraditionalSound: TraditionalAlarmSound = .classic
-    @State private var useTraditionalSound: Bool = true
-    @State private var useAIScript: Bool = true
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
     let onSave: (Alarm) -> Void
@@ -273,11 +269,6 @@ struct AlarmFormView: View {
         if formViewModel.validate() {
             var alarm = formViewModel.createAlarm()
             
-            // Set traditional sound properties
-            alarm.traditionalSound = selectedTraditionalSound
-            alarm.useTraditionalSound = useTraditionalSound
-            alarm.useAIScript = useAIScript
-            
             // Attach generated content if present
             if !generatedScript.isEmpty, let fileURL = lastGeneratedAudioURL, let voice = lastVoiceIdUsed {
                 let content = AlarmGeneratedContent(
@@ -448,10 +439,6 @@ struct AlarmFormView: View {
             // If all attempts failed, automatically fall back to traditional sound
             if !audioGenerated {
                 await MainActor.run {
-                    // Automatically disable AI script and enable traditional sound
-                    useAIScript = false
-                    useTraditionalSound = true
-                    
                     if let error = lastError {
                         let nsError = error as NSError
                         switch nsError.code {
@@ -810,50 +797,6 @@ struct AlarmFormView: View {
                         .padding(.horizontal, 20)
                         .tint(.blue)
                 }
-            }
-            
-            // Traditional Alarm Sound Section
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Wake-up Sound")
-                    .font(.system(size: 17, weight: .regular))
-                    .padding(.horizontal, 20)
-                
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(TraditionalAlarmSound.allCases, id: \.self) { sound in
-                            Button(action: {
-                                selectedTraditionalSound = sound
-                            }) {
-                                VStack(spacing: 4) {
-                                    Image(systemName: sound.iconName)
-                                        .font(.system(size: 20))
-                                        .foregroundColor(selectedTraditionalSound == sound ? .white : .blue)
-                                    
-                                    Text(sound.displayName)
-                                        .font(.system(size: 12, weight: .semibold))
-                                        .foregroundColor(selectedTraditionalSound == sound ? .white : .primary)
-                                        .multilineTextAlignment(.center)
-                                }
-                                .frame(width: 80, height: 60)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(selectedTraditionalSound == sound ? Color.blue : Color(.systemGray6))
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(selectedTraditionalSound == sound ? Color.blue : Color.clear, lineWidth: 2)
-                                )
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                }
-                
-                // Sound Description
-                Text(selectedTraditionalSound.description)
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 20)
             }
         }
         .padding(.vertical, 18)

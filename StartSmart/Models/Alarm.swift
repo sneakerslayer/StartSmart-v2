@@ -39,11 +39,6 @@ struct Alarm: Identifiable, Codable, Equatable {
     var customAudioPath: String?
     var generatedContent: AlarmGeneratedContent?
     
-    // MARK: - Traditional Alarm Sound
-    var traditionalSound: TraditionalAlarmSound
-    var useTraditionalSound: Bool  // Phase 1: Traditional sound
-    var useAIScript: Bool          // Phase 2: AI script after interaction
-    
     // MARK: - Initialization
     init(
         id: UUID = UUID(),
@@ -56,10 +51,7 @@ struct Alarm: Identifiable, Codable, Equatable {
         snoozeDuration: TimeInterval = 300, // 5 minutes
         maxSnoozeCount: Int = 3,
         customAudioPath: String? = nil,
-        generatedContent: AlarmGeneratedContent? = nil,
-        traditionalSound: TraditionalAlarmSound = .classic,
-        useTraditionalSound: Bool = true,
-        useAIScript: Bool = true
+        generatedContent: AlarmGeneratedContent? = nil
     ) {
         self.id = id
         self.time = time
@@ -76,9 +68,6 @@ struct Alarm: Identifiable, Codable, Equatable {
         self.updatedAt = Date()
         self.customAudioPath = customAudioPath
         self.generatedContent = generatedContent
-        self.traditionalSound = traditionalSound
-        self.useTraditionalSound = useTraditionalSound
-        self.useAIScript = useAIScript
     }
     
     // MARK: - Computed Properties
@@ -292,60 +281,6 @@ enum AlarmTone: String, CaseIterable, Codable {
         case .energetic: return "bolt.fill"
         case .toughLove: return "shield.fill"
         case .storyteller: return "book.fill"
-        }
-    }
-}
-
-// MARK: - Traditional Alarm Sound
-enum TraditionalAlarmSound: String, CaseIterable, Codable {
-    case bark = "bark"                 // Bark.mp3
-    case bells = "bells"               // Bells.mp3
-    case buzzer = "buzzer"             // Buzzer.mp3
-    case classic = "classic"           // Classic.mp3
-    case thunderstorm = "thunderstorm" // Thunderstorm.mp3
-    case warning = "warning"           // Warning.mp3
-    
-    var displayName: String {
-        switch self {
-        case .bark: return "Bark"
-        case .bells: return "Bells"
-        case .buzzer: return "Buzzer"
-        case .classic: return "Classic"
-        case .thunderstorm: return "Thunderstorm"
-        case .warning: return "Warning"
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .bark: return "Sharp, attention-grabbing bark"
-        case .bells: return "Traditional bell tower chimes"
-        case .buzzer: return "Modern electronic buzzer"
-        case .classic: return "Classic alarm sound"
-        case .thunderstorm: return "Gentle thunderstorm ambience"
-        case .warning: return "Urgent warning alert"
-        }
-    }
-    
-    var soundFileName: String {
-        switch self {
-        case .bark: return "Bark.caf"
-        case .bells: return "Bells.caf"
-        case .buzzer: return "Buzzer.caf"
-        case .classic: return "Classic.caf"
-        case .thunderstorm: return "Thunderstorm.caf"
-        case .warning: return "Warning.caf"
-        }
-    }
-    
-    var iconName: String {
-        switch self {
-        case .bark: return "exclamationmark.triangle.fill"
-        case .bells: return "bell.fill"
-        case .buzzer: return "waveform"
-        case .classic: return "alarm.fill"
-        case .thunderstorm: return "cloud.bolt.fill"
-        case .warning: return "exclamationmark.octagon.fill"
         }
     }
 }

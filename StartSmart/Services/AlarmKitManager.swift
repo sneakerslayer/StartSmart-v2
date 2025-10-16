@@ -98,12 +98,6 @@ class AlarmKitManager: ObservableObject {
             print("   Alarm ID: \(alarm.id.uuidString)")
             print("   User Goal: \(alarm.label)")
             
-            // STEP 1: Create WakeUpIntent with alarm details
-            let wakeUpIntent = WakeUpIntent(
-                alarmID: alarm.id.uuidString,
-                userGoal: alarm.label
-            )
-            
             // STEP 2: Create custom secondary button
             // This button will appear next to "Stop" on the lock screen
             let wakeUpButton = AlarmButton(
@@ -320,7 +314,6 @@ class AlarmKitManager: ObservableObject {
         // Check if any alarms are currently firing
         // We'll detect this by checking if any alarms are within a few minutes of their scheduled time
         let currentTime = Date()
-        let calendar = Calendar.current
         
         for alarm in alarmUpdates {
             // Check if this alarm should be firing now (within 5 minutes of scheduled time)

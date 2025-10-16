@@ -345,17 +345,10 @@ struct AlarmView: View {
         
         // IMPORTANT: iOS Notification Limitations
         
-        // FIXED APPROACH: Always play traditional alarm first in foreground (reliable)
+        // FIXED APPROACH: Always play AI script directly (reliable)
         // iOS notifications cannot reliably play loud alarm sounds
-        // Play traditional alarm in app, then transition to AI script
-        if alarm.useTraditionalSound {
-            alarmPhase = .traditionalAlarm
-            startTraditionalAlarmPhase()
-            
-            // Set up transition to AI script after user interaction
-            if alarm.useAIScript {
-            }
-        } else if alarm.useAIScript, let audioURL = alarm.audioFileURL {
+        // Play AI script in app for better user experience
+        if let audioURL = alarm.audioFileURL {
             alarmPhase = .aiScriptPlayback
             startAIScriptPhase(audioURL: audioURL)
         } else {
@@ -379,37 +372,6 @@ struct AlarmView: View {
         
     }
     
-    private func startTraditionalAlarmPhase() {
-        // Configure audio session for alarm playback
-        let audioSession = AVAudioSession.sharedInstance()
-        do {
-            // Set category to playback with options to allow mixing and override silent mode
-            try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-            try audioSession.setActive(true, options: [])
-        } catch {
-        }
-        
-        // Load and play the traditional alarm sound with looping
-        let fileName = alarm.traditionalSound.soundFileName.replacingOccurrences(of: ".caf", with: "")
-        guard let soundURL = Bundle.main.url(forResource: fileName, withExtension: "caf") else {
-            return
-        }
-        
-        
-        do {
-            traditionalAlarmPlayer = try AVAudioPlayer(contentsOf: soundURL)
-            traditionalAlarmPlayer?.numberOfLoops = -1 // Loop indefinitely
-            traditionalAlarmPlayer?.volume = 1.0 // Full volume for alarm
-            
-            // Prepare to play (preloads audio buffer)
-            traditionalAlarmPlayer?.prepareToPlay()
-            
-            // Play the alarm
-            let didPlay = traditionalAlarmPlayer?.play() ?? false
-            
-        } catch {
-        }
-    }
     
     private func startAIScriptPhase(audioURL: URL) {
         // Stop traditional alarm player
@@ -444,20 +406,9 @@ struct AlarmView: View {
     
     private func userInteracted() {
         // User tapped or interacted with the alarm
-        // If we're in traditional alarm phase and have AI script, transition to AI script
-        // But if we're already in AI script phase, just dismiss
-        if alarmPhase == .traditionalAlarm && alarm.useAIScript {
-            // Transition to AI script phase
-            if let audioURL = alarm.audioFileURL {
-                alarmPhase = .aiScriptPlayback
-                startAIScriptPhase(audioURL: audioURL)
-            } else {
-                alarmPhase = .dismissed
-            }
-        } else {
-            // Already in AI script phase or no AI script - just dismiss
-            alarmPhase = .dismissed
-        }
+        // Since we no longer have traditional alarm phase, just dismiss
+        viewModel.dismissAlarm(alarm.id, method: .button)
+        presentationMode.wrappedValue.dismiss()
     }
     
     private func cleanupAlarmExperience() {

@@ -239,10 +239,7 @@ class AlarmAudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
             isEnabled: true,
             repeatDays: [],
             tone: .energetic,
-            snoozeEnabled: true,
-            traditionalSound: .classic,
-            useTraditionalSound: false,
-            useAIScript: true
+            snoozeEnabled: true
         ),
         onDismiss: {}
     )
