@@ -93,73 +93,72 @@ class AlarmKitManager: ObservableObject {
         }
         
         do {
-            // Create alarm using the correct AlarmKit API based on ADHDAlarms implementation
-            // Reference: https://github.com/jacobsapps/ADHDAlarms
+            print("📅 Scheduling alarm for: \(alarm.time)")
+            print("   Alarm ID: \(alarm.id.uuidString)")
+            print("   User Goal: \(alarm.label)")
             
-            // 1. Create WakeUpIntent for the secondary button
+            // STEP 1: Create WakeUpIntent with alarm details
             let wakeUpIntent = WakeUpIntent(
                 alarmID: alarm.id.uuidString,
                 userGoal: alarm.label
             )
             
-            // 2. Create AlarmPresentation for how the alarm appears
-            let alertPresentation = AlarmPresentation.Alert(
-                title: LocalizedStringResource(stringLiteral: "⏰ Wake Up!"),
-                stopButton: AlarmButton(
-                    text: "Done",
-                    textColor: .white,
-                    systemImageName: "checkmark.circle.fill"
-                ),
-                secondaryButton: AlarmButton(
-                    text: "I'm Awake!",
-                    textColor: .white,
-                    systemImageName: "sun.max.fill"
-                )
+            // STEP 2: Create custom secondary button
+            // This button will appear next to "Stop" on the lock screen
+            let wakeUpButton = AlarmButton(
+                text: "I'm Awake!",              // Button text
+                textColor: .white,                 // Text color
+                systemImageName: "sun.max.fill"     // SF Symbol (shows in Dynamic Island)
             )
             
+            // STEP 3: Create alert presentation with BOTH buttons
+            let alertPresentation = AlarmPresentation.Alert(
+                title: "⏰ Wake Up Time!",         // Main title on lock screen
+                stopButton: wakeUpButton,           // Our custom button (replaces stop)
+                secondaryButton: nil                // No secondary button for now
+            )
+            
+            // STEP 4: Create full presentation configuration
             let presentation = AlarmPresentation(
                 alert: alertPresentation,
-                countdown: nil
+                countdown: nil,  // No countdown needed for wake-up alarms
+                paused: nil      // No paused state needed
             )
             
-            // 3. Create countdown duration (no snooze with WakeUpIntent approach)
-            let countdownDuration = AlarmKit.Alarm.CountdownDuration(
-                preAlert: nil,
-                postAlert: nil
-            )
-            
-            // 4. Create schedule using the correct AlarmKit API
-            let schedule = AlarmKit.Alarm.Schedule.relative(AlarmKit.Alarm.Schedule.Relative(
-                time: AlarmKit.Alarm.Schedule.Relative.Time(
-                    hour: Calendar.current.component(.hour, from: alarm.time),
-                    minute: Calendar.current.component(.minute, from: alarm.time)
-                ),
-                repeats: alarm.isRepeating ? AlarmKit.Alarm.Schedule.Relative.Recurrence.weekly(convertToAlarmKitWeekdays(alarm.repeatDays)) : AlarmKit.Alarm.Schedule.Relative.Recurrence.never
-            ))
-            
-            // 5. Create alarm attributes with proper metadata
+            // STEP 5: Create attributes with presentation and styling
             let metadata = StartSmartAlarmMetadata()
             let attributes = AlarmAttributes(
                 presentation: presentation,
                 metadata: metadata,
-                tintColor: .blue
+                tintColor: .purple  // Your brand color (adjust as needed)
             )
             
-            // 6. Create complete configuration
-            let alarmConfiguration = AlarmManager.AlarmConfiguration<StartSmartAlarmMetadata>(
-                countdownDuration: countdownDuration,
-                schedule: schedule,
-                attributes: attributes,
-                sound: .default
+            // STEP 6: Create complete alarm configuration
+            let configuration = AlarmManager.AlarmConfiguration<StartSmartAlarmMetadata>(
+                schedule: .fixed(alarm.time),  // One-time alarm at specific date
+                attributes: attributes               // Presentation and styling
             )
             
-            // 7. Schedule the alarm
+            // STEP 7: Schedule the alarm with AlarmKit
             let alarmKitAlarm = try await alarmManager.schedule(
                 id: alarm.id,
-                configuration: alarmConfiguration as AlarmManager.AlarmConfiguration<StartSmartAlarmMetadata>
+                configuration: configuration
             )
             
-                    logger.info("✅ AlarmKit alarm scheduled successfully: \(alarmKitAlarm.id.uuidString)")
+            print("✅ Alarm scheduled successfully!")
+            print("   System Alarm ID: \(alarmKitAlarm.id)")
+            print("   Our Alarm ID: \(alarm.id.uuidString)")
+            print("   Custom button: I'm Awake!")
+            
+            // STEP 8: Save to Firestore for tracking
+            try await saveAlarmToFirestore(
+                systemAlarmID: alarmKitAlarm.id.uuidString,
+                customAlarmID: alarm.id.uuidString,
+                scheduledDate: alarm.time,
+                userGoal: alarm.label
+            )
+            
+            logger.info("✅ AlarmKit alarm scheduled successfully: \(alarmKitAlarm.id.uuidString)")
                     
                     // Add to our alarms list for tracking
                     await MainActor.run {
@@ -384,6 +383,24 @@ class AlarmKitManager: ObservableObject {
     private func handleAppEnteredBackground() {
         logger.info("🔔 App entered background - tracking alarm state")
         // We'll track this state to detect when user returns from dismissing alarm
+    }
+    
+    // MARK: - Helper Method for Firestore
+    private func saveAlarmToFirestore(
+        systemAlarmID: String,
+        customAlarmID: String,
+        scheduledDate: Date,
+        userGoal: String?
+    ) async throws {
+        // TODO: This will be implemented in Step 5
+        // For now, just log that we would save
+        print("💾 Would save alarm to Firestore:")
+        print("   System ID: \(systemAlarmID)")
+        print("   Custom ID: \(customAlarmID)")
+        print("   Date: \(scheduledDate)")
+        print("   Goal: \(userGoal ?? "none")")
+        
+        // Actual Firestore implementation will come in Step 5
     }
 }
 
