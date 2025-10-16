@@ -4,6 +4,7 @@ import Combine
 import os.log
 import AppIntents
 import UIKit
+import FirebaseFirestore
 
 // MARK: - StartSmart Alarm Metadata
 
@@ -392,15 +393,42 @@ class AlarmKitManager: ObservableObject {
         scheduledDate: Date,
         userGoal: String?
     ) async throws {
-        // TODO: This will be implemented in Step 5
-        // For now, just log that we would save
-        print("💾 Would save alarm to Firestore:")
+        print("💾 Saving alarm to Firestore:")
         print("   System ID: \(systemAlarmID)")
         print("   Custom ID: \(customAlarmID)")
         print("   Date: \(scheduledDate)")
         print("   Goal: \(userGoal ?? "none")")
         
-        // Actual Firestore implementation will come in Step 5
+        // Get Firebase service from dependency container
+        let firebaseService: FirebaseServiceProtocol = DependencyContainer.shared.resolve()
+        
+        // Get current user ID
+        guard let userId = firebaseService.currentUser?.id.uuidString else {
+            print("⚠️ No authenticated user - skipping Firestore save")
+            return
+        }
+        
+        // Create alarm data for Firestore
+        let alarmData: [String: Any] = [
+            "systemAlarmID": systemAlarmID,
+            "customAlarmID": customAlarmID,
+            "scheduledDate": scheduledDate,
+            "userGoal": userGoal ?? "",
+            "status": "scheduled",
+            "createdAt": Date(),
+            "updatedAt": Date()
+        ]
+        
+        // Save to Firestore in user's alarms collection
+        let firestore = Firestore.firestore()
+        let alarmRef = firestore
+            .collection("users")
+            .document(userId)
+            .collection("alarms")
+            .document(customAlarmID)
+        
+        try await alarmRef.setData(alarmData)
+        print("✅ Alarm saved to Firestore successfully")
     }
 }
 
