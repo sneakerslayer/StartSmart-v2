@@ -32,6 +32,7 @@ struct AlarmDismissalView: View {
                 VStack(spacing: 16) {
                     // Waveform animation
                     HStack(spacing: 4) {
+                        Spacer()
                         ForEach(0..<20, id: \.self) { index in
                             RoundedRectangle(cornerRadius: 2)
                                 .fill(isPlaying ? Color.blue : Color.gray.opacity(0.3))
@@ -45,9 +46,9 @@ struct AlarmDismissalView: View {
                                     value: isPlaying
                                 )
                         }
+                        Spacer()
                     }
                     .frame(height: 60)
-                    .frame(maxWidth: .infinity, alignment: .center)
                     
                     // Playback Progress
                     ProgressView(value: playbackProgress)
