@@ -47,6 +47,7 @@ struct AlarmDismissalView: View {
                         }
                     }
                     .frame(height: 60)
+                    .frame(maxWidth: .infinity, alignment: .center)
                     
                     // Playback Progress
                     ProgressView(value: playbackProgress)
