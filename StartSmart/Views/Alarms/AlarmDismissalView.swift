@@ -49,6 +49,7 @@ struct AlarmDismissalView: View {
                         Spacer()
                     }
                     .frame(height: 60)
+                    .frame(maxWidth: .infinity)
                     
                     // Playback Progress
                     ProgressView(value: playbackProgress)
