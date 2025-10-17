@@ -33,11 +33,6 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>StartSmart needs microphone access for voice alarm dismissal and speech recognition features.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

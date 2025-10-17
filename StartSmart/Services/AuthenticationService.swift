@@ -40,6 +40,7 @@ class AuthenticationService: NSObject, @preconcurrency AuthenticationServiceProt
     @Published var isAuthenticated: Bool = false
     @Published var currentUser: User?
     @Published var authenticationState: AuthenticationState = .signedOut
+    @Published var isGuestMode: Bool = false
     
     // MARK: - Private Properties
     
@@ -231,6 +232,44 @@ class AuthenticationService: NSObject, @preconcurrency AuthenticationServiceProt
             authenticationState = .error(error)
             throw error
         }
+    }
+    
+    // MARK: - Guest Mode
+    
+    /// Enable guest mode allowing users to access free features without authentication
+    func enableGuestMode() {
+        isGuestMode = true
+        isAuthenticated = false
+        currentUser = nil
+        authenticationState = .signedOut
+        
+        // Mark onboarding as complete so user can access the main app
+        // Create default preferences for guest users
+        let guestPreferences = UserPreferences(
+            defaultAlarmTone: .energetic,
+            notificationsEnabled: true,
+            soundEnabled: true,
+            vibrationEnabled: true,
+            snoozeEnabled: true,
+            toneSliderPosition: 0.5
+        )
+        
+        let completionData = OnboardingCompletionData(
+            motivation: .fitness,
+            tonePosition: 0.5,
+            selectedVoice: VoicePersona.allPersonas.first ?? VoicePersona.allPersonas[0],
+            preferences: guestPreferences,
+            completedAt: Date()
+        )
+        
+        if let encoded = try? JSONEncoder().encode(completionData) {
+            UserDefaults.standard.set(encoded, forKey: "onboarding_completion_data")
+        }
+    }
+    
+    /// Exit guest mode (when user wants to sign in)
+    func exitGuestMode() {
+        isGuestMode = false
     }
     
     // MARK: - Helper Methods

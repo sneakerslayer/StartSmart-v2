@@ -173,6 +173,31 @@ struct OnboardingView: View {
             }
             .disabled(isSigningIn)
             
+            // Continue as Guest Button
+            Button {
+                handleGuestMode()
+            } label: {
+                HStack {
+                    Image(systemName: "person.crop.circle")
+                        .font(.title2)
+                    
+                    Text("Continue as Guest")
+                        .font(.system(size: 18, weight: .semibold))
+                    
+                    Spacer()
+                }
+                .foregroundColor(.secondary)
+                .frame(height: 56)
+                .frame(maxWidth: .infinity)
+                .background(Color(.systemGray6).opacity(0.6))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
+                )
+            }
+            .disabled(isSigningIn)
+            
             if isSigningIn {
                 HStack {
                     ProgressView()
@@ -247,6 +272,12 @@ struct OnboardingView: View {
                 }
             }
         }
+    }
+    
+    private func handleGuestMode() {
+        // Enable guest mode - user can access free features without authentication
+        authService.enableGuestMode()
+        // Navigation will be handled by the app state
     }
 }
 

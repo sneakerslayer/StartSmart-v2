@@ -8,11 +8,21 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationView {
-            VStack {
-                Text("Settings")
-                    .font(.largeTitle)
-                Text("Temporarily disabled to prevent main thread blocking")
-                    .foregroundColor(.secondary)
+            List {
+                // Legal Section
+                Section("Legal") {
+                    Link("Privacy Policy", destination: URL(string: "https://www.startsmartmobile.com/support")!)
+                    Link("Terms of Service", destination: URL(string: "https://www.startsmartmobile.com/support")!)
+                }
+                
+                Section("About") {
+                    HStack {
+                        Text("Version")
+                        Spacer()
+                        Text("1.0")
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
             .navigationTitle("Settings")
         }

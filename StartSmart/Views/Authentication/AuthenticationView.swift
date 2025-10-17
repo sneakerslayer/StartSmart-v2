@@ -38,7 +38,7 @@ struct AuthenticationView: View {
                 .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: authService.isAuthenticated)
+        .animation(.easeInOut(duration: 0.3), value: authService.isAuthenticated || authService.isGuestMode)
     }
 }
 

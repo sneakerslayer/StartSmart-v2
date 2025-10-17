@@ -242,19 +242,15 @@ struct EnhancedWelcomeView: View {
                     .foregroundColor(.secondary)
                 
                 HStack(spacing: 2) {
-                    Button("Terms of Service") {
-                        // Handle terms of service
-                    }
-                    .font(.system(size: 10, weight: .medium))
+                    Link("Terms of Service", destination: URL(string: "https://www.startsmartmobile.com/support")!)
+                        .font(.system(size: 10, weight: .medium))
                     
                     Text("and")
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                     
-                    Button("Privacy Policy") {
-                        // Handle privacy policy
-                    }
-                    .font(.system(size: 10, weight: .medium))
+                    Link("Privacy Policy", destination: URL(string: "https://www.startsmartmobile.com/support")!)
+                        .font(.system(size: 10, weight: .medium))
                 }
             }
             .padding(.top, 8)
