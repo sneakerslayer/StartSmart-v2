@@ -120,6 +120,9 @@ class AlarmViewModel: ObservableObject {
             do {
                 for index in indexSet {
                     let alarm = alarms[index]
+                    // Cancel AlarmKit alarm first before deleting from repository
+                    try await alarmKitManager.cancelAlarm(withId: alarm.id.uuidString)
+                    // Then delete from repository
                     try await alarmRepository.deleteAlarm(alarm)
                 }
             } catch {
