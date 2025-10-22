@@ -16,10 +16,10 @@ struct PaywallView: View {
         self.source = source
         self.onDismiss = onDismiss
         
-        // TEMPORARY: Create a mock subscription service for testing
-        let mockSubscriptionService = MockSubscriptionService()
+        // Use real SubscriptionService from DependencyContainer
+        let subscriptionService = DependencyContainer.shared.subscriptionService
         self._subscriptionStateManager = StateObject(wrappedValue: SubscriptionStateManager(
-            subscriptionService: mockSubscriptionService
+            subscriptionService: subscriptionService
         ))
     }
     
@@ -474,55 +474,6 @@ struct PaywallView: View {
 struct PaywallView_Previews: PreviewProvider {
     static var previews: some View {
         PaywallView(source: "preview")
-    }
-}
-
-// MARK: - Mock Subscription Service for Testing
-class MockSubscriptionService: SubscriptionServiceProtocol {
-    var currentSubscriptionStatus: StartSmartSubscriptionStatus = .free
-    var customerInfo: CustomerInfo? = nil
-    var availableOfferings: Offerings? = nil
-    
-    var subscriptionStatusPublisher: AnyPublisher<StartSmartSubscriptionStatus, Never> {
-        Just(.free).eraseToAnyPublisher()
-    }
-    
-    func configureRevenueCat() async {
-        print("Mock: RevenueCat configured")
-    }
-    
-    func getCustomerInfo() async throws -> CustomerInfo {
-        print("Mock: Getting customer info")
-        throw NSError(domain: "MockError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Mock service - no real customer info"])
-    }
-    
-    func getOfferings() async throws -> Offerings {
-        print("Mock: Getting offerings")
-        throw NSError(domain: "MockError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Mock service - no real offerings"])
-    }
-    
-    func purchasePackage(_ package: Package) async throws -> CustomerInfo {
-        print("Mock: Purchasing package")
-        throw NSError(domain: "MockError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Mock service - no real purchase"])
-    }
-    
-    func restorePurchases() async throws -> CustomerInfo {
-        print("Mock: Restoring purchases")
-        throw NSError(domain: "MockError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Mock service - no real restore"])
-    }
-    
-    func checkSubscriptionStatus() async throws -> StartSmartSubscriptionStatus {
-        print("Mock: Checking subscription status")
-        return .free
-    }
-    
-    func presentCodeRedemptionSheet() {
-        print("Mock: Presenting code redemption sheet")
-    }
-    
-    func canMakePayments() -> Bool {
-        print("Mock: Can make payments")
-        return true
     }
 }
 

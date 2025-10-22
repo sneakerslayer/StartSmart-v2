@@ -114,7 +114,7 @@ The hybrid approach is now ready for additional phases:
 - **Phase 3**: Follow-up notifications for missed wake-ups
 - **Phase 4**: System reconciliation on app launch
 
-## **ALARMKIT MIGRATION STRATEGY**
+## **ALARMKIT MIGRATION STRATEGIES**
 
 ### **Phase 1: Project Configuration & Setup**
 **Objective**: Prepare project for iOS 26 and AlarmKit integration
@@ -1541,4 +1541,87 @@ The app now builds successfully and is ready for physical device testing to veri
 - ✅ Guest mode fully implemented
 - ✅ Legal links functional and tested
 - ⏳ Awaiting subscription configuration in App Store Connect
+
+|
+
+---
+
+## 🔴 Onboarding Testing Issues - October 22, 2025
+
+**Status**: 🔄 IN PROGRESS - Fixing critical onboarding errors
+
+### Issues Found During Physical Device Testing
+
+**Issue #1: Mock Subscription Service** 🐛 FOUND & FIXED
+- **Error Message**: "Failed to refresh subscription data: Mock service - no real customer info"
+- **Root Cause**: `PaywallView.swift` was using `MockSubscriptionService` instead of real `SubscriptionService`
+- **Location**: Line 19-23 of PaywallView.swift
+- **Impact**: Users couldn't see available subscriptions or select plans
+- **Fix Applied**: ✅ Replaced with real `DependencyContainer.shared.subscriptionService`
+- **Additional**: Removed entire `MockSubscriptionService` class (was temporary for testing)
+
+**Issue #2: Subscription Selection Failing** 🐛 FOUND & FIXED  
+- **Error Message**: "Selected plan is not available"
+- **Root Cause**: Related to Issue #1 - mock service couldn't return real offering data
+- **Impact**: Users couldn't select any subscription plan
+- **Fix Applied**: ✅ Will be resolved by switching to real SubscriptionService
+
+**Issue #3: Apple Sign In Error 1000** 🟡 INVESTIGATION NEEDED
+- **Error Message**: "Apple Sign In failed: The operation couldn't be completed. (com.apple.AuthenticationServices.AuthorizationError error 1000.)"
+- **Error Code**: 1000 - User cancellation or authorization failure
+- **Location**: Triggered from `AccountCreationView.handleAppleSignInResult()` 
+- **Potential Causes**:
+  1. Missing "Sign In with Apple" capability on physical device
+  2. Bundle identifier mismatch
+  3. Team ID not configured
+  4. Temporary auth service issue
+- **Files Involved**:
+  - `StartSmart/Views/Onboarding/AccountCreationView.swift` - Lines 336-357
+  - `StartSmart/Services/SimpleAuthenticationService.swift` - Apple Sign In implementation
+  
+### Fixes Applied So Far
+
+**✅ COMPLETED: PaywallView Mock Service Fix**
+
+**File**: `StartSmart/Views/Subscription/PaywallView.swift`
+
+**Changes**:
+1. Replaced lines 19-23:
+   ```swift
+   // Before
+   let mockSubscriptionService = MockSubscriptionService()
+   self._subscriptionStateManager = StateObject(wrappedValue: SubscriptionStateManager(
+       subscriptionService: mockSubscriptionService
+   ))
+   
+   // After  
+   let subscriptionService = DependencyContainer.shared.subscriptionService
+   self._subscriptionStateManager = StateObject(wrappedValue: SubscriptionStateManager(
+       subscriptionService: subscriptionService
+   ))
+   ```
+
+2. Removed entire `MockSubscriptionService` class (lines 480-527)
+   - This class is no longer needed since we're using real RevenueCat
+
+**Impact**: PaywallView now connects to real subscription data from DependencyContainer
+
+### Next Steps
+
+**Immediate Actions**:
+1. ✅ Build and test subscription paywall
+2. ⏳ Investigate Apple Sign In error 1000  
+3. ⏳ Verify RevenueCat is properly configured
+4. ⏳ Check Sign In with Apple capability
+
+**Potential Apple Sign In Fixes** (if needed):
+- Verify project has "Sign In with Apple" capability enabled
+- Check that Team ID matches Apple Developer account
+- Verify bundle identifier matches App Store Connect
+- On device: Settings → Sign in with Apple → Manage → Check for StartSmart
+
+### Build Status
+
+- 🔄 Building after PaywallView changes...
+- ⏳ Ready to test paywall after build completes
 
