@@ -16,8 +16,9 @@ struct PaywallView: View {
         self.source = source
         self.onDismiss = onDismiss
         
-        // Use real SubscriptionService from DependencyContainer
-        let subscriptionService = DependencyContainer.shared.subscriptionService
+        // Create a default subscription service that will be updated when container is ready
+        // This prevents crashing when PaywallView is instantiated before DependencyContainer initializes
+        let subscriptionService = SubscriptionService()
         self._subscriptionStateManager = StateObject(wrappedValue: SubscriptionStateManager(
             subscriptionService: subscriptionService
         ))
