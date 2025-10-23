@@ -1377,6 +1377,7 @@ The app now builds successfully and is ready for physical device testing to veri
 - Use `AlarmView` (not `AlarmDismissalView`) when showing alarm from notification - it has the two-phase alarm system
 - Multiple audio players need centralized coordination - create singleton audio coordinator to prevent interference
 - Keyboard dismissal requires explicit implementation in SwiftUI - add toolbar "Done" button and .onSubmit modifier
+- **Avoid using `#if DEBUG` directives to skip core user-facing features** - Use proper feature flags or configuration instead. Conditional compilation should be for debugging tools, not production feature control
 
 ## Apple Review Rejection Fix Implementation Progress
 
@@ -1624,4 +1625,216 @@ The app now builds successfully and is ready for physical device testing to veri
 
 - 🔄 Building after PaywallView changes...
 - ⏳ Ready to test paywall after build completes
+
+
+---
+
+## 🔴 ONBOARDING PAGE 5 CONTENT MISMATCH - October 23, 2025
+
+**Status**: ✅ FIXED - Page 5 now displays correct DemoGenerationView content
+**Mode**: ✅ PLANNER MODE COMPLETE → ✅ EXECUTOR MODE COMPLETE
+
+### Issue Report
+
+User discovered that **page 5 of onboarding** ("5 of 7") shows incorrect content:
+- **Expected**: "Creating your first wake-up..." with DemoGenerationView content
+- **Actual**: Showing notification permission content (PermissionPrimingView)
+- **Impact**: Users don't see the demo wake-up creation experience during onboarding
+
+### Root Cause Analysis
+
+**File**: `StartSmart/Views/Onboarding/OnboardingFlowView.swift`
+**Location**: Lines 120-132
+
+The problem is a conditional compilation directive that causes different behavior in DEBUG vs Release builds:
+
+```swift
+case .demo:
+    #if DEBUG
+    DemoGenerationView(
+        onboardingState: onboardingViewModel.onboardingState,
+        onboardingViewModel: onboardingViewModel
+    )
+    #else
+    // Skip demo in Release builds
+    PermissionPrimingView(onboardingState: onboardingViewModel.onboardingState)
+    #endif
+```
+
+**Why this is wrong**:
+- The `#if DEBUG` directive was likely added during development to skip demo generation in Release builds
+- However, this causes the `.demo` step (page 5) to show PermissionPrimingView instead of DemoGenerationView
+- The result: Users see notification permission content twice (once on page 5, again on page 6)
+
+### Solution Plan
+
+**Objective**: Restore original DemoGenerationView content to page 5
+
+**Task Breakdown**:
+
+1. **Remove conditional compilation directive** (SIMPLE FIX)
+   - Remove `#if DEBUG` and `#else` blocks
+   - Always show `DemoGenerationView` for `.demo` case
+   - This ensures all users see the demo wake-up creation experience
+
+2. **Verify OnboardingState enum is correct**
+   - Confirm `.demo` = step 4 (displays as "5 of 7")
+   - Confirm `.demo` title = "Creating your first wake-up..."
+   - No changes needed here (already correct)
+
+3. **Test the fix**
+   - Build and run app
+   - Navigate through onboarding flow
+   - Verify page 5 shows DemoGenerationView with "Creating Your First Wake-Up..." content
+   - Verify page 6 shows PermissionPrimingView with notification permission content
+
+**Success Criteria**:
+- ✅ Page 5 (step `.demo`) displays DemoGenerationView
+- ✅ Page 5 shows "Creating your first wake-up..." header
+- ✅ Page 5 shows demo generation animation and content
+- ✅ Page 6 (step `.permissions`) displays PermissionPrimingView
+- ✅ No duplicate permission screens
+- ✅ Build succeeds without errors
+
+**Files to Modify**:
+- `StartSmart/Views/Onboarding/OnboardingFlowView.swift` (lines 120-132)
+
+**Estimated Time**: 5 minutes (simple conditional removal)
+
+---
+
+### ✅ EXECUTOR COMPLETION REPORT
+
+**What Was Done**:
+
+1. ✅ **Removed conditional compilation directive**
+   - File: `StartSmart/Views/Onboarding/OnboardingFlowView.swift`
+   - Lines modified: 120-132
+   - Removed `#if DEBUG`, `#else`, `#endif` blocks
+   - Now always shows `DemoGenerationView` for `.demo` case
+
+**Code Change**:
+```swift
+// BEFORE (WRONG):
+case .demo:
+    #if DEBUG
+    DemoGenerationView(...)
+    #else
+    // Skip demo in Release builds
+    PermissionPrimingView(...)
+    #endif
+
+// AFTER (FIXED):
+case .demo:
+    DemoGenerationView(
+        onboardingState: onboardingViewModel.onboardingState,
+        onboardingViewModel: onboardingViewModel
+    )
+```
+
+**Build Status**: ✅ **BUILD SUCCEEDED** - No compilation errors
+
+**Expected Result**:
+- ✅ Page 5 (step `.demo`) now displays DemoGenerationView
+- ✅ Shows "Creating your first wake-up..." header with wand icon
+- ✅ Shows demo generation animation (loading spinner, particles)
+- ✅ Displays generated AI content preview
+- ✅ Page 6 (step `.permissions`) continues to show PermissionPrimingView
+- ✅ No more duplicate permission screens
+
+**Testing Instructions for User**:
+1. Build and run app
+2. Navigate through onboarding flow
+3. On page 5 ("5 of 7"), verify you see:
+   - Header: "Creating Your First Wake-Up..."
+   - Magic wand icon with pulse animation
+   - Demo generation progress
+   - Preview of personalized AI-generated wake-up message
+4. Tap "Next" to proceed to page 6 (notification permissions)
+
+**Lesson Learned**:
+- Conditional compilation directives (`#if DEBUG`) should not be used to skip core user-facing features in Release builds
+- If a feature needs different behavior in Debug vs Release, implement proper feature flags or configuration rather than compilation directives
+- Always test onboarding flow in both Debug and Release configurations
+
+---
+
+## 🔴 CRITICAL CRASH FIX - October 22, 2025 (Latest Update)
+
+**Status**: ✅ FIXED - App crash on startup resolved
+
+### The Critical Issue Found
+
+When user tested the app after my previous fix, it **CRASHED IMMEDIATELY** with:
+```
+Fatal error: Dependency SubscriptionServiceProtocol requested 
+before container initialized
+```
+
+This appeared in both Xcode debugger and console logs.
+
+### Root Cause Analysis
+
+My previous fix introduced a **race condition**:
+
+1. **PaywallView init()** was trying to access `DependencyContainer.shared.subscriptionService` 
+2. **DependencyContainer** initializes asynchronously using `Task.detached()` in its `init()`
+3. **Race condition**: PaywallView loads before container finishes initializing
+4. **Result**: Fatal crash with "Dependency requested before container initialized"
+
+**Code that caused crash**:
+```swift
+// ❌ WRONG - Race condition with async container initialization
+let subscriptionService = DependencyContainer.shared.subscriptionService
+```
+
+### Solution Applied ✅
+
+Changed PaywallView to create SubscriptionService directly without depending on container timing:
+
+```swift
+// ✅ CORRECT - No dependency on container initialization timing
+let subscriptionService = SubscriptionService()
+```
+
+**Why this works**:
+- SubscriptionService() creates a fresh instance that initializes properly
+- Doesn't depend on DependencyContainer async timing
+- SubscriptionService is self-contained and initializes immediately
+- No race condition possible
+
+### Files Modified
+
+- `StartSmart/Views/Subscription/PaywallView.swift` (line 14-23)
+  - Changed from `DependencyContainer.shared.subscriptionService` to `SubscriptionService()`
+  - Added comment explaining why we don't use container
+
+### Build Status
+
+✅ **BUILD SUCCEEDED** - App now builds and runs without crashing
+✅ **Committed to GitHub** - All changes backed up safely
+
+### What This Fixes
+
+✅ App no longer crashes on startup
+✅ Onboarding flow can proceed
+✅ PaywallView displays without fatal errors
+✅ Authentication flow can be tested
+
+### Additional Issues in Console Logs
+
+While fixing the crash, noticed in user's logs:
+
+1. **Apple Sign In Error 1000** - Still happening (needs investigation)
+2. **Google Sign In Freeze** - App freezes when trying Google auth
+   - Multiple "Sandbox restriction" errors in logs
+   - Suggests sandbox/entitlement issues on simulator
+   - Might work better on physical device
+
+### Lesson Learned
+
+**Critical**: When using DependencyContainer that initializes asynchronously, never try to access dependencies in view inits(). Instead:
+- Create services directly if needed immediately
+- Or defer access until view body loads
+- Or use @Environment with proper initialization ordering
 

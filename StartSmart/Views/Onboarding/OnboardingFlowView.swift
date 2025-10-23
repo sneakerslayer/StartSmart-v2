@@ -118,15 +118,10 @@ struct OnboardingFlowView: View {
                             )
                             
                         case .demo:
-                            #if DEBUG
                             DemoGenerationView(
                                 onboardingState: onboardingViewModel.onboardingState,
                                 onboardingViewModel: onboardingViewModel
                             )
-                            #else
-                            // Skip demo in Release builds
-                            PermissionPrimingView(onboardingState: onboardingViewModel.onboardingState)
-                            #endif
                             
                         case .permissions:
                             PermissionPrimingView(onboardingState: onboardingViewModel.onboardingState)
