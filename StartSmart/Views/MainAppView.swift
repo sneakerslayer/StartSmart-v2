@@ -657,22 +657,34 @@ struct VoicesView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
 
-                        VoiceCard(
-                            name: "Drill Sergeant Drew",
-                            subtitle: "Tough, commanding military-style motivation",
-                            accent: "Military",
-                            isSelected: true,
-                            isPlaying: currentlyPlayingVoice == "Drill Sergeant Drew",
-                            isLoading: isLoadingVoicePreview && currentlyPlayingVoice == "Drill Sergeant Drew",
-                            onPlay: { playVoicePreview("Drill Sergeant Drew") }
-                        )
+                        // FREE VOICES (First 2)
                         VoiceCard(
                             name: "Girl Bestie",
                             subtitle: "Supportive and encouraging like your best friend",
                             accent: "Friendly",
+                            isSelected: true,
                             isPlaying: currentlyPlayingVoice == "Girl Bestie",
                             isLoading: isLoadingVoicePreview && currentlyPlayingVoice == "Girl Bestie",
                             onPlay: { playVoicePreview("Girl Bestie") }
+                        )
+                        VoiceCard(
+                            name: "Motivational Mike",
+                            subtitle: "High-energy speaker who gets you pumped up",
+                            accent: "Energetic",
+                            isPlaying: currentlyPlayingVoice == "Motivational Mike",
+                            isLoading: isLoadingVoicePreview && currentlyPlayingVoice == "Motivational Mike",
+                            onPlay: { playVoicePreview("Motivational Mike") }
+                        )
+                        
+                        // PREMIUM VOICES
+                        VoiceCard(
+                            name: "Drill Sergeant Drew",
+                            subtitle: "Tough, commanding military-style motivation",
+                            accent: "Military",
+                            isPremium: true,
+                            isPlaying: currentlyPlayingVoice == "Drill Sergeant Drew",
+                            isLoading: isLoadingVoicePreview && currentlyPlayingVoice == "Drill Sergeant Drew",
+                            onPlay: { playVoicePreview("Drill Sergeant Drew") }
                         )
                         VoiceCard(
                             name: "Mrs. Walker",
@@ -682,15 +694,6 @@ struct VoicesView: View {
                             isPlaying: currentlyPlayingVoice == "Mrs. Walker",
                             isLoading: isLoadingVoicePreview && currentlyPlayingVoice == "Mrs. Walker",
                             onPlay: { playVoicePreview("Mrs. Walker") }
-                        )
-                        VoiceCard(
-                            name: "Motivational Mike",
-                            subtitle: "High-energy speaker who gets you pumped up",
-                            accent: "Energetic",
-                            isPremium: true,
-                            isPlaying: currentlyPlayingVoice == "Motivational Mike",
-                            isLoading: isLoadingVoicePreview && currentlyPlayingVoice == "Motivational Mike",
-                            onPlay: { playVoicePreview("Motivational Mike") }
                         )
                         VoiceCard(
                             name: "Calm Kyle",

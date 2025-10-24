@@ -5,7 +5,7 @@ import Foundation
 struct AlarmFormView: View {
     @State private var formViewModel: AlarmFormViewModel? = nil
     @State private var tomorrowsMission: String = ""
-    @State private var selectedVoice: String = "Motivational Mike"
+    @State private var selectedVoice: String = "Girl Bestie" // Default to first free voice
     @State private var toneStyle: Double = 0.5 // 0.0 = Gentle, 1.0 = Tough Love
     @State private var showTimePicker = false
     @State private var generatedScript: String = ""
@@ -282,6 +282,57 @@ struct AlarmFormView: View {
         if !isPremium {
             usageService.incrementAlarmUsage()
         }
+    }
+    
+    @ViewBuilder
+    private func voiceButton(voice: String, isPremium: Bool) -> some View {
+        let isLocked = isPremium && !self.isPremium
+        let isSelected = selectedVoice == voice
+        
+        Button(action: {
+            if isLocked {
+                // Show upgrade prompt for premium voices
+                showUpgradePrompt = true
+            } else {
+                // Select voice
+                selectedVoice = voice
+            }
+        }) {
+            HStack(spacing: 8) {
+                // Lock icon for premium voices
+                if isLocked {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(.gray)
+                }
+                
+                Image(systemName: "waveform")
+                    .foregroundColor(isLocked ? .gray : (isSelected ? .white : .blue))
+                
+                Text(voice)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(isLocked ? .gray : (isSelected ? .white : .primary))
+                
+                // Premium badge
+                if isPremium {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundColor(isLocked ? .gray : .yellow)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isLocked ? Color(.systemGray5) : (isSelected ? Color.blue : Color(.systemGray6)))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+            )
+            .opacity(isLocked ? 0.6 : 1.0)
+        }
+        .disabled(isLocked)
     }
     
     private var loadingSection: some View {
@@ -816,29 +867,14 @@ struct AlarmFormView: View {
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        ForEach(["Drill Sergeant Drew", "Girl Bestie", "Mrs. Walker - Warm & Caring Southern Mom", "Motivational Mike", "Calm Kyle", "Angry Allen"], id: \.self) { voice in
-                            Button(action: {
-                                selectedVoice = voice
-                            }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "waveform")
-                                        .foregroundColor(selectedVoice == voice ? .white : .blue)
-                                    
-                                    Text(voice)
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(selectedVoice == voice ? .white : .primary)
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(selectedVoice == voice ? Color.blue : Color(.systemGray6))
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(selectedVoice == voice ? Color.blue : Color.clear, lineWidth: 2)
-                                )
-                            }
+                        // FREE VOICES FIRST (Girl Bestie, Motivational Mike)
+                        ForEach(["Girl Bestie", "Motivational Mike"], id: \.self) { voice in
+                            voiceButton(voice: voice, isPremium: false)
+                        }
+                        
+                        // PREMIUM VOICES (All others)
+                        ForEach(["Drill Sergeant Drew", "Mrs. Walker - Warm & Caring Southern Mom", "Calm Kyle", "Angry Allen"], id: \.self) { voice in
+                            voiceButton(voice: voice, isPremium: true)
                         }
                     }
                     .padding(.horizontal, 20)
