@@ -72,6 +72,7 @@ struct VoicePersona: Identifiable, Codable, Equatable {
     let tone: AlarmTone
     let sampleText: String
     let voiceId: String // ElevenLabs voice ID
+    let isPremium: Bool // Premium feature flag
     
     static let allPersonas: [VoicePersona] = [
         VoicePersona(
@@ -80,7 +81,8 @@ struct VoicePersona: Identifiable, Codable, Equatable {
             description: "Warm, encouraging guidance like a caring coach",
             tone: .gentle,
             sampleText: "Good morning. You've got this. Take a deep breath and gently begin your day with purpose.",
-            voiceId: "gentle"
+            voiceId: "gentle",
+            isPremium: false // Free voice
         ),
         VoicePersona(
             id: "energetic_coach",
@@ -88,7 +90,8 @@ struct VoicePersona: Identifiable, Codable, Equatable {
             description: "High-energy motivation to get you moving",
             tone: .energetic,
             sampleText: "Rise and shine! Today is your day to absolutely crush those goals. Let's go make it happen!",
-            voiceId: "energetic"
+            voiceId: "energetic",
+            isPremium: false // Free voice
         ),
         VoicePersona(
             id: "tough_challenger",
@@ -96,7 +99,8 @@ struct VoicePersona: Identifiable, Codable, Equatable {
             description: "Direct, no-nonsense motivation that pushes you",
             tone: .toughLove,
             sampleText: "Time to get up. No excuses today. That goal isn't going to crush itself. Move!",
-            voiceId: "tough_love"
+            voiceId: "tough_love",
+            isPremium: true // Premium voice
         ),
         VoicePersona(
             id: "wise_storyteller",
@@ -104,7 +108,8 @@ struct VoicePersona: Identifiable, Codable, Equatable {
             description: "Inspiring through metaphors and vivid imagery",
             tone: .storyteller,
             sampleText: "Like the sunrise breaking through the darkness, your potential awakens. Rise and embrace your journey.",
-            voiceId: "storyteller"
+            voiceId: "storyteller",
+            isPremium: true // Premium voice
         )
     ]
     

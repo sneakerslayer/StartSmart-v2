@@ -16,6 +16,10 @@ struct VoiceSelectionView: View {
     let onVoiceSelected: ((VoicePersona) -> Void)?
     @State private var animateElements = false
     @State private var showVoices = false
+    @State private var showPaywall = false
+    @State private var showUpgradePrompt = false
+    @State private var selectedPremiumVoice: VoicePersona?
+    @State private var isPremium = false // Will be updated from subscription service
     
     init(onboardingState: OnboardingState, onboardingViewModel: OnboardingViewModel, onVoiceSelected: ((VoicePersona) -> Void)? = nil) {
         self.onboardingState = onboardingState
@@ -47,6 +51,38 @@ struct VoiceSelectionView: View {
         }
         .onAppear {
             startAnimations()
+            checkPremiumStatus()
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
+        .overlay {
+            if showUpgradePrompt, let voice = selectedPremiumVoice {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            showUpgradePrompt = false
+                            selectedPremiumVoice = nil
+                        }
+                    
+                    UpgradePromptView(
+                        title: "Premium Voice",
+                        message: "\(voice.name) is a premium voice. Upgrade to unlock all voice styles and unlimited AI alarms!",
+                        featureIcon: "waveform",
+                        onUpgrade: {
+                            showUpgradePrompt = false
+                            selectedPremiumVoice = nil
+                            showPaywall = true
+                        },
+                        onDismiss: {
+                            showUpgradePrompt = false
+                            selectedPremiumVoice = nil
+                        }
+                    )
+                    .padding(20)
+                }
+            }
         }
     }
     
@@ -92,6 +128,7 @@ struct VoiceSelectionView: View {
                     voice: voice,
                     isSelected: onboardingState.selectedVoice?.id == voice.id,
                     isPlaying: onboardingViewModel.isAudioPlaying,
+                    isPremiumUser: isPremium,
                     onTap: {
                         handleVoiceSelection(voice)
                     },
@@ -124,11 +161,24 @@ struct VoiceSelectionView: View {
     private func handleVoiceSelection(_ voice: VoicePersona) {
         print("🎯 handleVoiceSelection called with: \(voice.name)")
         
+        // Check if voice is premium and user is not premium
+        if voice.isPremium && !isPremium {
+            print("🔒 Premium voice selected by free user - showing upgrade prompt")
+            selectedPremiumVoice = voice
+            showUpgradePrompt = true
+            return
+        }
+        
         // Call the callback if provided
         onVoiceSelected?(voice)
         
         // Also update the onboarding state for backward compatibility
         onboardingState.selectVoice(voice)
+    }
+    
+    private func checkPremiumStatus() {
+        // Check if user is premium
+        isPremium = false // Will be updated when subscription service is integrated
     }
     
     private func playVoicePreview(_ voice: VoicePersona) {
@@ -147,6 +197,7 @@ struct VoicePersonaCard: View {
     let voice: VoicePersona
     let isSelected: Bool
     let isPlaying: Bool
+    let isPremiumUser: Bool
     let onTap: () -> Void
     let onPlayPreview: () -> Void
     
@@ -155,6 +206,10 @@ struct VoicePersonaCard: View {
     @State private var playButtonScale: CGFloat = 1.0
     @State private var isThisCardPlaying = false
     @State private var synthesizer: AVSpeechSynthesizer?
+    
+    private var isLocked: Bool {
+        voice.isPremium && !isPremiumUser
+    }
     
     var body: some View {
         HStack(spacing: 16) {
@@ -175,6 +230,21 @@ struct VoicePersonaCard: View {
                     Image(systemName: voice.tone.iconName)
                         .font(.system(size: 24, weight: .medium))
                         .foregroundColor(voiceColor)
+                        .opacity(isLocked ? 0.5 : 1.0)
+                    
+                    // Lock badge for premium voices
+                    if isLocked {
+                        ZStack {
+                            Circle()
+                                .fill(Color.black.opacity(0.6))
+                                .frame(width: 24, height: 24)
+                            
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        .offset(x: 18, y: -18)
+                    }
                 }
                 .scaleEffect(isSelected ? 1.1 : 1.0)
                 .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isSelected)
@@ -220,9 +290,27 @@ struct VoicePersonaCard: View {
             // Voice information
             VStack(alignment: .leading, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(voice.name)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
+                    HStack(spacing: 8) {
+                        Text(voice.name)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                        
+                        if isLocked {
+                            HStack(spacing: 4) {
+                                Image(systemName: "crown.fill")
+                                    .font(.system(size: 10, weight: .semibold))
+                                Text("PRO")
+                                    .font(.system(size: 11, weight: .bold))
+                            }
+                            .foregroundColor(.yellow)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(
+                                Capsule()
+                                    .fill(Color.yellow.opacity(0.2))
+                            )
+                        }
+                    }
                     
                     Text(voice.description)
                         .font(.system(size: 14, weight: .medium))
@@ -456,6 +544,7 @@ struct VoiceSelectionView_Previews: PreviewProvider {
                 voice: VoicePersona.allPersonas[0],
                 isSelected: false,
                 isPlaying: false,
+                isPremiumUser: false,
                 onTap: { print("Voice selected") },
                 onPlayPreview: { print("Preview played") }
             )
