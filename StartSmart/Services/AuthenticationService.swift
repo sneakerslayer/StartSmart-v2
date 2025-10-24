@@ -56,6 +56,14 @@ class AuthenticationService: NSObject, @preconcurrency AuthenticationServiceProt
         self.firebaseService = firebaseService
         self.userViewModel = userViewModel
         super.init()
+        
+        // Check if user is in guest mode
+        let isGuest = UserDefaults.standard.bool(forKey: "is_guest_user")
+        if isGuest {
+            self.isGuestMode = true
+            print("✅ Guest mode detected from UserDefaults")
+        }
+        
         setupAuthenticationStateListener()
     }
     

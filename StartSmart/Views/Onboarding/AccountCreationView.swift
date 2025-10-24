@@ -392,23 +392,24 @@ struct AccountCreationView: View {
     private func handleContinueAsGuest() {
         print("⏭️ Continue as Guest tapped")
         print("⏭️ Entering guest mode - skipping authentication")
-        
+
         // Mark onboarding as completed
         UserDefaults.standard.set(true, forKey: "onboardingCompleted")
+
+        // Set guest mode flag (AuthenticationService will check this when initialized)
+        UserDefaults.standard.set(true, forKey: "is_guest_user")
         
-        // Enable guest mode in main auth service (not SimpleAuthenticationService)
-        let mainAuthService = DependencyContainer.shared.authenticationService as! AuthenticationService
-        mainAuthService.enableGuestMode()
-        
+        print("✅ Guest mode flag set in UserDefaults")
+
         // Save onboarding preferences locally (not to Firestore since no user account)
         saveOnboardingDataLocally()
-        
+
         // Navigate to main app
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             onComplete()
         }
-        
-        print("⏭️ Guest mode enabled, navigating to MainAppView")
+
+        print("⏭️ Navigating to MainAppView as guest user")
     }
     
     private func saveOnboardingData() {
