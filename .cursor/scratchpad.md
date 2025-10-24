@@ -1378,6 +1378,7 @@ The app now builds successfully and is ready for physical device testing to veri
 - Multiple audio players need centralized coordination - create singleton audio coordinator to prevent interference
 - Keyboard dismissal requires explicit implementation in SwiftUI - add toolbar "Done" button and .onSubmit modifier
 - **Avoid using `#if DEBUG` directives to skip core user-facing features** - Use proper feature flags or configuration instead. Conditional compilation should be for debugging tools, not production feature control
+- **NEVER access DependencyContainer during onboarding** - The container initializes asynchronously in background. During onboarding, use UserDefaults flags instead. Services should check UserDefaults in their init() to restore state. Fatal error: "Dependency requested before container initialized"
 
 ## Apple Review Rejection Fix Implementation Progress
 
@@ -2231,13 +2232,14 @@ Thank you for your patience as we work to bring StartSmart to the App Store!
 - [x] Gate premium voices (2 free, 2 premium)
 - [x] Commit changes to Git
 
-**Status:** ✅ FEATURE GATING COMPLETE - Testing phase ready
+**Status:** ✅ FEATURE GATING COMPLETE + CRASH FIX APPLIED
 **Owner:** Executor
 **Commits:** 
 - 4ffb59f: Guest mode in AccountCreationView
 - a2db0db: Upgrade banner in MainAppView
 - 0c01396: Usage tracking + alarm gating
 - cc90fb3: Voice feature gating
+- df1d309: **CRITICAL FIX** - Guest mode crash (DependencyContainer access during onboarding)
 
 **Files Modified:** 
 - AccountCreationView.swift (guest button + local storage) ✅
@@ -2255,6 +2257,19 @@ Thank you for your patience as we work to bring StartSmart to the App Store!
 ✅ **Voice Limits:** 2 free voices (Mentor, Coach), 2 premium (Challenger, Storyteller)
 ✅ **Upgrade UI:** Prominent banners, prompts on limit reached, upgrade section in settings
 ✅ **Usage Tracking:** Automatic monthly reset, visual feedback on remaining credits
+
+**Critical Bug Fixed (df1d309):**
+🐛 **Issue:** App crashed on physical device when user tapped "Continue as Guest"
+- Error: `Fatal error: Dependency AuthenticationServiceProtocol requested before container initialized`
+- Root cause: DependencyContainer initializes asynchronously, not ready during onboarding
+
+✅ **Solution Applied:**
+- Removed `DependencyContainer.shared.authenticationService` access from AccountCreationView
+- Set `is_guest_user` flag in UserDefaults instead
+- AuthenticationService checks UserDefaults flag on init()
+- Guest mode enabled automatically when container initializes
+
+📝 **Lesson Added:** Never access DependencyContainer during onboarding - use UserDefaults for state flags
 
 ---
 
