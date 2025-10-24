@@ -1759,7 +1759,547 @@ case .demo:
 
 ---
 
-## 🔴 CRITICAL CRASH FIX - October 22, 2025 (Latest Update)
+## 🚨 APPLE APP STORE REJECTION #2 - October 24, 2025
+
+**Status**: 🔄 PLANNING PHASE COMPLETE - Root causes identified, fixes planned
+
+### Rejection Summary
+
+Apple rejected the app (2nd rejection) citing three major issues:
+
+1. **Guideline 3.1.2** - Missing Terms of Use (EULA) link in App Store metadata
+2. **Guideline 4.0** - iPad UI issues (launch screen content cut off)
+3. **Guideline 5.1.1** - App requires registration before accessing features that aren't account-based
+
+---
+
+## 🔍 ROOT CAUSE ANALYSIS
+
+### Issue #1: Missing EULA in App Store Connect Metadata (Guideline 3.1.2)
+
+**What Apple Said:**
+> "The app's metadata is missing a functional link to the Terms of Use (EULA). If you are using the standard Apple Terms of Use (EULA), include a link to the Terms of Use in the App Description. If you are using a custom EULA, add it in App Store Connect."
+
+**Root Cause:**
+- ✅ The app itself HAS functional links (added in Phase 3 of previous fix)
+- ❌ App Store Connect metadata (App Description field) is MISSING the EULA link
+- Apple requires the link in BOTH places:
+  1. In-app (already done via `EnhancedWelcomeView.swift` and `SettingsView.swift`)
+  2. In App Store Connect metadata (NOT done yet)
+
+**Why This Happened:**
+- Previous fix only addressed in-app links
+- Did not update App Store Connect metadata
+- Apple's requirement is for BOTH locations to have functional links
+
+**Evidence:**
+- `EnhancedWelcomeView.swift` lines 245-253: ✅ Has functional links to https://www.startsmartmobile.com/support
+- `SettingsView.swift`: ✅ Has functional links to https://www.startsmartmobile.com/support
+- App Store Connect App Description: ❌ Does NOT mention Terms of Use or link to it
+
+---
+
+### Issue #2: iPad UI Problems - Launch Screen Content Cut Off (Guideline 4.0)
+
+**What Apple Said:**
+> "Parts of the app's user interface were still crowded, laid out, or displayed in a way that made it difficult to use the app when reviewed on iPad Air (5th generation) running iPadOS 26.0.1. Specifically, parts of the launch screen, such as the Terms of Services, where cut off and not able to reached."
+
+**Root Cause - CRITICAL DISCOVERY:**
+- The `project.pbxproj` file has **INCONSISTENT device family settings**:
+  - Lines 891, 929: `TARGETED_DEVICE_FAMILY = 1` (iPhone only) ✅ CORRECT
+  - Lines 947, 966: `TARGETED_DEVICE_FAMILY = "1,2"` (iPhone + iPad) ❌ WRONG
+
+**Why This Happened:**
+- Different build configurations have different device family settings
+- Debug/Test builds likely still have iPad support (`"1,2"`)
+- When Apple reviews the app, they might test Debug or TestFlight builds
+- These builds still support iPad, causing the UI issues they're reporting
+
+**Why Launch Screen Has Issues:**
+- `EnhancedWelcomeView.swift` (launch screen) has Terms of Service links at lines 239-256
+- On iPad, this content is being cut off because:
+  1. The view wasn't designed for iPad's larger screen
+  2. iPad support should be completely disabled, but isn't in all configurations
+  3. Text at bottom of screen (Terms/Privacy) gets cut off on iPad
+
+**Additional Evidence:**
+- `Info.plist` only has iPhone orientations (line 32-35) - ✅ Correct for iPhone-only
+- But Xcode project settings still allow iPad in some build configurations
+
+---
+
+### Issue #3: App Still Requires Registration (Guideline 5.1.1)
+
+**What Apple Said:**
+> "The app requires users to register or log in to access features that are not account based. Specifically, the app still requires users to register before accessing their data. Apps may not require users to enter personal information to function, except when directly relevant to the core functionality of the app or required by law."
+
+**Root Cause - Guest Mode Not Working as Expected:**
+
+Previous fix (Phase 2) added guest mode support, but there are critical problems:
+
+1. **Guest Mode Implementation Issues:**
+   - `AuthenticationService.swift` has `enableGuestMode()` method
+   - `OnboardingView.swift` has "Continue as Guest" button
+   - BUT: Guest users likely CAN'T access core alarm features without being blocked by subscription paywalls
+
+2. **Onboarding Flow Issues:**
+   - The onboarding flow forces users through multiple screens before they can use the app
+   - Even with guest mode, users must complete onboarding which collects personal preferences
+   - Apple interprets this as "requiring registration" because users can't just open the app and create an alarm
+
+3. **Feature Gating Issues:**
+   - Free users (including guests) might be blocked from core alarm features
+   - Subscription paywall might appear before users can test the app
+   - Apple wants users to access NON-account-based features WITHOUT any barriers
+
+**Why This Happened:**
+- Guest mode was added superficially but doesn't bypass all barriers
+- Onboarding flow still collects user information (name, goals, preferences)
+- Feature gates might block guest users from creating alarms
+- Apple expects users to be able to create and use alarms WITHOUT any registration OR onboarding
+
+**Evidence:**
+- `OnboardingView.swift` line 213-235: Guest mode button exists
+- But onboarding flow still requires 7 steps including personal information collection
+- `FeatureGateView.swift` might be blocking guest users from features
+
+---
+
+## 🎯 SOLUTION PLAN
+
+### Fix #1: Add EULA Link to App Store Connect Metadata
+
+**Objective:** Add functional Terms of Use link to App Description in App Store Connect
+
+**What Needs to Be Done:**
+1. Log into App Store Connect
+2. Navigate to app's "App Information" section
+3. In the "App Description" field, add:
+   ```
+   Terms of Use: https://www.startsmartmobile.com/support
+   Privacy Policy: https://www.startsmartmobile.com/support
+   ```
+4. Place these links prominently, either at the beginning or end of the description
+5. Save changes
+
+**Alternative Option:**
+- Upload a custom EULA file in the "License Agreement" section of App Store Connect
+- This would override Apple's standard EULA
+- Requires a formal EULA document
+
+**Success Criteria:**
+- ✅ App Description in App Store Connect contains functional Terms of Use link
+- ✅ Link opens to https://www.startsmartmobile.com/support
+- ✅ Link is clearly visible in App Description
+
+**Time Required:** 5 minutes (user action in App Store Connect)
+
+---
+
+### Fix #2: Completely Remove iPad Support from ALL Build Configurations
+
+**Objective:** Ensure app is iPhone-only across ALL build configurations (Release, Debug, Test)
+
+**Root Problem:** 
+- `TARGETED_DEVICE_FAMILY = "1,2"` in Debug/Test configurations (lines 947, 966 of project.pbxproj)
+- Should be `TARGETED_DEVICE_FAMILY = 1` (iPhone only) in ALL configurations
+
+**What Needs to Be Done:**
+
+**Task 2.1: Update Xcode Project Settings**
+1. Open Xcode project
+2. Select StartSmart target
+3. Go to "Build Settings" tab
+4. Search for "Targeted Device Family"
+5. For EVERY configuration (Debug, Release, Test), set to "1" (iPhone only)
+6. Verify no configuration has "1,2" or "2"
+
+**Task 2.2: Verify Info.plist**
+1. Confirm `UISupportedInterfaceOrientations` only has Portrait orientation
+2. Confirm NO `UISupportedInterfaceOrientations~ipad` key exists
+3. Confirm `LSRequiresIPhoneOS` is set to `true`
+
+**Task 2.3: Update Launch Screen for iPhone**
+1. Review `EnhancedWelcomeView.swift` for any iPad-specific layout issues
+2. Ensure Terms of Service links (lines 239-256) are properly constrained
+3. Test layout on smallest iPhone (iPhone SE) and largest iPhone (Pro Max)
+4. Ensure text doesn't get cut off at bottom of screen
+
+**Task 2.4: Clean and Rebuild**
+1. Product → Clean Build Folder
+2. Delete DerivedData folder
+3. Rebuild project
+4. Verify no iPad-related warnings or errors
+
+**Success Criteria:**
+- ✅ All build configurations set to iPhone-only (`TARGETED_DEVICE_FAMILY = 1`)
+- ✅ Project builds without iPad-related warnings
+- ✅ Launch screen displays properly on all iPhone sizes
+- ✅ Terms of Service text not cut off on any iPhone model
+- ✅ App cannot be installed on iPad devices
+
+**Time Required:** 15-20 minutes (Executor task)
+
+---
+
+### Fix #3: Implement True Guest Access to Core Features
+
+**Objective:** Allow users to create and use alarms WITHOUT registration, onboarding, or account creation
+
+**Root Problem:**
+- Current "guest mode" still forces users through onboarding
+- Users must provide personal information before accessing core features
+- Apple wants immediate access to non-account-based features (alarms)
+
+**What Needs to Be Done:**
+
+**Task 3.1: Create "Skip Onboarding" Option**
+1. Add "Skip for Now" button to `EnhancedWelcomeView.swift`
+2. This button should bypass ALL onboarding and go directly to MainAppView
+3. No data collection, no preferences, no personal information
+4. User goes straight to alarm creation screen
+
+**Task 3.2: Update Onboarding Flow**
+1. Modify `OnboardingFlowView.swift` to allow complete skip
+2. Set default preferences for skipped users (reasonable defaults)
+3. User can change preferences later in Settings if they want
+4. No forced data collection
+
+**Task 3.3: Ensure Alarm Creation Works Without Account**
+1. Verify `AlarmFormView.swift` doesn't require authentication
+2. Test alarm creation with no user logged in
+3. Test alarm triggering with no user logged in
+4. Store alarms locally (not in Firestore) for non-authenticated users
+
+**Task 3.4: Update Subscription Paywall Logic**
+1. Modify `PaywallView.swift` to only appear for PREMIUM features
+2. Basic alarm creation should be FREE and accessible without account
+3. Premium features (AI-generated content, voice selection) should show paywall
+4. Clarify what's free vs. premium in the UI
+
+**Task 3.5: Update FeatureGateView**
+1. Ensure basic alarm features are NOT gated
+2. Only premium features should show feature gate
+3. Test guest user flow: create alarm → alarm triggers → dismiss alarm
+
+**Success Criteria:**
+- ✅ User can tap "Skip for Now" on launch screen
+- ✅ User goes directly to MainAppView (alarm list)
+- ✅ User can create a basic alarm without any registration
+- ✅ User can set alarm time, label, and enable alarm
+- ✅ Alarm triggers at scheduled time
+- ✅ User can dismiss alarm
+- ✅ No forced data collection or personal information required
+- ✅ Only PREMIUM features (AI content, voice selection) require account/subscription
+- ✅ Basic alarm functionality is completely free and accessible
+
+**Time Required:** 1-2 hours (Executor task)
+
+---
+
+## 📋 IMPLEMENTATION TASK BREAKDOWN
+
+### **Phase 1: App Store Connect Metadata Update** (USER ACTION)
+
+**Priority:** HIGH (Blocks submission)
+**Owner:** User (cannot be automated)
+**Time:** 5 minutes
+
+**Tasks:**
+- [ ] Log into App Store Connect
+- [ ] Navigate to StartSmart app → App Information
+- [ ] Add Terms of Use link to App Description: https://www.startsmartmobile.com/support
+- [ ] Add Privacy Policy link to App Description: https://www.startsmartmobile.com/support
+- [ ] Save changes
+
+---
+
+### **Phase 2: Remove iPad Support from ALL Configurations** (EXECUTOR)
+
+**Priority:** HIGH (Guideline 4.0 violation)
+**Owner:** Executor
+**Time:** 15-20 minutes
+
+**Tasks:**
+- [ ] Update project.pbxproj to set `TARGETED_DEVICE_FAMILY = 1` for ALL configurations
+- [ ] Verify Info.plist has no iPad support
+- [ ] Test EnhancedWelcomeView layout on all iPhone sizes
+- [ ] Clean build and verify no iPad warnings
+- [ ] Commit changes to Git
+
+**Files to Modify:**
+- `StartSmart.xcodeproj/project.pbxproj` (lines 947, 966)
+- Potentially `StartSmart/Views/Onboarding/EnhancedWelcomeView.swift` (layout fixes)
+
+---
+
+### **Phase 3: Implement True Guest Access** (EXECUTOR)
+
+**Priority:** CRITICAL (Guideline 5.1.1 violation)
+**Owner:** Executor
+**Time:** 1-2 hours
+
+**Tasks:**
+- [ ] Add "Skip for Now" button to EnhancedWelcomeView
+- [ ] Implement bypass logic in OnboardingFlowView
+- [ ] Test alarm creation without authentication
+- [ ] Update PaywallView to only gate premium features
+- [ ] Update FeatureGateView to allow basic alarm access
+- [ ] Test complete guest user flow
+- [ ] Commit changes to Git
+
+**Files to Modify:**
+- `StartSmart/Views/Onboarding/EnhancedWelcomeView.swift`
+- `StartSmart/Views/Onboarding/OnboardingFlowView.swift`
+- `StartSmart/Views/Subscription/PaywallView.swift`
+- `StartSmart/Views/Subscription/FeatureGateView.swift`
+- `StartSmart/Views/Alarms/AlarmFormView.swift`
+- `StartSmart/Services/AuthenticationService.swift`
+
+---
+
+### **Phase 4: Testing and Verification** (EXECUTOR)
+
+**Priority:** HIGH (Ensure fixes work)
+**Owner:** Executor
+**Time:** 30 minutes
+
+**Tasks:**
+- [ ] Build and run app on physical iPhone
+- [ ] Test "Skip for Now" flow (no registration)
+- [ ] Create alarm without account
+- [ ] Verify alarm triggers
+- [ ] Test on smallest iPhone (SE) and largest (Pro Max)
+- [ ] Verify no UI cutoffs
+- [ ] Verify no iPad support in any configuration
+- [ ] Document test results
+
+---
+
+### **Phase 5: Resubmission Preparation** (USER ACTION)
+
+**Priority:** HIGH (Final step)
+**Owner:** User
+**Time:** 30 minutes
+
+**Tasks:**
+- [ ] Archive new build in Xcode
+- [ ] Upload to TestFlight
+- [ ] Verify TestFlight build works correctly
+- [ ] Update version number (if needed)
+- [ ] Add release notes explaining fixes
+- [ ] Submit to App Store for review
+
+**Release Notes to Include:**
+```
+This update addresses Apple's review feedback:
+
+1. Added Terms of Use and Privacy Policy links to App Store metadata
+2. Removed iPad support - app is now iPhone-only as intended
+3. Implemented true guest access - users can now create and use basic alarms without registration
+4. Only premium AI-powered features require account creation
+
+Thank you for your patience as we work to bring StartSmart to the App Store!
+```
+
+---
+
+## 🎯 SUCCESS CRITERIA (ALL MUST PASS)
+
+### **For Guideline 3.1.2 (EULA Links):**
+- ✅ App Description in App Store Connect contains functional Terms of Use link
+- ✅ Link is clearly visible and accessible
+- ✅ Link opens to valid Terms of Use page
+
+### **For Guideline 4.0 (iPad UI):**
+- ✅ ALL build configurations set to iPhone-only
+- ✅ No iPad support in project settings
+- ✅ Launch screen displays correctly on all iPhone sizes
+- ✅ No content cut off on any screen size
+- ✅ App cannot be installed or run on iPad
+
+### **For Guideline 5.1.1 (Account Requirement):**
+- ✅ User can skip onboarding entirely
+- ✅ User can create basic alarm without registration
+- ✅ User can set alarm time and label
+- ✅ Alarm triggers at scheduled time
+- ✅ User can dismiss alarm
+- ✅ No forced personal information collection
+- ✅ Basic alarm features are completely free
+- ✅ Only premium features (AI content, voice) require account
+
+---
+
+## ⚠️ RISKS AND MITIGATION
+
+### **Risk #1: User might not have access to App Store Connect**
+- **Mitigation:** Provide detailed instructions with screenshots
+- **Backup:** User can contact Apple Developer support if needed
+
+### **Risk #2: Removing iPad support might affect existing TestFlight users**
+- **Mitigation:** Notify TestFlight users in release notes
+- **Backup:** Keep iPad support in a separate branch if needed
+
+### **Risk #3: Guest mode might break existing features**
+- **Mitigation:** Extensive testing before resubmission
+- **Backup:** Feature flag to disable guest mode if issues arise
+
+### **Risk #4: Apple might find new issues**
+- **Mitigation:** Address all feedback comprehensively this time
+- **Backup:** Have rollback plan ready
+
+---
+
+## 📊 ESTIMATED TIMELINE
+
+| Phase | Owner | Time | Dependencies |
+|-------|-------|------|--------------|
+| Phase 1: App Store Metadata | User | 5 min | None |
+| Phase 2: Remove iPad Support | Executor | 20 min | None |
+| Phase 3: Guest Access | Executor | 2 hours | None |
+| Phase 4: Testing | Executor | 30 min | Phase 2 & 3 complete |
+| Phase 5: Resubmission | User | 30 min | All phases complete |
+| **TOTAL** | **Both** | **~3.5 hours** | **Sequential** |
+
+---
+
+## 🔄 NEXT STEPS
+
+**PLANNER STATUS:** ✅ PLANNING COMPLETE - Ready for Executor implementation
+
+**EXECUTOR SHOULD START WITH:**
+1. Phase 2 (Remove iPad Support) - Quick win, addresses Guideline 4.0
+2. Phase 3 (Guest Access) - Most complex, addresses Guideline 5.1.1
+3. Phase 4 (Testing) - Verify everything works
+
+**USER SHOULD DO:**
+1. Phase 1 (App Store Metadata) - Can be done in parallel with Executor work
+2. Phase 5 (Resubmission) - After all Executor phases complete
+
+**CRITICAL NOTES:**
+- All three issues must be fixed before resubmission
+- Test thoroughly on physical iPhone before submitting
+- Document all changes for Apple reviewers
+- Be prepared for potential 3rd rejection (but unlikely if all fixes are correct)
+
+---
+
+## 📋 PROJECT STATUS BOARD - Apple Rejection Fix #2
+
+**Current Phase:** Planning Complete, Ready for Execution
+
+### Phase 1: App Store Connect Metadata Update (USER ACTION)
+- [ ] Log into App Store Connect
+- [ ] Navigate to StartSmart app → App Information
+- [ ] Add Terms of Use link to App Description
+- [ ] Add Privacy Policy link to App Description
+- [ ] Save changes
+
+**Status:** ⏳ PENDING USER ACTION
+**Owner:** User
+**Est. Time:** 5 minutes
+
+---
+
+### Phase 2: Add iPad Support and Fix Layout (EXECUTOR) - MODIFIED APPROACH
+- [ ] Ensure TARGETED_DEVICE_FAMILY = "1,2" for ALL configurations
+- [ ] Add iPad orientation support to Info.plist
+- [ ] Fix EnhancedWelcomeView layout to work properly on iPad
+- [ ] Ensure Terms of Service links are visible and accessible on iPad
+- [ ] Test layout on iPad Air and iPad Pro
+- [ ] Test layout on iPhone SE and Pro Max
+- [ ] Clean build folder and rebuild
+- [ ] Verify no layout warnings
+- [ ] Commit changes to Git
+
+**Status:** 🔄 IN PROGRESS BY EXECUTOR
+**Owner:** Executor
+**Est. Time:** 30-40 minutes (increased due to iPad layout work)
+**Files:** project.pbxproj, Info.plist, EnhancedWelcomeView.swift
+
+---
+
+### Phase 3: Implement Freemium Guest Access with Premium Upgrade Prompts (EXECUTOR) - MODIFIED APPROACH
+- [ ] **Task 3.1:** Add "Skip for Now" button to EnhancedWelcomeView
+- [ ] **Task 3.2:** Implement bypass logic in OnboardingFlowView
+- [ ] **Task 3.3:** Add prominent "Upgrade to Premium" button in MainAppView
+- [ ] **Task 3.4:** Add upgrade prompts when accessing premium features
+- [ ] **Task 3.5:** Create periodic upgrade reminder popups
+- [ ] **Task 3.6:** Add "Upgrade" section in Settings that redirects to PaywallView
+- [ ] **Task 3.7:** Verify alarm creation works without account (basic features)
+- [ ] **Task 3.8:** Update FeatureGateView to show upgrade prompt instead of blocking
+- [ ] Test complete guest user flow with upgrade prompts
+- [ ] Commit changes to Git
+
+**Status:** ⏳ READY FOR EXECUTOR (After Phase 2)
+**Owner:** Executor
+**Est. Time:** 2-3 hours (increased due to upgrade UI)
+**Files:** EnhancedWelcomeView.swift, OnboardingFlowView.swift, MainAppView.swift, PaywallView.swift, FeatureGateView.swift, SettingsView.swift, AlarmFormView.swift
+
+---
+
+### Phase 4: Testing and Verification (EXECUTOR)
+- [ ] Build and run on physical iPhone
+- [ ] Test "Skip for Now" flow (no registration)
+- [ ] Create alarm without account
+- [ ] Verify alarm triggers at scheduled time
+- [ ] Test on iPhone SE (smallest)
+- [ ] Test on iPhone Pro Max (largest)
+- [ ] Verify no UI cutoffs
+- [ ] Verify no iPad support in any configuration
+- [ ] Document test results
+
+**Status:** ⏳ BLOCKED (Waiting for Phase 2 & 3)
+**Owner:** Executor
+**Est. Time:** 30 minutes
+
+---
+
+### Phase 5: Resubmission Preparation (USER ACTION)
+- [ ] Archive new build in Xcode
+- [ ] Upload to TestFlight
+- [ ] Verify TestFlight build works
+- [ ] Update version number (if needed)
+- [ ] Add release notes
+- [ ] Submit to App Store for review
+
+**Status:** ⏳ BLOCKED (Waiting for all phases)
+**Owner:** User
+**Est. Time:** 30 minutes
+
+---
+
+## 📊 PROGRESS SUMMARY
+
+| Metric | Status |
+|--------|--------|
+| **Planning** | ✅ COMPLETE |
+| **Root Cause Analysis** | ✅ COMPLETE |
+| **Solution Design** | ✅ COMPLETE |
+| **Implementation** | ⏳ PENDING |
+| **Testing** | ⏳ PENDING |
+| **Resubmission** | ⏳ PENDING |
+
+**Overall Progress:** 30% (Planning phase complete)
+**Estimated Time to Completion:** 3.5 hours
+**Blocking Issues:** None (ready to proceed)
+
+---
+
+## 🎯 IMMEDIATE NEXT ACTION
+
+**For User:**
+- Start Phase 1 (App Store Connect metadata update) - can be done in parallel with Executor work
+- Takes only 5 minutes
+
+**For Executor:**
+- Await user confirmation to proceed with Phase 2 (iPad support removal)
+- This is the quickest fix and addresses Guideline 4.0
+- Once approved, proceed immediately
+
+---
+
+## 🔴 CRITICAL CRASH FIX - October 22, 2025 (Previous Issue)
 
 **Status**: ✅ FIXED - App crash on startup resolved
 

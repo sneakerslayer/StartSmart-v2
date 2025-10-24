@@ -18,23 +18,30 @@ struct EnhancedWelcomeView: View {
     
     var body: some View {
         GeometryReader { geometry in
+            // Detect if we're on iPad for layout adjustments
+            let isIPad = UIDevice.current.userInterfaceIdiom == .pad
+            let headerHeight = isIPad ? min(geometry.size.height * 0.3, 300) : geometry.size.height * 0.35
+            
             VStack(spacing: 0) {
-                // Header Section with refined messaging - increased height
+                // Header Section with refined messaging - adjusted for iPad
                 headerSection
-                    .frame(height: geometry.size.height * 0.35)
+                    .frame(height: headerHeight)
                     .opacity(animateElements ? 1 : 0)
                     .offset(y: animateElements ? 0 : -30)
                 
-                // Content Section with better CTAs - adjusted space
-                contentSection
-                    .frame(maxHeight: geometry.size.height * 0.65)
-                    .background(Color(.systemBackground))
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    )
-                    .offset(y: -20)
-                    .opacity(showFeatures ? 1 : 0)
-                    .offset(y: showFeatures ? -20 : 0)
+                // Content Section with better CTAs - scrollable for iPad
+                ScrollView(.vertical, showsIndicators: false) {
+                    contentSection
+                        .padding(.top, isIPad ? 40 : 20)
+                        .padding(.bottom, isIPad ? 60 : 40)
+                }
+                .background(Color(.systemBackground))
+                .clipShape(
+                    RoundedRectangle(cornerRadius: 30, style: .continuous)
+                )
+                .offset(y: -20)
+                .opacity(showFeatures ? 1 : 0)
+                .offset(y: showFeatures ? -20 : 0)
             }
         }
         .onAppear {
@@ -87,23 +94,26 @@ struct EnhancedWelcomeView: View {
     // MARK: - Content Section
     
     private var contentSection: some View {
-        VStack(spacing: 16) {
+        let isIPad = UIDevice.current.userInterfaceIdiom == .pad
+        let maxWidth: CGFloat = isIPad ? 600 : .infinity
+        
+        return VStack(spacing: 16) {
             VStack(spacing: 8) {
-                // Main heading - reduced size
+                // Main heading - adjusted for iPad
                 Text("Your Personal Morning Coach")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(.system(size: isIPad ? 28 : 22, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
                     .multilineTextAlignment(.center)
                 
-                // Quick value props - shortened
+                // Quick value props - adjusted for iPad
                 Text("Personalized motivational messages created just for your goals.")
-                    .font(.system(size: 14, weight: .regular)) // Slightly increased body text size
+                    .font(.system(size: isIPad ? 16 : 14, weight: .regular))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(1)
+                    .lineSpacing(2)
                     .padding(.horizontal, 16)
             }
-            .padding(.top, 16)
+            .padding(.top, isIPad ? 20 : 16)
             
             // Enhanced features with animations
             enhancedFeaturesSection
@@ -114,8 +124,9 @@ struct EnhancedWelcomeView: View {
             // Secondary action for existing users
             secondaryActionSection
         }
-        .padding(.horizontal, 30)
-        .padding(.bottom, 5)
+        .frame(maxWidth: maxWidth)
+        .padding(.horizontal, isIPad ? 40 : 30)
+        .padding(.bottom, isIPad ? 20 : 5)
     }
     
     // MARK: - Enhanced Features Section
