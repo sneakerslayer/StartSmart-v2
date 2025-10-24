@@ -209,6 +209,31 @@ struct AccountCreationView: View {
                 }
                 .disabled(isSigningIn)
                 
+                // Continue as Guest button
+                Button(action: {
+                    handleContinueAsGuest()
+                }) {
+                    HStack {
+                        Image(systemName: "person.fill.questionmark")
+                            .font(.title2)
+                        
+                        Text("Continue as Guest")
+                            .font(.system(size: 18, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .frame(height: 56)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.white.opacity(0.1))
+                            )
+                    )
+                }
+                .disabled(isSigningIn)
+                
                 // Loading state
                 if isSigningIn {
                     HStack {
@@ -222,6 +247,13 @@ struct AccountCreationView: View {
                     .padding(.top, 8)
                 }
             }
+            
+            // Guest mode disclaimer
+            Text("Guest mode: Basic alarm features only")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.white.opacity(0.6))
+                .multilineTextAlignment(.center)
+                .padding(.top, 4)
         }
     }
     
@@ -357,6 +389,28 @@ struct AccountCreationView: View {
         }
     }
     
+    private func handleContinueAsGuest() {
+        print("⏭️ Continue as Guest tapped")
+        print("⏭️ Entering guest mode - skipping authentication")
+        
+        // Mark onboarding as completed
+        UserDefaults.standard.set(true, forKey: "onboardingCompleted")
+        
+        // Enable guest mode in main auth service (not SimpleAuthenticationService)
+        let mainAuthService = DependencyContainer.shared.authenticationService as! AuthenticationService
+        mainAuthService.enableGuestMode()
+        
+        // Save onboarding preferences locally (not to Firestore since no user account)
+        saveOnboardingDataLocally()
+        
+        // Navigate to main app
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            onComplete()
+        }
+        
+        print("⏭️ Guest mode enabled, navigating to MainAppView")
+    }
+    
     private func saveOnboardingData() {
         // Create user preferences from onboarding state
         let preferences = onboardingState.createUserPreferences()
@@ -376,6 +430,27 @@ struct AccountCreationView: View {
         }
         
         print("✅ Onboarding preferences saved successfully")
+    }
+    
+    private func saveOnboardingDataLocally() {
+        // Save onboarding preferences locally for guest users (no Firestore)
+        let preferences = onboardingState.createUserPreferences()
+        
+        let onboardingData = OnboardingCompletionData(
+            motivation: onboardingState.selectedMotivation,
+            tonePosition: onboardingState.toneSliderPosition,
+            selectedVoice: onboardingState.selectedVoice,
+            preferences: preferences,
+            completedAt: Date()
+        )
+        
+        // Save to UserDefaults only (guest mode - no cloud sync)
+        if let encoded = try? JSONEncoder().encode(onboardingData) {
+            UserDefaults.standard.set(encoded, forKey: "onboarding_completion_data")
+            UserDefaults.standard.set(true, forKey: "is_guest_user")
+        }
+        
+        print("✅ Guest user preferences saved locally (no cloud sync)")
     }
     
     private func updateUserWithOnboardingData(_ user: User) {

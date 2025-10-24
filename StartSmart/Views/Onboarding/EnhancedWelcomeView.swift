@@ -243,8 +243,8 @@ struct EnhancedWelcomeView: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.blue)
             }
-            .buttonStyle(PlainButtonStyle()) // Ensure proper tap handling
-            .contentShape(Rectangle()) // Explicitly define tappable area
+            .buttonStyle(PlainButtonStyle())
+            .contentShape(Rectangle())
             
             // Terms and privacy
             VStack(spacing: 4) {
