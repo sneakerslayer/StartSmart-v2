@@ -2202,19 +2202,18 @@ Thank you for your patience as we work to bring StartSmart to the App Store!
 
 ---
 
-### Phase 2: Add iPad Support and Fix Layout (EXECUTOR) - MODIFIED APPROACH
-- [x] Ensure TARGETED_DEVICE_FAMILY = "1,2" for ALL configurations
-- [x] Add iPad orientation support to Info.plist
-- [x] Fix EnhancedWelcomeView layout to work properly on iPad
-- [x] Ensure Terms of Service links are visible and accessible on iPad
-- [x] Clean build folder and rebuild
-- [x] Verify no layout warnings
+### Phase 2: Remove iPad Support (EXECUTOR) - REVERTED TO IPHONE-ONLY
+- [x] Set TARGETED_DEVICE_FAMILY = 1 (iPhone only) in project.pbxproj
+- [x] Remove iPad orientation support from Info.plist
+- [x] Verify build succeeds
 - [x] Commit changes to Git
 
-**Status:** ✅ COMPLETE - Committed (b41fad5)
+**Status:** ✅ COMPLETE - iPhone-only (Reverted from iPad support per user request)
 **Owner:** Executor
-**Files Modified:** project.pbxproj, Info.plist, EnhancedWelcomeView.swift
-**Next:** Phase 3 implementation in progress
+**Commit:** 8ddf8b3
+**Files Modified:** project.pbxproj, Info.plist
+**Rationale:** Apple won't test on iPad if app is iPhone-only, avoiding Guideline 4.0 rejection
+**Next:** Phase 3 implementation complete
 
 ---
 
@@ -2232,7 +2231,7 @@ Thank you for your patience as we work to bring StartSmart to the App Store!
 - [x] Gate premium voices (2 free, 2 premium)
 - [x] Commit changes to Git
 
-**Status:** ✅ FEATURE GATING COMPLETE + CRASH FIX + VOICE UPDATE
+**Status:** ✅ FEATURE GATING COMPLETE + CRASH FIX + VOICE UPDATE + IPHONE-ONLY
 **Owner:** Executor
 **Commits:** 
 - 4ffb59f: Guest mode in AccountCreationView
@@ -2241,6 +2240,7 @@ Thank you for your patience as we work to bring StartSmart to the App Store!
 - cc90fb3: Voice feature gating
 - df1d309: **CRITICAL FIX** - Guest mode crash (DependencyContainer access during onboarding)
 - 01f8375: **VOICE UPDATE** - Changed free voices to Girl Bestie & Motivational Mike per user testing feedback
+- 8ddf8b3: **FINAL CHANGE** - Reverted to iPhone-only (removed iPad support per user decision)
 
 **Files Modified:** 
 - AccountCreationView.swift (guest button + local storage) ✅
