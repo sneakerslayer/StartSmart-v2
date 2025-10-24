@@ -2232,7 +2232,7 @@ Thank you for your patience as we work to bring StartSmart to the App Store!
 - [x] Gate premium voices (2 free, 2 premium)
 - [x] Commit changes to Git
 
-**Status:** ✅ FEATURE GATING COMPLETE + CRASH FIX APPLIED
+**Status:** ✅ FEATURE GATING COMPLETE + CRASH FIX + VOICE UPDATE
 **Owner:** Executor
 **Commits:** 
 - 4ffb59f: Guest mode in AccountCreationView
@@ -2240,6 +2240,7 @@ Thank you for your patience as we work to bring StartSmart to the App Store!
 - 0c01396: Usage tracking + alarm gating
 - cc90fb3: Voice feature gating
 - df1d309: **CRITICAL FIX** - Guest mode crash (DependencyContainer access during onboarding)
+- 01f8375: **VOICE UPDATE** - Changed free voices to Girl Bestie & Motivational Mike per user testing feedback
 
 **Files Modified:** 
 - AccountCreationView.swift (guest button + local storage) ✅
@@ -2254,9 +2255,10 @@ Thank you for your patience as we work to bring StartSmart to the App Store!
 **Feature Summary:**
 ✅ **Guest Mode:** Users can skip account creation and use app with limits
 ✅ **Alarm Limits:** 15 AI alarms per month for free users
-✅ **Voice Limits:** 2 free voices (Mentor, Coach), 2 premium (Challenger, Storyteller)
+✅ **Voice Limits:** 2 free voices (Girl Bestie, Motivational Mike), 4 premium voices (Drill Sergeant Drew, Mrs. Walker, Calm Kyle, Angry Allen)
 ✅ **Upgrade UI:** Prominent banners, prompts on limit reached, upgrade section in settings
 ✅ **Usage Tracking:** Automatic monthly reset, visual feedback on remaining credits
+✅ **Voice UI:** Free voices first, premium voices greyed out/disabled for free users with lock icons
 
 **Critical Bug Fixed (df1d309):**
 🐛 **Issue:** App crashed on physical device when user tapped "Continue as Guest"
