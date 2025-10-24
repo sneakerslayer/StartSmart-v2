@@ -2229,11 +2229,25 @@ Thank you for your patience as we work to bring StartSmart to the App Store!
 - [ ] Test complete guest user flow with upgrade prompts
 - [ ] Commit changes to Git
 
-**Status:** 🔄 IN PROGRESS - Guest mode complete, upgrade UI next
+**Status:** 🔄 IN PROGRESS - Guest mode ✅, Usage tracking ✅, Upgrade banner ✅, Need Xcode integration
 **Owner:** Executor
-**Est. Time:** 2-3 hours
-**Files Modified:** AccountCreationView.swift (guest button added - 4ffb59f)
-**Files Remaining:** MainAppView.swift, PaywallView.swift, FeatureGateView.swift, SettingsView.swift, AlarmFormView.swift
+**Est. Time:** 1 hour remaining
+**Files Modified:** 
+- AccountCreationView.swift (guest button - 4ffb59f) ✅
+- MainAppView.swift (upgrade banner - a2db0db) ✅
+- UsageTrackingService.swift (NEW - tracks 15/month limit) ✅
+- UpgradePromptView.swift (NEW - reusable upgrade UI) ✅
+
+**⚠️ MANUAL STEP REQUIRED:**
+New files created but need to be added to Xcode project manually:
+1. Open StartSmart.xcodeproj in Xcode
+2. Drag these files into project navigator:
+   - `StartSmart/Services/UsageTrackingService.swift`
+   - `StartSmart/Views/Subscription/UpgradePromptView.swift`
+3. Check "Add to targets: StartSmart"
+4. Build project
+
+**Files Remaining:** AlarmFormView.swift (gate alarm creation), SettingsView.swift (upgrade section), FeatureGateView.swift (show upgrade vs block)
 
 ---
 

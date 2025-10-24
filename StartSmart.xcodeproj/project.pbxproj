@@ -73,6 +73,8 @@
 		0E93CDBA2E9F0C5C005E5758 /* AlarmKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E93CDB92E9F0C5C005E5758 /* AlarmKitManager.swift */; };
 		0E93CDBB2E9F0C5C005E5758 /* AlarmIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E93CDBC2E9F0C5C005E5758 /* AlarmIntent.swift */; };
 		0E93CDBE2E9F0C5C005E5758 /* WakeUpIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E93CDBD2E9F0C5C005E5758 /* WakeUpIntent.swift */; };
+		0E95309B2EABC715003A85A8 /* UsageTrackingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E95309A2EABC715003A85A8 /* UsageTrackingService.swift */; };
+		0E95309D2EABC740003A85A8 /* UpgradePromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E95309C2EABC740003A85A8 /* UpgradePromptView.swift */; };
 		0EF353F72E74A76500B66B53 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F62E74A76500B66B53 /* FirebaseAuth */; };
 		0EF353F92E74A76500B66B53 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353F82E74A76500B66B53 /* FirebaseCore */; };
 		0EF353FB2E74A76500B66B53 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 0EF353FA2E74A76500B66B53 /* FirebaseFirestore */; };
@@ -170,6 +172,8 @@
 		0E93CDB92E9F0C5C005E5758 /* AlarmKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmKitManager.swift; sourceTree = "<group>"; };
 		0E93CDBC2E9F0C5C005E5758 /* AlarmIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmIntent.swift; sourceTree = "<group>"; };
 		0E93CDBD2E9F0C5C005E5758 /* WakeUpIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeUpIntent.swift; sourceTree = "<group>"; };
+		0E95309A2EABC715003A85A8 /* UsageTrackingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageTrackingService.swift; sourceTree = "<group>"; };
+		0E95309C2EABC740003A85A8 /* UpgradePromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradePromptView.swift; sourceTree = "<group>"; };
 		1F3D5A457CED47FD9310D74F /* StartSmart/Views/Onboarding/ToneSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/ToneSelectionView.swift; sourceTree = "<group>"; };
 		2596752C91664F69939DBD57 /* StartSmart/Models/OnboardingState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Models/OnboardingState.swift; sourceTree = "<group>"; };
 		5991B1CBA7934AACA630BD23 /* StartSmart/Views/Onboarding/AccountCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/AccountCreationView.swift; sourceTree = "<group>"; };
@@ -249,6 +253,7 @@
 		0E41DC8B2E74F96000358D55 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				0E95309A2EABC715003A85A8 /* UsageTrackingService.swift */,
 				0E93CDB92E9F0C5C005E5758 /* AlarmKitManager.swift */,
 				0E709AEB2E9AF5ED00DB836C /* AlarmNotificationCoordinator.swift */,
 				0E41DC772E74F96000358D55 /* AlarmAudioService.swift */,
@@ -371,6 +376,7 @@
 		0E41DCAE2E74F96000358D55 /* Subscription */ = {
 			isa = PBXGroup;
 			children = (
+				0E95309C2EABC740003A85A8 /* UpgradePromptView.swift */,
 				0E41DCAC2E74F96000358D55 /* FeatureGateView.swift */,
 				0E41DCAD2E74F96000358D55 /* PaywallView.swift */,
 			);
@@ -679,6 +685,7 @@
 				0E41DCD22E74F96100358D55 /* AuthenticationLoadingView.swift in Sources */,
 				0E93CDBA2E9F0C5C005E5758 /* AlarmKitManager.swift in Sources */,
 				0E93CDBB2E9F0C5C005E5758 /* AlarmIntent.swift in Sources */,
+				0E95309D2EABC740003A85A8 /* UpgradePromptView.swift in Sources */,
 				0E93CDBE2E9F0C5C005E5758 /* WakeUpIntent.swift in Sources */,
 				0E41DCD32E74F96100358D55 /* AlarmDetailView.swift in Sources */,
 				0E41DCD42E74F96100358D55 /* AudioCacheService.swift in Sources */,
@@ -698,6 +705,7 @@
 				0E41DCE42E74F96100358D55 /* SocialSharingView.swift in Sources */,
 				0E41DCE52E74F96100358D55 /* PaywallView.swift in Sources */,
 				0E41DCE72E74F96100358D55 /* SocialSharingService.swift in Sources */,
+				0E95309B2EABC715003A85A8 /* UsageTrackingService.swift in Sources */,
 				D0000001000000000000000A /* StartSmartApp.swift in Sources */,
 				9DEABF64196242FD9F2F7A71 /* StartSmart/Models/OnboardingState.swift in Sources */,
 				01BA08664E944A139C51913D /* StartSmart/Views/Onboarding/OnboardingFlowView.swift in Sources */,
@@ -883,14 +891,14 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.startsmart.mobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-			SUPPORTS_MACCATALYST = NO;
-			SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-			SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-			SWIFT_EMIT_LOC_STRINGS = YES;
-			SWIFT_VERSION = 5.0;
-			TARGETED_DEVICE_FAMILY = "1,2";
-		};
-		name = Debug;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
 		};
 		D0000001000000000000005O /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -920,15 +928,15 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.startsmart.mobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-			SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-			SUPPORTS_MACCATALYST = NO;
-			SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-			SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-			SWIFT_EMIT_LOC_STRINGS = YES;
-			SWIFT_VERSION = 5.0;
-			TARGETED_DEVICE_FAMILY = "1,2";
-		};
-		name = Release;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
 		};
 		D0000001000000000000005P /* Debug */ = {
 			isa = XCBuildConfiguration;

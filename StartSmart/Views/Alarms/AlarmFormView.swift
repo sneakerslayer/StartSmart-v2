@@ -13,6 +13,12 @@ struct AlarmFormView: View {
     @State private var isPlayingAudio = false
     @State private var audioPlaybackService: AudioPlaybackService? = nil
     
+    // Usage tracking for freemium
+    @StateObject private var usageService = UsageTrackingService.shared
+    @State private var showUpgradePrompt = false
+    @State private var showPaywall = false
+    @State private var isPremium = false
+    
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
     let onSave: (Alarm) -> Void
@@ -66,6 +72,37 @@ struct AlarmFormView: View {
                         formViewModel = AlarmFormViewModel()
                     }
                     print("AlarmFormViewModel initialized successfully")
+                }
+                
+                // Check premium status
+                checkPremiumStatus()
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
+            }
+            .overlay {
+                if showUpgradePrompt {
+                    ZStack {
+                        Color.black.opacity(0.4)
+                            .ignoresSafeArea()
+                            .onTapGesture {
+                                showUpgradePrompt = false
+                            }
+                        
+                        UpgradePromptView(
+                            title: "You've Reached Your Limit",
+                            message: "You've used all 15 free AI alarms this month. Upgrade to Premium for unlimited personalized wake-ups!",
+                            featureIcon: "alarm.fill",
+                            onUpgrade: {
+                                showUpgradePrompt = false
+                                showPaywall = true
+                            },
+                            onDismiss: {
+                                showUpgradePrompt = false
+                            }
+                        )
+                        .padding(20)
+                    }
                 }
             }
             .alert(
@@ -187,7 +224,7 @@ struct AlarmFormView: View {
     private var createAlarmButton: some View {
         VStack(spacing: 12) {
             Button {
-                saveAlarm()
+                handleAlarmCreation()
             } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "alarm.fill")
@@ -212,13 +249,39 @@ struct AlarmFormView: View {
             .scaleEffect(isGenerating ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: isGenerating)
             
-            Text("Your personalized morning experience awaits")
-                .font(.system(size: 14))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            // Usage info for free users
+            if !isPremium {
+                let remaining = usageService.getRemainingAlarmCredits(isPremium: isPremium) ?? 0
+                Text("\(remaining) free alarms remaining this month")
+                    .font(.system(size: 13))
+                    .foregroundColor(remaining <= 3 ? .orange : .secondary)
+                    .multilineTextAlignment(.center)
+            } else {
+                Text("Your personalized morning experience awaits")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 20)
+    }
+    
+    private func handleAlarmCreation() {
+        // Check if user can create alarm (usage limits for free users)
+        guard usageService.canCreateAlarm(isPremium: isPremium) else {
+            print("⚠️ Free tier limit reached - showing upgrade prompt")
+            showUpgradePrompt = true
+            return
+        }
+        
+        // Proceed with alarm creation
+        saveAlarm()
+        
+        // Increment usage for free users
+        if !isPremium {
+            usageService.incrementAlarmUsage()
+        }
     }
     
     private var loadingSection: some View {
@@ -263,6 +326,15 @@ struct AlarmFormView: View {
     }
     
     // MARK: - Helper Methods
+    private func checkPremiumStatus() {
+        // Check if user is premium (from subscription service or UserDefaults)
+        // For now, default to free unless they have a subscription
+        let isGuestUser = UserDefaults.standard.bool(forKey: "is_guest_user")
+        isPremium = false // Will be updated when subscription service is integrated
+        
+        print("📊 Premium status: \(isPremium ? "Premium" : "Free"), Guest: \(isGuestUser)")
+    }
+    
     private func saveAlarm() {
         guard let formViewModel = formViewModel else { return }
         
