@@ -218,8 +218,11 @@ struct HomeView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var alarmViewModel = AlarmViewModel()
     @StateObject private var streakService = StreakTrackingService()
+    @StateObject private var usageService = UsageTrackingService.shared
     @State private var enhancedStats = EnhancedUserStats()
     @State private var nextAlarm: Alarm?
+    @State private var showPaywall = false
+    @State private var isPremium = false
     
     var body: some View {
         ScrollView {
@@ -227,6 +230,11 @@ struct HomeView: View {
                 Text("Good Morning!")
                     .font(.system(size: 32, weight: .bold))
                     .padding(.top, 20)
+
+                // Upgrade Banner for Free Users
+                if !isPremium {
+                    upgradeBanner
+                }
 
                 // Streak Card
                 VStack(alignment: .leading, spacing: 8) {
@@ -427,6 +435,83 @@ struct HomeView: View {
         .onReceive(alarmViewModel.$alarms) { _ in
             nextAlarm = alarmViewModel.nextAlarm
         }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
+    }
+    
+    // MARK: - Upgrade Banner
+    
+    private var upgradeBanner: some View {
+        let usageInfo = usageService.getUsageInfo(isPremium: isPremium)
+        let remaining = usageService.getRemainingAlarmCredits(isPremium: isPremium) ?? 0
+        
+        return Button(action: {
+            showPaywall = true
+        }) {
+            HStack(spacing: 12) {
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [.blue, .purple],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 40, height: 40)
+                    
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                
+                // Content
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Upgrade to Premium")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.primary)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    if let total = usageInfo.total {
+                        Text("\(remaining) of \(total) free alarms remaining")
+                            .font(.system(size: 13))
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(
+                        LinearGradient(
+                            colors: [.blue.opacity(0.1), .purple.opacity(0.1)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [.blue.opacity(0.3), .purple.opacity(0.3)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                ),
+                                lineWidth: 1.5
+                            )
+                    )
+            )
+        }
+        .buttonStyle(.plain)
     }
     
     // MARK: - Helper Functions
