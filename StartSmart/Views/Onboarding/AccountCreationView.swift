@@ -8,6 +8,8 @@
 
 import SwiftUI
 import AuthenticationServices
+import CryptoKit
+import FirebaseAuth
 
 /// Enhanced account creation focused on saving onboarding preferences
 struct AccountCreationView: View {
@@ -369,7 +371,44 @@ struct AccountCreationView: View {
         isSigningIn = true
         
         Task {
-            let success = await authService.signInWithApple()
+            var success = false
+            var errorMsg: String? = nil
+            
+            switch result {
+            case .success(let authorization):
+                // Process the authorization from SignInWithAppleButton
+                guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else {
+                    errorMsg = "Invalid Apple ID credential"
+                    break
+                }
+                
+                guard let appleIDToken = appleIDCredential.identityToken,
+                      let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
+                    errorMsg = "Unable to fetch identity token"
+                    break
+                }
+                
+                // Generate nonce for Firebase
+                let nonce = randomNonceString()
+                
+                // Create Firebase credential
+                let credential = OAuthProvider.appleCredential(
+                    withIDToken: idTokenString,
+                    rawNonce: nonce,
+                    fullName: appleIDCredential.fullName
+                )
+                
+                do {
+                    // Sign in with Firebase
+                    _ = try await Auth.auth().signIn(with: credential)
+                    success = true
+                } catch {
+                    errorMsg = "Firebase authentication failed: \(error.localizedDescription)"
+                }
+                
+            case .failure(let error):
+                errorMsg = "Apple Sign In failed: \(error.localizedDescription)"
+            }
             
             await MainActor.run {
                 isSigningIn = false
@@ -383,7 +422,7 @@ struct AccountCreationView: View {
                         onComplete()
                     }
                 } else {
-                    onAuthError(authService.errorMessage ?? "Apple Sign In failed")
+                    onAuthError(errorMsg ?? "Apple Sign In failed")
                 }
             }
         }
@@ -487,6 +526,34 @@ struct AccountCreationView: View {
         withAnimation(.easeOut(duration: 0.8).delay(0.4)) {
             showAuthOptions = true
         }
+    }
+    
+    // MARK: - Apple Sign In Helper Methods
+    
+    private func randomNonceString(length: Int = 32) -> String {
+        precondition(length > 0)
+        var randomBytes = [UInt8](repeating: 0, count: length)
+        let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
+        if errorCode != errSecSuccess {
+            fatalError("Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)")
+        }
+        
+        let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        let nonce = randomBytes.map { byte in
+            charset[Int(byte) % charset.count]
+        }
+        
+        return String(nonce)
+    }
+    
+    private func sha256(_ input: String) -> String {
+        let inputData = Data(input.utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        let hashString = hashedData.compactMap {
+            String(format: "%02x", $0)
+        }.joined()
+        
+        return hashString
     }
 }
 
