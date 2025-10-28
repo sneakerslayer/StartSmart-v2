@@ -1,6 +1,16 @@
 import SwiftUI
 import Foundation
 
+// MARK: - Keyboard Dismissal Helper
+extension UIApplication {
+    func dismissKeyboard() {
+        let scenes = UIApplication.shared.connectedScenes
+        let windowScene = scenes.first as? UIWindowScene
+        let window = windowScene?.windows.first
+        window?.endEditing(true)
+    }
+}
+
 // MARK: - Alarm Form View with Step-by-Step Restoration
 struct AlarmFormView: View {
     @State private var formViewModel: AlarmFormViewModel? = nil
@@ -54,6 +64,11 @@ struct AlarmFormView: View {
                 }
             }
             .background(Color(.systemBackground))
+            .contentShape(Rectangle())
+            .onTapGesture {
+                // Dismiss keyboard when user taps outside the text editor
+                UIApplication.shared.dismissKeyboard()
+            }
             .navigationTitle("New Alarm")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

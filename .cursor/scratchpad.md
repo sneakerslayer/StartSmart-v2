@@ -2438,3 +2438,22 @@ While fixing the crash, noticed in user's logs:
 - Use Result<ASAuthorization, Error> pattern properly
 **Commit:** 5094ffa
 
+### ✅ Lesson 3: Alarm toggle race condition causes AlarmKit error 0
+**Context:** When user toggled alarm off, got: "Failed to schedule alarm: error 0"
+**Root Cause:**
+1. toggleAlarm() checked alarm state AFTER repository toggle
+2. @Published alarms array was out of sync with actual state
+3. Tried to cancel alarm that wasn't yet scheduled in AlarmKit
+4. AlarmKit threw generic "error 0" when alarm didn't exist
+**Solution:**
+- Calculate new state directly: `let isNowEnabled = !alarm.isEnabled`
+- Don't rely on @Published array being in sync
+- Better error handling in cancelAlarm - detect "not found" errors
+- Clean up locally even if AlarmKit operation fails
+- Don't throw on cancellation errors (alarm may not exist)
+**Prevention:**
+- Pass alarm state explicitly, don't read from @Published during async operations
+- Validate all AlarmKit IDs before operations
+- Graceful degradation: clean up locally if remote operation fails
+**Commit:** 5865534
+
