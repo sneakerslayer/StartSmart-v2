@@ -185,6 +185,7 @@ struct AccountCreationView: View {
                 }
                 .signInWithAppleButtonStyle(.white)
                 .frame(height: 56)
+                .frame(maxWidth: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .disabled(isSigningIn)
                 
