@@ -139,17 +139,33 @@ class AlarmViewModel: ObservableObject {
                 // Update local repository first
                 try await alarmRepository.toggleAlarm(withId: alarm.id)
                 
-                // Update AlarmKit scheduling based on new state
-                let updatedAlarm = alarms.first { $0.id == alarm.id } ?? alarm
-                if updatedAlarm.isEnabled {
+                // After toggling, check what the NEW state is
+                // The alarm parameter passed in has the OLD state, so we need to check it
+                let isNowEnabled = !alarm.isEnabled  // Toggle inverts the state
+                
+                // Update AlarmKit scheduling based on NEW state
+                if isNowEnabled {
+                    // Alarm is now enabled, schedule it
+                    var updatedAlarm = alarm
+                    updatedAlarm.isEnabled = true
                     try await alarmKitManager.scheduleAlarm(for: updatedAlarm)
+                    print("✅ Alarm enabled and scheduled: \(alarm.label)")
                 } else {
+                    // Alarm is now disabled, cancel it
+                    print("🔕 Disabling alarm: \(alarm.label)")
                     try await alarmKitManager.cancelAlarm(withId: alarm.id.uuidString)
+                    print("✅ Alarm disabled and canceled: \(alarm.label)")
                 }
                 
             } catch {
                 await MainActor.run {
-                    errorMessage = "Failed to toggle alarm: \(error.localizedDescription)"
+                    let errorDesc = if let alarmKitError = error as? AlarmKitError {
+                        "AlarmKit error: \(alarmKitError.localizedDescription)"
+                    } else {
+                        error.localizedDescription
+                    }
+                    errorMessage = "Failed to toggle alarm: \(errorDesc)"
+                    print("❌ \(errorMessage ?? "Unknown error")")
                 }
             }
         }

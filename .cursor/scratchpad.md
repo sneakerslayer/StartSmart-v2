@@ -2415,3 +2415,26 @@ While fixing the crash, noticed in user's logs:
 - Or defer access until view body loads
 - Or use @Environment with proper initialization ordering
 
+## 📚 LESSONS LEARNED
+
+### ✅ Lesson 1: NEVER access DependencyContainer during onboarding
+**Context:** Guest mode implementation caused crash on physical device
+**Error:** `Fatal error: Dependency AuthenticationServiceProtocol requested before container initialized`
+**Solution:** Use UserDefaults flags instead. Services check UserDefaults on init() to restore state.
+**Prevention:** Always defer heavy initialization. Use UserDefaults for early lifecycle flags.
+
+### ✅ Lesson 2: Double-trigger authentication flows cause unresponsiveness
+**Context:** Apple Sign In button was unresponsive on iPad (and iPhone)
+**Root Cause:** Code triggered SignInWithAppleButton (first flow), then called authService.signInWithApple() (second flow)
+**Error:** Sign in button frozen, iPad testing showed "unresponsive to tap" error
+**Solution:** 
+- Use the authorization result from SignInWithAppleButton directly
+- Process credentials immediately instead of starting a second flow
+- Implement nonce generation locally (randomNonceString, sha256)
+- Pass result to Firebase directly: `Auth.auth().signIn(with: credential)`
+**Prevention:** 
+- Only trigger auth flow once per button tap
+- Process the result, don't re-trigger
+- Use Result<ASAuthorization, Error> pattern properly
+**Commit:** 5094ffa
+
