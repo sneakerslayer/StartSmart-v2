@@ -84,6 +84,7 @@
 		20913532AE484808923816E5 /* StartSmart/Views/Onboarding/ToneSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3D5A457CED47FD9310D74F /* StartSmart/Views/Onboarding/ToneSelectionView.swift */; };
 		3F359AACBCED415997BA2464 /* StartSmart/Views/Onboarding/MotivationSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C43AA2FAE90A40D9876DAD19 /* StartSmart/Views/Onboarding/MotivationSelectionView.swift */; };
 		416D6397FB264B96B69D0B33 /* StartSmart/Views/Onboarding/EnhancedWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C412C4D8A79419E896C64FC /* StartSmart/Views/Onboarding/EnhancedWelcomeView.swift */; };
+		02AC80442A730696BF8F8150591A0F16 /* StartSmart/Views/Onboarding/PremiumLandingPageV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = F339E0CC99B06E4E377421157585336D /* StartSmart/Views/Onboarding/PremiumLandingPageV2.swift */; };
 		44E4D0E960314946A3F718C0 /* StartSmart/Views/Onboarding/VoiceSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02D52818D1B45DDA99CBFC4 /* StartSmart/Views/Onboarding/VoiceSelectionView.swift */; };
 		78623D0B33E64EA1910CE12E /* StartSmart/Views/Onboarding/DemoGenerationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB6CB892061746018A16BFCB /* StartSmart/Views/Onboarding/DemoGenerationView.swift */; };
 		8F68888080944CE0A380058D /* StartSmart/Views/Onboarding/PermissionPrimingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC5E2EAB9D44303B4B850DA /* StartSmart/Views/Onboarding/PermissionPrimingView.swift */; };
@@ -193,6 +194,7 @@
 		D0000001000000000000004A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D02D52818D1B45DDA99CBFC4 /* StartSmart/Views/Onboarding/VoiceSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/VoiceSelectionView.swift; sourceTree = "<group>"; };
 		FD2D763377C74333BEF2B66F /* StartSmart/Views/Onboarding/OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/OnboardingFlowView.swift; sourceTree = "<group>"; };
+		F339E0CC99B06E4E377421157585336D /* StartSmart/Views/Onboarding/PremiumLandingPageV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/PremiumLandingPageV2.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -405,6 +407,7 @@
 				2596752C91664F69939DBD57 /* StartSmart/Models/OnboardingState.swift */,
 				FD2D763377C74333BEF2B66F /* StartSmart/Views/Onboarding/OnboardingFlowView.swift */,
 				5C412C4D8A79419E896C64FC /* StartSmart/Views/Onboarding/EnhancedWelcomeView.swift */,
+				F339E0CC99B06E4E377421157585336D /* StartSmart/Views/Onboarding/PremiumLandingPageV2.swift */,
 				C43AA2FAE90A40D9876DAD19 /* StartSmart/Views/Onboarding/MotivationSelectionView.swift */,
 				1F3D5A457CED47FD9310D74F /* StartSmart/Views/Onboarding/ToneSelectionView.swift */,
 				D02D52818D1B45DDA99CBFC4 /* StartSmart/Views/Onboarding/VoiceSelectionView.swift */,
@@ -710,15 +713,15 @@
 				9DEABF64196242FD9F2F7A71 /* StartSmart/Models/OnboardingState.swift in Sources */,
 				01BA08664E944A139C51913D /* StartSmart/Views/Onboarding/OnboardingFlowView.swift in Sources */,
 				416D6397FB264B96B69D0B33 /* StartSmart/Views/Onboarding/EnhancedWelcomeView.swift in Sources */,
-				3F359AACBCED415997BA2464 /* StartSmart/Views/Onboarding/MotivationSelectionView.swift in Sources */,
-				20913532AE484808923816E5 /* StartSmart/Views/Onboarding/ToneSelectionView.swift in Sources */,
-				0E709AEA2E9ADAAF00DB836C /* AlarmDismissalView.swift in Sources */,
+				02AC80442A730696BF8F8150591A0F16 /* StartSmart/Views/Onboarding/PremiumLandingPageV2.swift in Sources */,
 				44E4D0E960314946A3F718C0 /* StartSmart/Views/Onboarding/VoiceSelectionView.swift in Sources */,
 				78623D0B33E64EA1910CE12E /* StartSmart/Views/Onboarding/DemoGenerationView.swift in Sources */,
 				8F68888080944CE0A380058D /* StartSmart/Views/Onboarding/PermissionPrimingView.swift in Sources */,
 				D18AFF8EBD864888931C3442 /* StartSmart/Views/Onboarding/AccountCreationView.swift in Sources */,
 				CF5D655054BC48F7BD603B62 /* StartSmart/Services/OnboardingDemoService.swift in Sources */,
 				E05ED718CB114E329263DFD8 /* StartSmart/Services/OnboardingDemoServiceProtocol.swift in Sources */,
+				3F359AACBCED415997BA2464 /* StartSmart/Views/Onboarding/MotivationSelectionView.swift in Sources */,
+				20913532AE484808923816E5 /* StartSmart/Views/Onboarding/ToneSelectionView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

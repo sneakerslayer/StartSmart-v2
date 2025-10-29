@@ -120,7 +120,7 @@ struct VoicePersona: Identifiable, Codable, Equatable {
 
 // MARK: - Onboarding Step
 enum OnboardingStep: Int, CaseIterable {
-    case welcome = 0
+    case premiumLanding = 0
     case motivation = 1
     case tone = 2
     case voice = 3
@@ -130,7 +130,7 @@ enum OnboardingStep: Int, CaseIterable {
     
     var title: String {
         switch self {
-        case .welcome: return "Welcome"
+        case .premiumLanding: return "StartSmart"
         case .motivation: return "What drives you?"
         case .tone: return "How do you like your motivation?"
         case .voice: return "Choose your morning guide"
@@ -142,7 +142,7 @@ enum OnboardingStep: Int, CaseIterable {
     
     var isInteractive: Bool {
         switch self {
-        case .welcome, .demo, .permissions, .accountCreation:
+        case .premiumLanding, .demo, .permissions, .accountCreation:
             return false
         case .motivation, .tone, .voice:
             return true
@@ -151,7 +151,7 @@ enum OnboardingStep: Int, CaseIterable {
     
     var canSkip: Bool {
         switch self {
-        case .welcome, .demo, .permissions, .accountCreation:
+        case .premiumLanding, .demo, .permissions, .accountCreation:
             return false
         case .motivation, .tone, .voice:
             return true
@@ -161,7 +161,7 @@ enum OnboardingStep: Int, CaseIterable {
 
 // MARK: - Onboarding State
 class OnboardingState: ObservableObject {
-    @Published var currentStep: OnboardingStep = .welcome {
+    @Published var currentStep: OnboardingStep = .premiumLanding {
         didSet {
             print("🔄 OnboardingState.currentStep changed from \(oldValue) to \(currentStep)")
         }
@@ -183,7 +183,7 @@ class OnboardingState: ObservableObject {
     
     var canProceed: Bool {
         switch currentStep {
-        case .welcome:
+        case .premiumLanding:
             return true
         case .motivation:
             return selectedMotivation != nil
@@ -388,7 +388,7 @@ class OnboardingState: ObservableObject {
     
     // MARK: - Reset
     func reset() {
-        currentStep = .welcome
+        currentStep = .premiumLanding
         selectedMotivation = nil
         toneSliderPosition = 0.5
         selectedVoice = nil

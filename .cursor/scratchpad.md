@@ -1,26 +1,65 @@
 # StartSmart Project Scratchpad
 
+## 🎨 CURRENT TASK: Replace Old Landing Page with New Premium Design
+
+**Status**: 🔄 IN PROGRESS - Executor replacing EnhancedWelcomeView with PremiumLandingPageV2
+
+### Background and Motivation
+User wants to completely replace the old landing page (EnhancedWelcomeView) with the new premium landing page (PremiumLandingPageV2). The new page was created as an additional step, but now the user prefers to use it as the only landing page.
+
+### Changes to Make
+1. Remove EnhancedWelcomeView from the onboarding flow
+2. Keep PremiumLandingPageV2 as the first onboarding step (index 0)
+3. Re-index all other onboarding steps
+4. Update all references in code
+5. Optionally: Delete EnhancedWelcomeView.swift file (or keep as backup)
+
+### Current State
+- PremiumLandingPageV2 is at index 0
+- EnhancedWelcomeView is currently at index 1
+- All other steps are re-indexed (motivation=2, tone=3, voice=4, etc.)
+- File added to pbxproj but build still fails due to AlarmDismissalView issue
+
+---
+
 ## 🚨 CRITICAL: Apple Rejection #3 - October 28, 2025
 
-**Status**: ⏳ PLANNING PHASE - Two critical issues identified
+**Status**: ⏳ FIXES APPLIED - Ready for resubmission testing
 
 ### Issues Identified
 
-**Issue 1: Sign-in Button Unresponsive on iPad**
-- Status: Still failing despite previous fix
-- Device: iPad Air (5th generation), iPadOS 26.0.1
-- Root Cause: Previous fix may not have fully resolved the issue OR iPad has different behavior
-- Impact: App is being tested on iPad even though we set it to iPhone-only
-- **Note**: Apple confirmed they test on iPad regardless of device family setting
+**Issue 1: Sign-in Button Unresponsive on iPad** ✅ FIXED
+- Status: Fixed by adding proper frame sizing
+- Root Cause: SignInWithAppleButton didn't have `.frame(maxWidth: .infinity)`
+- Solution Applied:
+  - Added `.frame(maxWidth: .infinity)` to SignInWithAppleButton
+  - Now matches sizing of other buttons
+  - Will fill available width on all screen sizes including iPad
+- File: StartSmart/Views/Onboarding/AccountCreationView.swift
+- Commit: c841536
 
-**Issue 2: Account Deletion Feature Missing**
+**Issue 2: Account Deletion Feature Missing** ✅ IMPLEMENTED
 - Guideline: 5.1.1(v) - Data Collection and Storage
-- Requirement: Apps with account creation MUST support account deletion
-- Status: Not implemented yet
-- Next Steps: Add account deletion feature to Settings
+- Status: Implemented with two-stage confirmation
+- Solution Applied:
+  - Added "Delete Account" button to Settings
+  - First confirmation: "Delete Account?"
+  - Second confirmation: "Confirm Deletion?" (for safety)
+  - Calls existing FirebaseService.deleteUser()
+  - Clears local data and signs out
+  - Redirects to onboarding after successful deletion
+- File: StartSmart/Views/Settings/SettingsView.swift
+- Commit: c841536
 
 ### Key Discovery
 **Apple ALWAYS tests on iPad** - Despite setting TARGETED_DEVICE_FAMILY = 1 (iPhone-only), Apple still tests on iPad. We need to make the app work properly on iPad rather than trying to exclude it.
+
+### Next Steps
+1. ✅ Fixed Apple Sign In button sizing
+2. ✅ Added account deletion feature
+3. Test both features on iPad simulator
+4. Prepare for resubmission
+5. Document any remaining issues
 
 ---
 

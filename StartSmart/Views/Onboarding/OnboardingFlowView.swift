@@ -24,7 +24,7 @@ struct OnboardingFlowView: View {
     // MARK: - State Management
     @State private var showingAuthAlert = false
     @State private var authAlertMessage = ""
-    @State private var currentStep: OnboardingStep = .welcome
+    @State private var currentStep: OnboardingStep = .premiumLanding
     @State private var isSigningIn = false
     @State private var selectedMotivation: MotivationCategory? = nil
     @State private var selectedVoice: VoicePersona? = nil
@@ -38,7 +38,7 @@ struct OnboardingFlowView: View {
     private var canProceed: Bool {
         let result: Bool
         switch currentStep {
-        case .welcome:
+        case .premiumLanding:
             result = true
         case .motivation:
             result = selectedMotivation != nil
@@ -66,8 +66,8 @@ struct OnboardingFlowView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Progress indicator (hidden on welcome screen)
-                    if currentStep != .welcome {
+                    // Progress indicator (hidden on premium landing screen)
+                    if currentStep != .premiumLanding {
                         progressIndicator
                             .padding(.top, 20) // Increased top padding to prevent cutoff
                             .padding(.horizontal, 20)
@@ -77,24 +77,11 @@ struct OnboardingFlowView: View {
                     // Main content area - Conditional View System (No TabView)
                     Group {
                         switch currentStep {
-                        case .welcome:
-                            EnhancedWelcomeView(
-                                onPrimaryAction: {
-                                    print("🚀 Primary action called from OnboardingFlowView")
-                                    print("🚀 Current step before: \(currentStep)")
-                                    
-                                    // Direct state update - no complex chain
-                                    currentStep = .motivation
-                                    print("🚀 Current step after: \(currentStep)")
-                                },
-                                onSecondaryAction: {
-                                    print("🚀 Secondary action called from OnboardingFlowView")
-                                    DispatchQueue.main.async {
-                                        showSignInFlow()
-                                    }
-                                }
-                            )
-                            
+                        case .premiumLanding:
+                            PremiumLandingPageV2(onGetStarted: {
+                                currentStep = .motivation
+                            })
+                        
                         case .motivation:
                             MotivationSelectionView(
                                 onboardingState: onboardingViewModel.onboardingState,
@@ -175,7 +162,7 @@ struct OnboardingFlowView: View {
     private var backgroundGradient: some View {
         Group {
             switch currentStep {
-            case .welcome:
+            case .premiumLanding:
                 LinearGradient(
                     colors: [.blue.opacity(0.8), .purple.opacity(0.6)],
                     startPoint: .topLeading,
@@ -287,7 +274,7 @@ struct OnboardingFlowView: View {
     
     private var shouldShowNavigationControls: Bool {
         switch currentStep {
-        case .welcome, .accountCreation:
+        case .premiumLanding, .accountCreation:
             return false
         case .motivation, .tone, .voice, .demo, .permissions:
             return true
@@ -433,7 +420,7 @@ struct OnboardingFlowView: View {
         _ = VoicePersona.allPersonas
         
         // Configure initial state
-        onboardingViewModel.onboardingState.currentStep = .welcome
+        onboardingViewModel.onboardingState.currentStep = .premiumLanding
         
         // Initialize any required services
         // This could include checking for existing partial onboarding data

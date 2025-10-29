@@ -9,36 +9,73 @@ import SwiftUI
 
 /// Main authentication view that handles authentication state and navigation
 struct AuthenticationView: View {
-    @StateObject private var authService = DependencyContainer.shared.authenticationService as! AuthenticationService
-    @State private var showingOnboarding = true
+    @StateObject private var container = DependencyContainer.shared
+    @State private var authService: AuthenticationService?
+    @State private var isLoading = true
     
     var body: some View {
         Group {
-            switch authService.authenticationState {
-            case .signedOut:
-                OnboardingView()
-                    .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))
-                
-            case .signingIn:
-                SigningInView()
-                    .transition(.opacity)
-                
-            case .signedIn:
-                // This will be replaced with the main app view in future tasks
-                SignedInView()
-                    .transition(.asymmetric(insertion: .move(edge: .leading), removal: .move(edge: .trailing)))
-                
-            case .error(let error):
-                ErrorView(error: error) {
-                    // Retry action
-                    Task {
-                        await authService.updateAuthenticationState()
+            if isLoading {
+                // Show loading state while container initializes
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .scaleEffect(1.5, anchor: .center)
+                    Text("Loading...")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(.systemBackground))
+            } else if let authService = authService {
+                Group {
+                    switch authService.authenticationState {
+                    case .signedOut:
+                        OnboardingView()
+                            .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))
+                        
+                    case .signingIn:
+                        SigningInView()
+                            .transition(.opacity)
+                        
+                    case .signedIn:
+                        // This will be replaced with the main app view in future tasks
+                        SignedInView()
+                            .transition(.asymmetric(insertion: .move(edge: .leading), removal: .move(edge: .trailing)))
+                        
+                    case .error(let error):
+                        ErrorView(error: error) {
+                            // Retry action
+                            Task {
+                                await authService.updateAuthenticationState()
+                            }
+                        }
+                        .transition(.opacity)
                     }
                 }
-                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.3), value: authService.isAuthenticated || authService.isGuestMode)
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: authService.isAuthenticated || authService.isGuestMode)
+        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            // Wait for container to initialize, then get the auth service
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                if container.isInitialized {
+                    authService = container.authenticationService as? AuthenticationService
+                    isLoading = false
+                } else {
+                    // Poll until initialized
+                    let timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
+                        if container.isInitialized {
+                            authService = container.authenticationService as? AuthenticationService
+                            isLoading = false
+                            timer.invalidate()
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

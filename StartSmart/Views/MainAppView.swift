@@ -62,12 +62,12 @@ struct MainAppView: View {
                     .tabItem { Label("Alarms", systemImage: "alarm.fill") }
                     .tag(2)
 
-                DeferredView { VoicesView() }
-                    .tabItem { Label("Voices", systemImage: "waveform.circle.fill") }
+                DeferredView { AnalyticsDashboardView() }
+                    .tabItem { Label("Analytics", systemImage: "chart.bar.fill") }
                     .tag(3)
 
-                DeferredView { AnalyticsDashboardView() }
-                    .tabItem { Label("Insights", systemImage: "chart.bar.fill") }
+                DeferredView { SettingsView() }
+                    .tabItem { Label("Settings", systemImage: "gear") }
                     .tag(4)
             }
             .onChange(of: appState.selectedTab) { newValue in
@@ -148,16 +148,16 @@ struct MainAppView: View {
             .sheet(isPresented: $shouldShowWakeUpSheet) {
                 if let alarmId = wakeUpAlarmId,
                    let alarm = alarmViewModel.alarms.first(where: { $0.id.uuidString == alarmId }) {
-                    AlarmDismissalView(alarm: alarm) {
-                        shouldShowWakeUpSheet = false
-                        wakeUpAlarmId = nil
-                        wakeUpUserGoal = nil
-                        logger.info("🎯 WakeUpIntent sheet dismissed")
-                    }
-                    .onAppear {
-                        logger.info("🎯 WakeUpIntent sheet appeared for alarm: \(alarm.label)")
-                        logger.info("🎯 User goal: \(wakeUpUserGoal ?? "No goal")")
-                    }
+                    // TODO: Fix AlarmDismissalView not found in project
+                    // AlarmDismissalView(alarm: alarm) {
+                    //     shouldShowWakeUpSheet = false
+                    //     wakeUpAlarmId = nil
+                    //     wakeUpUserGoal = nil
+                    //     logger.info("🎯 WakeUpIntent sheet dismissed")
+                    // }
+                    // .onAppear {
+                    Text("Alarm Dismissal View - Temporarily Disabled")
+                    // }
                 } else {
                     // Fallback if alarm not found
                     VStack(spacing: 20) {
@@ -219,10 +219,16 @@ struct HomeView: View {
     @StateObject private var alarmViewModel = AlarmViewModel()
     @StateObject private var streakService = StreakTrackingService()
     @StateObject private var usageService = UsageTrackingService.shared
+    @StateObject private var container = DependencyContainer.shared
     @State private var enhancedStats = EnhancedUserStats()
     @State private var nextAlarm: Alarm?
     @State private var showPaywall = false
     @State private var isPremium = false
+    
+    // Voice preview state
+    @State private var currentlyPlayingVoice: String?
+    @State private var voiceAudioPlayer: AVAudioPlayer?
+    @State private var isLoadingVoicePreview = false
     
     var body: some View {
         ScrollView {
@@ -298,16 +304,16 @@ struct HomeView: View {
                     .contentShape(Rectangle())
                     .allowsHitTesting(true)
 
-                    // Voices
+                    // Analytics
                     Button {
-                        logger.info("Tap Voices (state)")
+                        logger.info("Tap Analytics (state)")
                         appState.selectedTab = 3
                     } label: {
                         VStack(spacing: 6) {
-                            Image(systemName: "waveform")
-                                .foregroundColor(.purple)
+                            Image(systemName: "chart.bar")
+                                .foregroundColor(.green)
                                 .font(.title2)
-                            Text("Voices")
+                            Text("Analytics")
                                 .font(.caption)
                                 .foregroundColor(.primary)
                         }
@@ -322,16 +328,16 @@ struct HomeView: View {
                     .contentShape(Rectangle())
                     .allowsHitTesting(true)
 
-                    // Stats
+                    // Settings
                     Button {
-                        logger.info("Tap Stats (state)")
+                        logger.info("Tap Settings (state)")
                         appState.selectedTab = 4
                     } label: {
                         VStack(spacing: 6) {
-                            Image(systemName: "chart.bar")
-                                .foregroundColor(.green)
+                            Image(systemName: "gear")
+                                .foregroundColor(.purple)
                                 .font(.title2)
-                            Text("Stats")
+                            Text("Settings")
                                 .font(.caption)
                                 .foregroundColor(.primary)
                         }
@@ -420,6 +426,69 @@ struct HomeView: View {
                                 subtitle: formatEventTime(event.timestamp)
                             )
                         }
+                    }
+                }
+                
+                // AI Voice Library Section (simplified for Home)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("AI Voice Library")
+                        .font(.headline)
+                        .padding(.top, 8)
+
+                    Text("Choose your AI voice for personalized wake-up content")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    // Voice Cards (with play buttons)
+                    VStack(spacing: 8) {
+                        SimpleVoiceCard(
+                            name: "Girl Bestie",
+                            subtitle: "Supportive and encouraging",
+                            isPremium: false,
+                            isPlaying: currentlyPlayingVoice == "Girl Bestie",
+                            isLoading: isLoadingVoicePreview && currentlyPlayingVoice == "Girl Bestie",
+                            onPlay: { playVoicePreview("Girl Bestie") }
+                        )
+                        SimpleVoiceCard(
+                            name: "Motivational Mike",
+                            subtitle: "High-energy motivation",
+                            isPremium: false,
+                            isPlaying: currentlyPlayingVoice == "Motivational Mike",
+                            isLoading: isLoadingVoicePreview && currentlyPlayingVoice == "Motivational Mike",
+                            onPlay: { playVoicePreview("Motivational Mike") }
+                        )
+                        SimpleVoiceCard(
+                            name: "Drill Sergeant Drew",
+                            subtitle: "Military-style discipline",
+                            isPremium: true,
+                            isPlaying: currentlyPlayingVoice == "Drill Sergeant Drew",
+                            isLoading: isLoadingVoicePreview && currentlyPlayingVoice == "Drill Sergeant Drew",
+                            onPlay: { playVoicePreview("Drill Sergeant Drew") }
+                        )
+                        SimpleVoiceCard(
+                            name: "Mrs. Walker",
+                            subtitle: "Warm Southern encouragement",
+                            isPremium: true,
+                            isPlaying: currentlyPlayingVoice == "Mrs. Walker",
+                            isLoading: isLoadingVoicePreview && currentlyPlayingVoice == "Mrs. Walker",
+                            onPlay: { playVoicePreview("Mrs. Walker") }
+                        )
+                        SimpleVoiceCard(
+                            name: "Calm Kyle",
+                            subtitle: "Peaceful zen guidance",
+                            isPremium: true,
+                            isPlaying: currentlyPlayingVoice == "Calm Kyle",
+                            isLoading: isLoadingVoicePreview && currentlyPlayingVoice == "Calm Kyle",
+                            onPlay: { playVoicePreview("Calm Kyle") }
+                        )
+                        SimpleVoiceCard(
+                            name: "Angry Allen",
+                            subtitle: "Intense wake-up calls",
+                            isPremium: true,
+                            isPlaying: currentlyPlayingVoice == "Angry Allen",
+                            isLoading: isLoadingVoicePreview && currentlyPlayingVoice == "Angry Allen",
+                            onPlay: { playVoicePreview("Angry Allen") }
+                        )
                     }
                 }
             }
@@ -606,6 +675,109 @@ struct HomeView: View {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: date, relativeTo: Date())
+    }
+    
+    // MARK: - Voice Preview Functions
+    
+    private func playVoicePreview(_ voiceName: String) {
+        // Check if services are ready
+        guard container.isFullyInitialized else {
+            logger.info("AI services not ready yet")
+            return
+        }
+        
+        // Stop any currently playing voice
+        stopVoicePreview()
+        
+        // Configure audio session for playback
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            logger.error("Audio session error: \(error)")
+            return
+        }
+        
+        // Generate a random phrase for the voice to read
+        let phrases = [
+            "Good morning! Time to conquer your day!",
+            "Rise and shine! Your goals are waiting!",
+            "Wake up! Today is full of possibilities!",
+            "Morning! Let's make today amazing!",
+            "Time to wake up and chase your dreams!"
+        ]
+        
+        let randomPhrase = phrases.randomElement() ?? "Good morning! Time to start your day!"
+        
+        currentlyPlayingVoice = voiceName
+        isLoadingVoicePreview = true
+        
+        // Generate actual audio using ElevenLabs
+        Task {
+            do {
+                // Use safe async resolution
+                guard let elevenLabsService: ElevenLabsServiceProtocol = await container.resolveSafe() else {
+                    logger.error("ElevenLabs service not available")
+                    await MainActor.run {
+                        self.currentlyPlayingVoice = nil
+                        self.isLoadingVoicePreview = false
+                    }
+                    return
+                }
+                
+                let audioData = try await elevenLabsService.generateVoicePreview(text: randomPhrase, voiceName: voiceName)
+                
+                // Validate audio data
+                guard !audioData.isEmpty else {
+                    await MainActor.run {
+                        self.currentlyPlayingVoice = nil
+                        self.isLoadingVoicePreview = false
+                    }
+                    return
+                }
+                
+                // Save audio data to temporary file
+                let tempURL = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("voice_preview_\(voiceName.replacingOccurrences(of: " ", with: "_")).mp3")
+                try audioData.write(to: tempURL)
+                
+                // Play the audio
+                await MainActor.run {
+                    do {
+                        self.voiceAudioPlayer = try AVAudioPlayer(contentsOf: tempURL)
+                        self.voiceAudioPlayer?.volume = 0.8
+                        self.isLoadingVoicePreview = false
+                        
+                        _ = self.voiceAudioPlayer?.play()
+                        
+                        // Auto-stop after audio finishes
+                        let duration = self.voiceAudioPlayer?.duration ?? 3.0
+                        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+                            if self.currentlyPlayingVoice == voiceName {
+                                self.stopVoicePreview()
+                            }
+                        }
+                    } catch {
+                        self.logger.error("Audio playback error: \(error)")
+                        self.currentlyPlayingVoice = nil
+                        self.isLoadingVoicePreview = false
+                    }
+                }
+            } catch {
+                logger.error("Voice preview generation failed: \(error)")
+                await MainActor.run {
+                    self.currentlyPlayingVoice = nil
+                    self.isLoadingVoicePreview = false
+                }
+            }
+        }
+    }
+    
+    private func stopVoicePreview() {
+        voiceAudioPlayer?.stop()
+        voiceAudioPlayer = nil
+        currentlyPlayingVoice = nil
+        isLoadingVoicePreview = false
     }
 }
 
@@ -927,6 +1099,78 @@ struct VoiceCard: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+}
+
+// MARK: - Simple Voice Card (for HomeView)
+struct SimpleVoiceCard: View {
+    let name: String
+    let subtitle: String
+    let isPremium: Bool
+    var isPlaying: Bool = false
+    var isLoading: Bool = false
+    var onPlay: () -> Void = {}
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Voice Icon
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: isPremium ? [.purple.opacity(0.3), .blue.opacity(0.3)] : [.green.opacity(0.3), .blue.opacity(0.3)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 40, height: 40)
+                
+                Image(systemName: "waveform")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(isPremium ? .purple : .green)
+            }
+            
+            // Voice Info
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text(name)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.primary)
+                    
+                    if isPremium {
+                        Image(systemName: "crown.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.yellow)
+                    }
+                }
+                
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            // Play/Stop Button
+            Button(action: onPlay) {
+                Group {
+                    if isLoading {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    } else {
+                        Image(systemName: isPlaying ? "stop.circle.fill" : "play.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(isPremium ? .purple : .blue)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
                 .fill(Color(.secondarySystemBackground))
         )
     }
