@@ -96,9 +96,9 @@
 		D0000001000000000000002A /* StartSmartTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0000001000000000000002B /* StartSmartTests.swift */; };
 		D18AFF8EBD864888931C3442 /* StartSmart/Views/Onboarding/AccountCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5991B1CBA7934AACA630BD23 /* StartSmart/Views/Onboarding/AccountCreationView.swift */; };
 		E05ED718CB114E329263DFD8 /* StartSmart/Services/OnboardingDemoServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC94B8C01E9E436188E1FC88 /* StartSmart/Services/OnboardingDemoServiceProtocol.swift */; };
-\t\t302B8383EF59675B57C79E4E /* StartSmart/Services/AlarmDismissalStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9585313AA76516478233DDB /* StartSmart/Services/AlarmDismissalStateManager.swift */; };
-\t\t78805206848BAD07507CA7E8 /* StartSmart/Services/AlarmErrorTrackingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEB2C2408E0CE4D2648480AE /* StartSmart/Services/AlarmErrorTrackingService.swift */; };
-\t\tFA36976B82B5CE3A6C1150E5 /* StartSmart/Services/AlarmMetadataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56D5E8F3B39F6F458A0F99A /* StartSmart/Services/AlarmMetadataCache.swift */; };
+		302B8383EF59675B57C79E4E /* StartSmart/Services/AlarmDismissalStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9585313AA76516478233DDB /* StartSmart/Services/AlarmDismissalStateManager.swift */; };
+		78805206848BAD07507CA7E8 /* StartSmart/Services/AlarmErrorTrackingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEB2C2408E0CE4D2648480AE /* StartSmart/Services/AlarmErrorTrackingService.swift */; };
+		FA36976B82B5CE3A6C1150E5 /* StartSmart/Services/AlarmMetadataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56D5E8F3B39F6F458A0F99A /* StartSmart/Services/AlarmMetadataCache.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -198,9 +198,9 @@
 		D02D52818D1B45DDA99CBFC4 /* StartSmart/Views/Onboarding/VoiceSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/VoiceSelectionView.swift; sourceTree = "<group>"; };
 		FD2D763377C74333BEF2B66F /* StartSmart/Views/Onboarding/OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/OnboardingFlowView.swift; sourceTree = "<group>"; };
 		F339E0CC99B06E4E377421157585336D /* StartSmart/Views/Onboarding/PremiumLandingPageV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Views/Onboarding/PremiumLandingPageV2.swift; sourceTree = "<group>"; };
-\t\tF9585313AA76516478233DDB /* StartSmart/Services/AlarmDismissalStateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Services/AlarmDismissalStateManager.swift; sourceTree = "<group>"; };
-\t\tEEB2C2408E0CE4D2648480AE /* StartSmart/Services/AlarmErrorTrackingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Services/AlarmErrorTrackingService.swift; sourceTree = "<group>"; };
-\t\tF56D5E8F3B39F6F458A0F99A /* StartSmart/Services/AlarmMetadataCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Services/AlarmMetadataCache.swift; sourceTree = "<group>"; };
+		F9585313AA76516478233DDB /* StartSmart/Services/AlarmDismissalStateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Services/AlarmDismissalStateManager.swift; sourceTree = "<group>"; };
+		EEB2C2408E0CE4D2648480AE /* StartSmart/Services/AlarmErrorTrackingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Services/AlarmErrorTrackingService.swift; sourceTree = "<group>"; };
+		F56D5E8F3B39F6F458A0F99A /* StartSmart/Services/AlarmMetadataCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartSmart/Services/AlarmMetadataCache.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
