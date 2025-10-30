@@ -59,7 +59,7 @@ class AlarmMetadataCache {
     }
     
     /// Get cached alarm metadata by alarm ID (for quick access)
-    func getCachedAlarmMetadata(for alarmId: String) -> AlarmMetadata? {
+    func getCachedAlarmMetadata(for alarmId: String) -> CachedAlarmMetadata? {
         guard let cacheData = userDefaults.dictionary(forKey: cacheKey),
               let timestamp = cacheData["timestamp"] as? TimeInterval else {
             logger.info("ℹ️ No alarm metadata cache found")
@@ -82,7 +82,7 @@ class AlarmMetadataCache {
         // Find matching alarm
         if let alarmData = alarmsArray.first(where: { ($0["id"] as? String) == alarmId }) {
             logger.info("✅ Found cached metadata for alarm: \(alarmId)")
-            return AlarmMetadata(from: alarmData)
+            return CachedAlarmMetadata(from: alarmData)
         }
         
         logger.info("ℹ️ No cached metadata found for alarm: \(alarmId)")
@@ -140,7 +140,7 @@ class AlarmMetadataCache {
 }
 
 /// Lightweight alarm metadata structure for caching
-struct AlarmMetadata {
+struct CachedAlarmMetadata {
     let id: String
     let label: String
     let time: Date
