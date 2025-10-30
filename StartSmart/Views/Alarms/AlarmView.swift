@@ -424,7 +424,9 @@ struct AlarmView: View {
             if FileManager.default.fileExists(atPath: audioURL.path) {
                 logger.info("✅ File exists at path, starting AI script playback")
                 alarmPhase = .aiScriptPlayback
-                startAIScriptPhase(audioURL: audioURL, retryCount: 0)
+                Task {
+                    await startAIScriptPhase(audioURL: audioURL, retryCount: 0)
+                }
             } else {
                 logger.error("❌ Audio file does not exist at path: \(audioURL.path)")
                 logger.info("🔄 Attempting fallback lookup...")
@@ -450,7 +452,7 @@ struct AlarmView: View {
     }
     
     
-    private func startAIScriptPhase(audioURL: URL, retryCount: Int = 0) {
+    private func startAIScriptPhase(audioURL: URL, retryCount: Int = 0) async {
         logger.info("🎵 ========== START AI SCRIPT PHASE ==========")
         logger.info("📁 Audio URL: \(audioURL.path)")
         logger.info("🔄 Retry Count: \(retryCount)")
@@ -486,9 +488,7 @@ struct AlarmView: View {
                 logger.info("🔄 Retrying audio load in \(audioLoadRetryDelay) seconds... (attempt \(retryCount + 1)/\(maxAudioLoadRetries))")
                 Task {
                     try? await Task.sleep(nanoseconds: UInt64(audioLoadRetryDelay * 1_000_000_000))
-                    await MainActor.run {
-                        startAIScriptPhase(audioURL: audioURL, retryCount: retryCount + 1)
-                    }
+                    await startAIScriptPhase(audioURL: audioURL, retryCount: retryCount + 1)
                 }
             } else {
                 logger.error("❌ Max retries reached. Audio file not found.")
@@ -506,7 +506,7 @@ struct AlarmView: View {
                     )
                 }
                 
-                await MainActor.run {
+                Task { @MainActor in
                     audioPlaybackError = "Audio file not found. Please regenerate your alarm content."
                     alarmPhase = .dismissed
                 }
@@ -614,10 +614,7 @@ struct AlarmView: View {
                     logger.info("🔄 Retrying audio playback in \(audioLoadRetryDelay) seconds... (attempt \(retryCount + 1)/\(maxAudioLoadRetries))")
                     
                     try? await Task.sleep(nanoseconds: UInt64(audioLoadRetryDelay * 1_000_000_000))
-                    
-                    await MainActor.run {
-                        startAIScriptPhase(audioURL: audioURL, retryCount: retryCount + 1)
-                    }
+                    await startAIScriptPhase(audioURL: audioURL, retryCount: retryCount + 1)
                 } else {
                     logger.error("❌ Max playback retries reached")
                     
@@ -676,8 +673,8 @@ struct AlarmView: View {
                         
                         await MainActor.run {
                             alarmPhase = .aiScriptPlayback
-                            startAIScriptPhase(audioURL: fallbackURL, retryCount: 0)
                         }
+                        await startAIScriptPhase(audioURL: fallbackURL, retryCount: 0)
                         return
                     } else {
                         logger.warning("⚠️ Fallback file does not exist: \(fallbackURL.path)")
@@ -745,8 +742,8 @@ struct AlarmView: View {
                             
                             await MainActor.run {
                                 alarmPhase = .aiScriptPlayback
-                                startAIScriptPhase(audioURL: file, retryCount: 0)
                             }
+                            await startAIScriptPhase(audioURL: file, retryCount: 0)
                             return
                         }
                     }
