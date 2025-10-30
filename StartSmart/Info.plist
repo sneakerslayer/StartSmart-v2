@@ -51,6 +51,14 @@
 				<string>com.googleusercontent.apps.761977742726-rs1r4p4u0pqv7jp5dmmhclnr2ipj8l03</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.startsmart.mobile</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>startsmart</string>
+			</array>
+		</dict>
 	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>

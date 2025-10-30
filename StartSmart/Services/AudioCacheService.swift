@@ -6,6 +6,7 @@ import Combine
 protocol AudioCacheServiceProtocol {
     func cacheAudio(data: Data, forKey key: String, metadata: SimpleAudioMetadata) async throws -> String
     func getCachedAudio(forKey key: String) async throws -> CachedAudioResult?
+    func findAudioByAlarmOrIntentId(alarmId: String, intentId: String?, voiceId: String?) async throws -> CachedAudioResult?
     func removeCachedAudio(forKey key: String) async throws
     func clearCache() async throws
     func getCacheStatistics() async -> AudioCacheStatistics
@@ -317,6 +318,82 @@ class AudioCacheService: AudioCacheServiceProtocol, ObservableObject {
             item: audioItem,
             isValid: true
         )
+    }
+    
+    /// Find audio file by alarm ID or intent ID (fallback lookup)
+    func findAudioByAlarmOrIntentId(alarmId: String, intentId: String?, voiceId: String?) async throws -> CachedAudioResult? {
+        let contentCache = loadContentCache()
+        
+        // First try: exact cache key match
+        if let intentId = intentId, let voiceId = voiceId {
+            let cacheKey = "\(intentId)_\(voiceId)"
+            if let result = try await getCachedAudio(forKey: cacheKey) {
+                return result
+            }
+        }
+        
+        // Second try: search by intent ID
+        if let intentId = intentId {
+            for (_, audioItem) in contentCache.cachedAudio {
+                if audioItem.intentId == intentId {
+                    // Check if file exists
+                    if fileManager.fileExists(atPath: audioItem.filePath) && !audioItem.isExpired {
+                        let metadata = SimpleAudioMetadata(
+                            intentId: audioItem.intentId,
+                            voiceId: audioItem.voiceId,
+                            duration: audioItem.duration,
+                            format: audioItem.format,
+                            quality: audioItem.quality,
+                            generatedAt: audioItem.createdAt
+                        )
+                        return CachedAudioResult(
+                            filePath: audioItem.filePath,
+                            metadata: metadata,
+                            item: audioItem,
+                            isValid: true
+                        )
+                    }
+                }
+            }
+        }
+        
+        // Third try: search cache directory for files containing alarm ID
+        let cacheDir = cacheDirectory
+        if fileManager.fileExists(atPath: cacheDir.path) {
+            do {
+                let files = try fileManager.contentsOfDirectory(at: cacheDir, includingPropertiesForKeys: nil)
+                for file in files {
+                    let fileName = file.lastPathComponent
+                    if fileName.contains(alarmId) || (intentId != nil && fileName.contains(intentId!)) {
+                        if fileManager.fileExists(atPath: file.path) {
+                            // Try to find matching cache entry
+                            for (_, audioItem) in contentCache.cachedAudio {
+                                if audioItem.filePath == file.path && !audioItem.isExpired {
+                                    let metadata = SimpleAudioMetadata(
+                                        intentId: audioItem.intentId,
+                                        voiceId: audioItem.voiceId,
+                                        duration: audioItem.duration,
+                                        format: audioItem.format,
+                                        quality: audioItem.quality,
+                                        generatedAt: audioItem.createdAt
+                                    )
+                                    return CachedAudioResult(
+                                        filePath: audioItem.filePath,
+                                        metadata: metadata,
+                                        item: audioItem,
+                                        isValid: true
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch {
+                throw AudioCacheError.fileReadError(error)
+            }
+        }
+        
+        return nil
     }
     
     func removeCachedAudio(forKey key: String) async throws {

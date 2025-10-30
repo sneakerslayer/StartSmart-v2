@@ -59,15 +59,18 @@ struct AlarmRowView: View {
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(alarm.isEnabled ? .primary : .secondary)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
             
             if let nextTrigger = alarm.nextTriggerDate {
                 Text(timeUntilNextTrigger(nextTrigger))
                     .font(.caption)
                     .foregroundColor(alarm.isEnabled ? .primary : .secondary)
                     .fontWeight(.medium)
+                    .lineLimit(1)
             }
         }
-        .frame(width: 80, alignment: .leading)
+        .frame(minWidth: 80, alignment: .leading)
     }
     
     // MARK: - Details Section
@@ -90,6 +93,7 @@ struct AlarmRowView: View {
                     Text(alarm.repeatDaysDisplayString)
                         .font(.caption)
                         .foregroundColor(.secondary)
+                        .lineLimit(1)
                 }
                 
                 // Tone
@@ -101,6 +105,8 @@ struct AlarmRowView: View {
                     Text(alarm.tone.displayName)
                         .font(.caption)
                         .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
             }
             

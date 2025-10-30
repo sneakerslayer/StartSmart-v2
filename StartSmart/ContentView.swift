@@ -1,12 +1,16 @@
 import SwiftUI
 import Combine
 import RevenueCat
+import os.log
 
 struct ContentView: View {
     @State private var hasCompletedOnboarding = false
     @State private var hasSeenPaywall = false
     @State private var showPaywall = false
     @State private var isInitialized = false
+    @State private var pendingAlarmDismissal: (alarmId: String, userGoal: String?)?
+    
+    private let logger = Logger(subsystem: "com.startsmart.mobile", category: "ContentView")
     
     var body: some View {
         Group {
@@ -19,10 +23,20 @@ struct ContentView: View {
                 PaywallView(source: "onboarding", onDismiss: { completePaywall() })
             } else {
                 MainAppView()
+                    .onAppear {
+                        // Check for pending dismissal when MainAppView appears
+                        checkForPendingDismissal()
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: .handleDeepLink)) { notification in
+                        if let url = notification.userInfo?["url"] as? URL {
+                            handleDeepLink(url: url)
+                        }
+                    }
             }
         }
         .onAppear {
             checkOnboardingStatus()
+            checkForPendingDismissal()
         }
     }
     
@@ -39,6 +53,61 @@ struct ContentView: View {
         }
         
         isInitialized = true
+    }
+    
+    private func checkForPendingDismissal() {
+        logger.info("🔍 ContentView checking for pending dismissal...")
+        
+        if let dismissal = AlarmDismissalStateManager.shared.getPendingDismissal() {
+            logger.info("✅ Found pending dismissal in ContentView for alarm: \(dismissal.alarmId)")
+            pendingAlarmDismissal = dismissal
+            
+            // Post notification after a short delay to ensure MainAppView is ready
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                NotificationCenter.default.post(
+                    name: .showAlarmView,
+                    object: nil,
+                    userInfo: [
+                        "alarmID": dismissal.alarmId,
+                        "userGoal": dismissal.userGoal ?? "",
+                        "wakeupMethod": "content_view_detection"
+                    ]
+                )
+                logger.info("📤 Posted showAlarmView notification from ContentView")
+            }
+        }
+    }
+    
+    private func handleDeepLink(url: URL) {
+        logger.info("🔗 ContentView handling deep link: \(url.absoluteString)")
+        
+        guard url.scheme == "startsmart", url.host == "alarm" else {
+            return
+        }
+        
+        let pathComponents = url.pathComponents.filter { $0 != "/" }
+        
+        if let alarmId = pathComponents.first {
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            let userGoal = components?.queryItems?.first(where: { $0.name == "goal" })?.value
+            
+            AlarmDismissalStateManager.shared.storePendingDismissal(
+                alarmId: alarmId,
+                userGoal: userGoal
+            )
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                NotificationCenter.default.post(
+                    name: .showAlarmView,
+                    object: nil,
+                    userInfo: [
+                        "alarmID": alarmId,
+                        "userGoal": userGoal ?? "",
+                        "wakeupMethod": "deep_link"
+                    ]
+                )
+            }
+        }
     }
     
     private func completeOnboarding() {

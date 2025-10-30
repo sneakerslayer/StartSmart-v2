@@ -1,6 +1,277 @@
 # StartSmart Project Scratchpad
 
-## 🎨 CURRENT TASK: Replace Old Landing Page with New Premium Design
+## 🚨 CURRENT TASK: Fix Alarm AI Script Playback and App Launch Issues
+
+**Status**: 📋 PLANNING - Analyzing and creating plan for alarm playback and app launch fixes
+
+### Background and Motivation
+
+The user reported two critical issues affecting the alarm experience:
+
+**Issue 1: AI Script Not Playing for Morning Alarms**
+- When alarms are set at night to go off in the morning, the AI-generated script doesn't play
+- This works fine when testing with alarms set to go off in 2 minutes
+- Suggests a timing/lifecycle issue when app launches from terminated state
+
+**Issue 2: App Not Opening After Alarm Dismissal**
+- When user dismisses alarm from lockscreen by tapping "I'm Awake", the phone stays on lockscreen
+- Even if user unlocks phone, app might not be focused/open
+- AI script never plays because AlarmView isn't shown
+- Need to ensure app opens and shows AlarmView immediately after dismissal
+
+**User Requirement**: Users must hear the AI-generated script as soon as possible after dismissing the initial wake-up alarm. The app should automatically open and play the script when the alarm is dismissed from the lockscreen.
+
+### Key Challenges and Analysis
+
+**Root Cause Analysis:**
+
+**Issue 1: AI Script Not Playing for Morning Alarms**
+
+After analyzing the codebase, I've identified several potential causes:
+
+1. **Audio File Path Persistence**: 
+   - Audio files are stored in `Documents/AudioCache` directory (persistent)
+   - However, when app launches from terminated state, the alarm data might not be fully loaded
+   - The `AlarmView.setupAlarmExperience()` checks `alarm.audioFileURL` but if alarm isn't loaded yet, this will be nil
+   - File paths stored in `AlarmGeneratedContent.audioFilePath` might not resolve correctly when app cold-starts
+
+2. **App Lifecycle Timing Issue**:
+   - When app is terminated overnight and alarm fires in morning, app must launch from scratch
+   - `WakeUpIntent.perform()` posts notification, but MainAppView might not be ready to receive it
+   - The NotificationCenter observer in MainAppView might miss the notification if it fires before view hierarchy is set up
+
+3. **Alarm Data Loading Race Condition**:
+   - `AlarmViewModel.loadAlarms()` is async and called in `init()`
+   - When AlarmView appears, alarms might not be loaded yet
+   - `alarmViewModel.alarms.first(where: { $0.id.uuidString == alarmId })` might return nil if alarms aren't loaded
+   - Audio file path check happens before alarm data is ready
+
+4. **Silent Failures**:
+   - `AlarmView.startAIScriptPhase()` has empty catch blocks
+   - File existence check fails silently if file doesn't exist
+   - No logging or fallback when audio file is missing
+
+**Issue 2: App Not Opening After Alarm Dismissal**
+
+1. **WakeUpIntent Not Reliably Opening App**:
+   - `WakeUpIntent.openAppWhenRun = true` should open app, but iOS might not honor this if app is terminated
+   - Intent might execute before app is fully launched
+   - NotificationCenter.post() might not reach MainAppView if app isn't ready
+
+2. **AlarmKit Dismissal Detection Gap**:
+   - `AlarmKitManager.handleAppBecameActive()` checks for dismissed alarms only after app becomes active
+   - But if user dismisses alarm and phone stays locked, app never becomes active
+   - The dismissal notification might not trigger properly
+
+3. **MainAppView Sheet Presentation Timing**:
+   - `shouldShowDismissalSheet` is set based on `alarmCoordinator.pendingAlarmId`
+   - But if MainAppView isn't initialized when dismissal happens, sheet won't show
+   - The `.sheet(isPresented:)` modifier only works when view is already in hierarchy
+
+4. **Missing App Launch Intent Handling**:
+   - No check in `StartSmartApp` or `ContentView` for whether app was launched from alarm dismissal
+   - No URL scheme or user activity handling for alarm dismissal launches
+   - App doesn't proactively check if it should show AlarmView on launch
+
+**Key Technical Findings:**
+
+1. **Audio File Storage**: Files are stored in Documents directory and should persist, but path resolution might fail when app cold-starts
+2. **Notification Timing**: NotificationCenter observers might miss notifications if they fire before observers are registered
+3. **View Initialization**: AlarmView might appear before alarm data is loaded, causing audioFileURL to be nil
+4. **App Launch Detection**: No mechanism to detect that app was launched due to alarm dismissal
+5. **WakeUpIntent Execution**: Intent might execute in background context, not opening app as expected
+
+### High-level Task Breakdown
+
+**Task 1: Fix Audio File Path Resolution and Validation**
+- **Objective**: Ensure audio file paths are correctly resolved and validated when app launches from terminated state
+- **Subtasks**:
+  1.1. Add comprehensive logging to `AlarmView.setupAlarmExperience()` to track audio file path resolution
+  1.2. Implement fallback audio file lookup in AudioCacheService if direct path fails
+  1.3. Add file existence validation with error reporting instead of silent failures
+  1.4. Ensure alarm data is fully loaded before AlarmView attempts to play audio
+  1.5. Add retry mechanism if audio file is not immediately available
+- **Success Criteria**: 
+  - Audio file paths resolve correctly when app launches from terminated state
+  - Detailed logging shows why audio files fail to play
+  - File existence is verified before attempting playback
+  - Alarm data is guaranteed to be loaded before audio playback starts
+
+**Task 2: Fix App Launch and AlarmView Presentation Timing**
+- **Objective**: Ensure app opens and AlarmView appears immediately when alarm is dismissed
+- **Subtasks**:
+  2.1. Add app launch detection in `StartSmartApp.init()` to check if app was launched from alarm dismissal
+  2.2. Store dismissal state in UserDefaults or App Group when alarm is dismissed
+  2.3. Check dismissal state on app launch and immediately show AlarmView if needed
+  2.4. Ensure WakeUpIntent reliably opens app by using URL scheme or deep link
+  2.5. Add timeout mechanism to show AlarmView even if notification is missed
+  2.6. Make AlarmView presentation work even if MainAppView isn't fully initialized
+- **Success Criteria**:
+  - App opens immediately when "I'm Awake" is tapped from lockscreen
+  - AlarmView appears within 1 second of app launch
+  - Works reliably even when app was terminated
+  - No dependency on NotificationCenter timing
+
+**Task 3: Improve Alarm Data Loading and Synchronization**
+- **Objective**: Ensure alarm data is available before AlarmView needs it
+- **Subtasks**:
+  3.1. Add loading state check in MainAppView before showing AlarmView sheet
+  3.2. Implement alarm data preloading when app becomes active
+  3.3. Add synchronization between AlarmKitManager and AlarmRepository to ensure alarms are loaded
+  3.4. Store alarm metadata in UserDefaults for immediate access on launch
+  3.5. Ensure AlarmViewModel has alarms loaded before AlarmView appears
+- **Success Criteria**:
+  - Alarm data is always available when AlarmView appears
+  - No race conditions between alarm loading and view presentation
+  - Alarm metadata accessible within 100ms of app launch
+
+**Task 4: Enhance WakeUpIntent Reliability**
+- **Objective**: Ensure WakeUpIntent always opens app and triggers AlarmView
+- **Subtasks**:
+  4.1. Add URL scheme handler for alarm dismissal deep links
+  4.2. Store alarm ID in shared App Group when intent fires
+  4.3. Check App Group on app launch for pending alarm dismissals
+  4.4. Add fallback mechanism if WakeUpIntent doesn't open app
+  4.5. Ensure intent execution happens on main thread and app is notified
+- **Success Criteria**:
+  - WakeUpIntent opens app 100% of the time
+  - AlarmView appears within 2 seconds of tapping "I'm Awake"
+  - Works even if app was terminated
+  - Multiple fallback mechanisms ensure reliability
+
+**Task 5: Add Comprehensive Error Handling and Logging**
+- **Objective**: Make failures visible and debuggable
+- **Subtasks**:
+  5.1. Replace all silent error handling in AlarmView with proper logging
+  5.2. Add analytics events for alarm playback failures
+  5.3. Implement user-facing error messages if audio playback fails
+  5.4. Add debug logging throughout alarm dismissal flow
+  5.5. Create test scenarios for cold-start alarm playback
+- **Success Criteria**:
+  - All failures are logged with context
+  - User sees helpful error messages if playback fails
+  - Debug logs show exactly why audio didn't play
+  - Analytics track alarm playback success rate
+
+**Task 6: Testing and Validation**
+- **Objective**: Verify fixes work in all scenarios
+- **Subtasks**:
+  6.1. Test alarm dismissal when app is terminated (cold start)
+  6.2. Test alarm dismissal when app is in background
+  6.3. Test alarm dismissal when app is active
+  6.4. Test with alarms set for morning (overnight wait)
+  6.5. Test with alarms set for immediate (2 minutes)
+  6.6. Verify audio files persist correctly overnight
+  6.7. Test multiple alarms and ensure correct one plays
+- **Success Criteria**:
+  - All test scenarios pass
+  - Audio plays correctly in all cases
+  - App opens reliably from lockscreen
+  - No regressions in existing functionality
+
+### Project Status Board
+
+- [x] **Task 1**: Fix Audio File Path Resolution and Validation ✅ COMPLETED
+  - [x] 1.1: Add comprehensive logging to setupAlarmExperience()
+  - [x] 1.2: Implement fallback audio file lookup in AudioCacheService
+  - [x] 1.3: Add file existence validation with error reporting
+  - [x] 1.4: Ensure alarm data is fully loaded before audio playback
+  - [x] 1.5: Add retry mechanism if audio file is not immediately available
+- [x] **Task 2**: Fix App Launch and AlarmView Presentation Timing ✅ COMPLETED
+  - [x] 2.1: Add app launch detection in StartSmartApp.init()
+  - [x] 2.2: Store dismissal state in UserDefaults when alarm is dismissed
+  - [x] 2.3: Check dismissal state on app launch and show AlarmView
+  - [x] 2.4: Ensure WakeUpIntent stores dismissal state (partially - URL scheme pending)
+  - [x] 2.5: Add timeout mechanism to show AlarmView if notification missed
+  - [x] 2.6: Make AlarmView presentation work even if MainAppView not fully initialized
+- [x] **Task 3**: Improve Alarm Data Loading and Synchronization ✅ COMPLETED
+  - [x] 3.1: Add loading state check in MainAppView before showing AlarmView sheet
+  - [x] 3.2: Implement alarm data preloading when app becomes active
+  - [x] 3.3: Add synchronization between AlarmKitManager and AlarmRepository
+  - [x] 3.4: Store alarm metadata in UserDefaults for immediate access
+  - [x] 3.5: Ensure AlarmViewModel has alarms loaded before AlarmView appears
+- [x] **Task 4**: Enhance WakeUpIntent Reliability ✅ COMPLETED
+  - [x] 4.1: Add URL scheme support for deep linking when app is terminated
+  - [x] 4.2: Ensure WakeUpIntent handles errors gracefully
+  - [x] 4.3: Add retry mechanism for WakeUpIntent notification delivery
+  - [x] 4.4: Verify openAppWhenRun works correctly
+  - [x] 4.5: Add App Group support for shared state (using UserDefaults instead)
+- [x] **Task 5**: Add Comprehensive Error Handling and Logging ✅ COMPLETED
+  - [x] 5.1: Replace silent error handling in AlarmView with proper logging
+  - [x] 5.2: Add analytics events for alarm playback failures
+  - [x] 5.3: Implement user-facing error messages if audio playback fails
+  - [x] 5.4: Add debug logging throughout alarm dismissal flow
+  - [x] 5.5: Add error tracking service for analytics
+- [ ] **Task 6**: Testing and Validation
+
+### Executor's Feedback or Assistance Requests
+
+**Task 1 Completed** ✅
+- Added comprehensive logging throughout AlarmView.setupAlarmExperience() 
+- Implemented fallback audio lookup in AudioCacheService with findAudioByAlarmOrIntentId()
+- Added file existence validation with detailed error reporting
+- Improved MainAppView to wait for alarms to load before showing AlarmView
+- Added retry mechanism with 3 retries and 1 second delay between attempts
+- Added user-facing error messages in UI when audio fails to load
+
+**Task 2 Completed** ✅
+- Created AlarmDismissalStateManager to persist dismissal state in UserDefaults
+- Added app launch detection in StartSmartApp.init() to check for pending dismissals
+- Updated ContentView to check for pending dismissals and notify MainAppView
+- Enhanced MainAppView with timeout mechanism (0.5s) to catch missed notifications
+- Updated WakeUpIntent to store dismissal state when intent fires
+- Updated AlarmNotificationCoordinator to store dismissal state
+- Improved shouldShowWakeUpSheet sheet to properly handle alarm loading and display AlarmView
+- Multiple fallback mechanisms ensure AlarmView appears even if notification is missed
+
+**Task 3 Completed** ✅
+- Created AlarmMetadataCache service to store alarm metadata in UserDefaults for immediate access
+- Added app lifecycle observers (didBecomeActive, willEnterForeground) to trigger alarm preloading
+- Implemented alarm preloading in MainAppView.onAppear() when alarms are empty
+- Added onChange handler to cache alarm metadata whenever alarms are updated
+- Enhanced shouldShowWakeUpSheet to check cache first for immediate AlarmView display
+- Added preloadAlarms notification that triggers when app becomes active
+- AlarmMetadataCache stores audio file paths, generated content metadata, and expires after 24 hours
+- Cache-first approach allows AlarmView to appear immediately using cached data even before full repository load
+
+**Task 4 Completed** ✅
+- Added URL scheme "startsmart://" to Info.plist for deep linking support
+- Created AppDelegate to handle URL scheme launches in SwiftUI app
+- Implemented triple-redundancy in WakeUpIntent: UserDefaults storage, NotificationCenter notification, and deep link URL
+- Added error handling with success tracking and error logging
+- WakeUpIntent now uses multiple channels: openAppWhenRun (primary), deep link URL (fallback), UserDefaults persistence
+- Added deep link handling in StartSmartApp.handleDeepLink() and ContentView.handleDeepLink()
+- Deep link format: startsmart://alarm/{alarmId}?goal={userGoal}
+- Analytics logging moved to detached task to prevent blocking
+- All methods run independently - if one fails, others still work
+
+**Task 5 Completed** ✅
+- Created AlarmErrorTrackingService for centralized error tracking and analytics
+- Added comprehensive error tracking throughout AlarmView (playback errors, file resolution, fallback lookups)
+- Enhanced WakeUpIntent with error tracking for all execution methods
+- Added app launch detection tracking in StartSmartApp and MainAppView
+- Implemented user-facing error messages in AlarmView UI (already completed in Task 1)
+- All errors are logged to Firestore with context (alarm ID, error type, retry count, file paths)
+- Error types categorized: fileNotFound, fileLoadError, playbackFailed, audioSessionError, timeout, unknown
+- Dismissal success tracking includes method, audio playback status, and context
+- Analytics events logged to Firestore: alarm_playback_error, alarm_dismissal_success, app_launch_detection, audio_file_resolution, wakeup_intent_execution
+
+**Task 6: Testing and Validation** - IN PROGRESS
+- Fixed critical bug in AlarmDismissalStateManager: userGoal Optional contract violation
+  - Issue: userGoal was stored as "" when nil, breaking Optional semantics
+  - Fix: Only store userGoal in dictionary if it's not nil/empty
+  - Fix: Return nil on retrieval if key doesn't exist or value is empty string
+  - This ensures `if let goal = dismissal.userGoal` works correctly
+
+**Next Steps**: Continue with test plan creation and validation
+
+### Lessons
+
+*This section will be updated with key learnings during implementation*
+
+---
+
+## 🎨 PREVIOUS TASK: Replace Old Landing Page with New Premium Design
 
 **Status**: 🔄 IN PROGRESS - Executor replacing EnhancedWelcomeView with PremiumLandingPageV2
 

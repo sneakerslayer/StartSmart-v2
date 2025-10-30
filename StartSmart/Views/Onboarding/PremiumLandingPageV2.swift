@@ -84,10 +84,9 @@ struct PremiumLandingPageV2: View {
                 }
                 .ignoresSafeArea()
                 
-                // Content - No status bar, compact layout
-                VStack(spacing: 0) {
-                    ScrollView(.vertical, showsIndicators: false) {
-                        VStack(alignment: .center, spacing: 12) {
+                // Content - No status bar, compact layout - Locked, no scrolling
+                GeometryReader { geometry in
+                    VStack(alignment: .center, spacing: 12) {
                             // Logo Section
                             VStack(spacing: 12) {
                                 ZStack {
@@ -235,9 +234,11 @@ struct PremiumLandingPageV2: View {
                             .padding(.bottom, 16)
                             .opacity(animationStarted ? 1 : 0)
                             .offset(y: animationStarted ? 0 : 20)
-                        }
-                        .padding(.top, 8)
                     }
+                    .padding(.top, 8)
+                    .frame(maxWidth: .infinity, maxHeight: geometry.size.height)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
                 }
             }
             .onAppear {
@@ -252,7 +253,7 @@ struct PremiumLandingPageV2: View {
     private func startActivityRotation() {
         Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
             withAnimation(.easeInOut(duration: 0.5)) {
-                currentActivityIndex = (currentActivityIndex + 1) % 3
+                self.currentActivityIndex = (self.currentActivityIndex + 1) % 3
             }
         }
     }

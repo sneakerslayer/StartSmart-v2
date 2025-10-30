@@ -78,32 +78,100 @@ struct MainAppView: View {
             .onReceive(NotificationCenter.default.publisher(for: .showAlarmView)) { notification in
                 logger.info("🎯 WakeUpIntent notification received in MainAppView")
                 if let userInfo = notification.userInfo,
-                   let alarmID = userInfo["alarmID"] as? String,
-                   let userGoal = userInfo["userGoal"] as? String {
+                   let alarmID = userInfo["alarmID"] as? String {
+                    let userGoal = userInfo["userGoal"] as? String
+                    let wakeupMethod = userInfo["wakeupMethod"] as? String ?? "unknown"
+                    
                     wakeUpAlarmId = alarmID
                     wakeUpUserGoal = userGoal
                     shouldShowWakeUpSheet = true
                     logger.info("🎯 Showing WakeUpIntent sheet for alarm: \(alarmID)")
+                    
+                    // Track successful notification receipt
+                    Task {
+                        await AlarmErrorTrackingService.shared.trackAppLaunchDetection(
+                            source: wakeupMethod,
+                            alarmId: alarmID,
+                            success: true
+                        )
+                    }
+                    
+                    // Clear pending dismissal state since we're handling it
+                    AlarmDismissalStateManager.shared.clearPendingDismissal()
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .preloadAlarms)) { _ in
+                logger.info("📥 Preloading alarms due to app lifecycle event")
+                if alarmViewModel.alarms.isEmpty {
+                    alarmViewModel.loadAlarms()
+                }
+            }
+            .onAppear {
+                // Check for pending dismissal when MainAppView appears
+                logger.info("🔍 MainAppView appeared, checking for pending dismissal...")
+                
+                // Preload alarms immediately when MainAppView appears
+                if alarmViewModel.alarms.isEmpty {
+                    logger.info("📥 Preloading alarms on MainAppView appear...")
+                    alarmViewModel.loadAlarms()
+                }
+                
+                // Use a timeout mechanism: check for pending dismissal even if notification was missed
+                Task {
+                    try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                    
+                    if let dismissal = AlarmDismissalStateManager.shared.getPendingDismissal() {
+                        logger.info("✅ Found pending dismissal in MainAppView for alarm: \(dismissal.alarmId)")
+                        await MainActor.run {
+                            wakeUpAlarmId = dismissal.alarmId
+                            wakeUpUserGoal = dismissal.userGoal
+                            shouldShowWakeUpSheet = true
+                            AlarmDismissalStateManager.shared.clearPendingDismissal()
+                        }
+                    }
+                }
+            }
+            .onChange(of: alarmViewModel.alarms) { alarms in
+                // Store alarm metadata for quick access on launch
+                if !alarms.isEmpty {
+                    logger.info("💾 Storing alarm metadata for quick access (\(alarms.count) alarms)")
+                    AlarmMetadataCache.shared.storeAlarmMetadata(alarms)
                 }
             }
             .sheet(isPresented: $alarmCoordinator.shouldShowDismissalSheet) {
                 if let alarmId = alarmCoordinator.pendingAlarmId {
-                    // Ensure alarms are loaded
-                    if alarmViewModel.alarms.isEmpty {
-                        ProgressView("Loading alarm...")
-                            .onAppear {
-                                logger.info("📢 ========== ALARM SHEET TRIGGERED ==========")
-                                logger.info("📋 Pending Alarm ID: \(alarmId)")
-                                logger.info("⏳ Alarms not loaded, loading now...")
-                                alarmViewModel.loadAlarms()
-                                // Give it a moment to load
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                    // Force refresh of sheet if still empty
-                                    if alarmViewModel.alarms.isEmpty {
-                                        logger.error("❌ Alarms still empty after loading")
-                                    }
+                    // Ensure alarms are loaded before showing AlarmView
+                    if alarmViewModel.alarms.isEmpty || alarmViewModel.isLoading {
+                        VStack(spacing: 20) {
+                            ProgressView()
+                                .scaleEffect(1.2)
+                            Text("Loading alarm...")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(.systemBackground))
+                        .onAppear {
+                            logger.info("📢 ========== ALARM SHEET TRIGGERED ==========")
+                            logger.info("📋 Pending Alarm ID: \(alarmId)")
+                            logger.info("⏳ Alarms not loaded or loading, loading now...")
+                            alarmViewModel.loadAlarms()
+                            
+                            // Wait for alarms to load with timeout
+                            Task {
+                                var waitCount = 0
+                                while (alarmViewModel.alarms.isEmpty || alarmViewModel.isLoading) && waitCount < 20 {
+                                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                                    waitCount += 1
+                                }
+                                
+                                if alarmViewModel.alarms.isEmpty {
+                                    logger.error("❌ Alarms still empty after loading (timeout)")
+                                } else {
+                                    logger.info("✅ Alarms loaded successfully: \(alarmViewModel.alarms.count) alarms")
                                 }
                             }
+                        }
                     } else if let alarm = alarmViewModel.alarms.first(where: { $0.id.uuidString == alarmId }) {
                         AlarmView(alarm: alarm)
                             .onAppear {
@@ -112,6 +180,7 @@ struct MainAppView: View {
                                 logger.info("🔧 Alarm Settings:")
                                 logger.info("   - ID: \(alarm.id.uuidString)")
                                 logger.info("   - hasCustomAudio: \(alarm.hasCustomAudio)")
+                                logger.info("   - audioFileURL: \(alarm.audioFileURL?.path ?? "nil")")
                                 logger.info("🎬 AlarmView appeared for alarm: \(alarm.label)")
                             }
                             .onDisappear {
@@ -146,42 +215,81 @@ struct MainAppView: View {
                 }
             }
             .sheet(isPresented: $shouldShowWakeUpSheet) {
-                if let alarmId = wakeUpAlarmId,
-                   let alarm = alarmViewModel.alarms.first(where: { $0.id.uuidString == alarmId }) {
-                    // TODO: Fix AlarmDismissalView not found in project
-                    // AlarmDismissalView(alarm: alarm) {
-                    //     shouldShowWakeUpSheet = false
-                    //     wakeUpAlarmId = nil
-                    //     wakeUpUserGoal = nil
-                    //     logger.info("🎯 WakeUpIntent sheet dismissed")
-                    // }
-                    // .onAppear {
-                    Text("Alarm Dismissal View - Temporarily Disabled")
-                    // }
-                } else {
-                    // Fallback if alarm not found
-                    VStack(spacing: 20) {
-                        Image(systemName: "sun.max.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.orange)
-                        
-                        Text("Wake Up!")
-                            .font(.title.bold())
-                        
-                        Text("Ready to start your day?")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Button("Dismiss") {
-                            shouldShowWakeUpSheet = false
-                            wakeUpAlarmId = nil
-                            wakeUpUserGoal = nil
+                if let alarmId = wakeUpAlarmId {
+                    // Ensure alarms are loaded before showing AlarmView
+                    if alarmViewModel.alarms.isEmpty || alarmViewModel.isLoading {
+                        VStack(spacing: 20) {
+                            ProgressView()
+                                .scaleEffect(1.2)
+                            Text("Loading alarm...")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
                         }
-                        .buttonStyle(.borderedProminent)
-                    }
-                    .padding()
-                    .onAppear {
-                        logger.error("❌ Could not find alarm with ID: \(wakeUpAlarmId ?? "nil")")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(.systemBackground))
+                        .onAppear {
+                            logger.info("📢 ========== WAKE UP SHEET TRIGGERED ==========")
+                            logger.info("📋 Alarm ID: \(alarmId)")
+                            logger.info("⏳ Loading alarms...")
+                            alarmViewModel.loadAlarms()
+                            
+                            // Wait for alarms to load with timeout
+                            Task {
+                                var waitCount = 0
+                                while (alarmViewModel.alarms.isEmpty || alarmViewModel.isLoading) && waitCount < 20 {
+                                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                                    waitCount += 1
+                                }
+                                
+                                if alarmViewModel.alarms.isEmpty {
+                                    logger.error("❌ Alarms still empty after loading (timeout)")
+                                } else {
+                                    logger.info("✅ Alarms loaded successfully")
+                                }
+                            }
+                        }
+                    } else if let alarm = alarmViewModel.alarms.first(where: { $0.id.uuidString == alarmId }) {
+                        AlarmView(alarm: alarm)
+                            .onAppear {
+                                logger.info("🎬 AlarmView appeared for wake-up dismissal")
+                                logger.info("✅ Found alarm: '\(alarm.label)'")
+                                logger.info("🔧 Alarm Settings:")
+                                logger.info("   - ID: \(alarm.id.uuidString)")
+                                logger.info("   - hasCustomAudio: \(alarm.hasCustomAudio)")
+                                logger.info("   - audioFileURL: \(alarm.audioFileURL?.path ?? "nil")")
+                            }
+                            .onDisappear {
+                                logger.info("👋 AlarmView disappeared")
+                                shouldShowWakeUpSheet = false
+                                wakeUpAlarmId = nil
+                                wakeUpUserGoal = nil
+                            }
+                    } else {
+                        // Fallback if alarm not found
+                        VStack(spacing: 20) {
+                            Image(systemName: "sun.max.fill")
+                                .font(.system(size: 60))
+                                .foregroundColor(.orange)
+                            
+                            Text("Wake Up!")
+                                .font(.title.bold())
+                            
+                            Text("Could not find alarm details")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                            Button("Dismiss") {
+                                shouldShowWakeUpSheet = false
+                                wakeUpAlarmId = nil
+                                wakeUpUserGoal = nil
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .padding()
+                        .onAppear {
+                            logger.error("❌ Could not find alarm with ID: \(alarmId)")
+                            logger.info("Available alarms: \(alarmViewModel.alarms.map { $0.id.uuidString })")
+                        }
                     }
                 }
             }

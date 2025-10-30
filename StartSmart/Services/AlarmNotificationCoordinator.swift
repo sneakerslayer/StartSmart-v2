@@ -54,11 +54,19 @@ class AlarmNotificationCoordinator: ObservableObject {
     
     func showAlarmDismissal(for alarmId: String) {
         logger.info("🔔 Showing alarm dismissal for: \(alarmId)")
+        
+        // Store dismissal state for app launch detection
+        AlarmDismissalStateManager.shared.storePendingDismissal(alarmId: alarmId)
+        
         pendingAlarmId = alarmId
         shouldShowDismissalSheet = true
     }
     
     func clearPendingAlarm() {
+        logger.info("🗑️ Clearing pending alarm")
+        if let alarmId = pendingAlarmId {
+            AlarmDismissalStateManager.shared.clearPendingDismissal()
+        }
         pendingAlarmId = nil
         shouldShowDismissalSheet = false
     }
