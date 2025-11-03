@@ -129,67 +129,55 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
             return dependency
         }
         
-        // Wait for full initialization
-        while !isFullyInitialized {
+        // Wait for full initialization with timeout (30 seconds max)
+        let timeoutDeadline = Date().addingTimeInterval(30.0)
+        while !isFullyInitialized && Date() < timeoutDeadline {
             try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
         }
         
-        // Try again after full initialization
-        return queue.sync(execute: { self.dependencies[key] as? T })
+        // Return dependency if found, nil if timeout
+        if isFullyInitialized {
+            return queue.sync(execute: { self.dependencies[key] as? T })
+        }
+        
+        print("⚠️ WARNING: resolveSafe timed out waiting for \(key) initialization")
+        return nil
     }
 
-    // Async resolve variant
+    // ✅ FIXED: Safe async resolve - replaces broken double-resume version
+    // No longer uses nested CheckedContinuation which caused double-resume crashes
     func resolveAsync<T>() async throws -> T {
-        let initialized = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
-            initializationQueue.async {
-                continuation.resume(returning: self.isInitialized)
+        let key = String(describing: T.self)
+        
+        // ✅ SAFE POLLING: Wait for initialization using pure async/await
+        // Continues polling through entire timeout, even after isInitialized becomes true
+        // This ensures Stage 2 services that load asynchronously are properly waited for
+        let maxWaitTime: TimeInterval = 30.0 // 30 second timeout
+        let timeoutDeadline = Date().addingTimeInterval(maxWaitTime)
+        
+        while Date() < timeoutDeadline {
+            // Try to resolve the dependency (works if already registered)
+            if let dependency = queue.sync(execute: { self.dependencies[key] as? T }) {
+                return dependency
             }
+            
+            // Check if we should continue polling
+            let initialized = initializationQueue.sync { self.isInitialized }
+            let fullyInitialized = self.isFullyInitialized
+            
+            // If fully initialized and still not found, something is wrong
+            if fullyInitialized {
+                throw DependencyContainerError.initializationFailed
+            }
+            
+            // Wait before checking again - using pure async/await, not continuations
+            // Shorter sleep (50ms) for better responsiveness once initialization completes
+            try await Task.sleep(nanoseconds: 50_000_000) // 50ms checks
         }
         
-        if initialized {
-            return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<T, Error>) in
-                queue.async { [weak self] in
-                    guard let self else { 
-                        continuation.resume(throwing: DependencyContainerError.initializationFailed)
-                        return 
-                    }
-                    let key = String(describing: T.self)
-                    if let dependency = self.dependencies[key] as? T {
-                        continuation.resume(returning: dependency)
-                    } else {
-                        continuation.resume(throwing: DependencyContainerError.initializationFailed)
-                    }
-                }
-            }
-        }
-        
-        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<T, Error>) in
-            Task {
-                while true {
-                    let initialized = await withCheckedContinuation { (initContinuation: CheckedContinuation<Bool, Never>) in
-                        initializationQueue.async {
-                            initContinuation.resume(returning: self.isInitialized)
-                        }
-                    }
-                    
-                    if initialized {
-                        let key = String(describing: T.self)
-                        if let dependency = await withCheckedContinuation({ (depContinuation: CheckedContinuation<T?, Never>) in
-                            self.queue.async {
-                                depContinuation.resume(returning: self.dependencies[key] as? T)
-                            }
-                        }) {
-                            continuation.resume(returning: dependency)
-                        } else {
-                            continuation.resume(throwing: DependencyContainerError.initializationFailed)
-                        }
-                        return
-                    }
-                    
-                    try? await Task.sleep(nanoseconds: 100_000_000)
-                }
-            }
-        }
+        // Timeout occurred
+        print("❌ ERROR: Timeout waiting for dependency \(key) - initialization took >30s")
+        throw DependencyContainerError.initializationFailed
     }
     
     // MARK: - ✅ OPTIMIZED: Two-Stage Initialization

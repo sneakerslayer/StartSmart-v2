@@ -2,14 +2,14 @@
 //  VoiceSelectionView.swift
 //  StartSmart
 //
-//  Voice Selection with Audio Previews
-//  ElevenLabs integration for voice persona selection
+//  Onboarding Step 4: Voice Selection
+//  Updated to match PremiumLandingPageV2 theme
 //
 
 import SwiftUI
 import AVFoundation
 
-/// Voice persona selection with audio previews
+/// Voice persona selection with audio previews and premium design
 struct VoiceSelectionView: View {
     @ObservedObject var onboardingState: OnboardingState
     @ObservedObject var onboardingViewModel: OnboardingViewModel
@@ -19,7 +19,8 @@ struct VoiceSelectionView: View {
     @State private var showPaywall = false
     @State private var showUpgradePrompt = false
     @State private var selectedPremiumVoice: VoicePersona?
-    @State private var isPremium = false // Will be updated from subscription service
+    @State private var isPremium = false
+    @State private var playingVoiceId: String?
     
     init(onboardingState: OnboardingState, onboardingViewModel: OnboardingViewModel, onVoiceSelected: ((VoicePersona) -> Void)? = nil) {
         self.onboardingState = onboardingState
@@ -28,26 +29,63 @@ struct VoiceSelectionView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 24) { // Reduced spacing from 32 to 24
-                    // Header section
-                    headerSection
-                        .opacity(animateElements ? 1 : 0)
-                        .offset(y: animateElements ? 0 : -20)
-                    
-                    // Voice selection list
-                    voiceSelectionList
-                        .opacity(showVoices ? 1 : 0)
-                        .offset(y: showVoices ? 0 : 30)
-                    
-                    Spacer(minLength: 20) // Reduced to minimize dead space
-                }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 20) // Reduced bottom padding to minimize dead space
-                .frame(minHeight: geometry.size.height) // Ensure content takes at least full screen height
+        ZStack {
+            // Background - matching landing page theme
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.06, green: 0.06, blue: 0.12),
+                    Color(red: 0.10, green: 0.10, blue: 0.18)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            // Radial gradients for depth
+            ZStack {
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        DesignSystem.purple.opacity(0.15),
+                        Color.clear
+                    ]),
+                    center: .topLeading,
+                    startRadius: 0,
+                    endRadius: 300
+                )
+                
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        DesignSystem.indigo.opacity(0.15),
+                        Color.clear
+                    ]),
+                    center: .bottomTrailing,
+                    startRadius: 0,
+                    endRadius: 300
+                )
             }
-            .scrollContentBackground(.hidden) // Hide default background for better bounce effect
+            .ignoresSafeArea()
+            
+            // Content
+            GeometryReader { geometry in
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: DesignSystem.spacing3) {
+                        // Header section
+                        headerSection
+                            .opacity(animateElements ? 1 : 0)
+                            .offset(y: animateElements ? 0 : 20)
+                        
+                        // Voice selection list
+                        voiceSelectionList
+                            .opacity(showVoices ? 1 : 0)
+                            .offset(y: showVoices ? 0 : 30)
+                        
+                        Spacer(minLength: 20)
+                    }
+                    .padding(.horizontal, DesignSystem.spacing4)
+                    .padding(.bottom, 20)
+                    .frame(minHeight: geometry.size.height)
+                }
+            }
         }
         .onAppear {
             startAnimations()
@@ -58,30 +96,7 @@ struct VoiceSelectionView: View {
         }
         .overlay {
             if showUpgradePrompt, let voice = selectedPremiumVoice {
-                ZStack {
-                    Color.black.opacity(0.4)
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            showUpgradePrompt = false
-                            selectedPremiumVoice = nil
-                        }
-                    
-                    UpgradePromptView(
-                        title: "Premium Voice",
-                        message: "\(voice.name) is a premium voice. Upgrade to unlock all voice styles and unlimited AI alarms!",
-                        featureIcon: "waveform",
-                        onUpgrade: {
-                            showUpgradePrompt = false
-                            selectedPremiumVoice = nil
-                            showPaywall = true
-                        },
-                        onDismiss: {
-                            showUpgradePrompt = false
-                            selectedPremiumVoice = nil
-                        }
-                    )
-                    .padding(20)
-                }
+                upgradePromptOverlay(for: voice)
             }
         }
     }
@@ -89,34 +104,37 @@ struct VoiceSelectionView: View {
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(spacing: 12) { // Standardized spacing
+        VStack(spacing: DesignSystem.spacing3) {
             // Voice icon
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 50, height: 50) // Standardized size
+                    .fill(Color.white.opacity(0.04))
+                    .frame(width: 56, height: 56)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
                 
                 Image(systemName: "person.wave.2.fill")
-                    .font(.system(size: 24, weight: .medium)) // Standardized size
-                    .foregroundColor(.white)
+                    .font(.system(size: 24))
+                    .foregroundColor(DesignSystem.purple)
             }
             
-            // Main question
-            Text("Choose your morning guide")
-                .font(.system(size: 28, weight: .bold, design: .rounded)) // Standardized size
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .tracking(-1) // Standardized tracking
-            
-            // Subtitle
-            Text("Each voice has its own personality. Tap to hear a preview.")
-                .font(.system(size: 14, weight: .medium)) // Standardized size
-                .foregroundColor(.white.opacity(0.85)) // Standardized opacity
-                .multilineTextAlignment(.center)
-                .lineSpacing(2) // Standardized line spacing
-                .padding(.horizontal, 10) // Standardized padding
+            VStack(spacing: 12) {
+                Text("Choose your\nmorning guide")
+                    .font(.system(size: 32, weight: .bold, design: .default))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .tracking(-0.5)
+                
+                Text("Each voice has its own personality. Tap to hear a preview.")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
         }
-        .padding(.top, 10) // Standardized top padding
+        .padding(.top, 60)
     }
     
     // MARK: - Voice Selection List
@@ -124,16 +142,13 @@ struct VoiceSelectionView: View {
     private var voiceSelectionList: some View {
         VStack(spacing: 16) {
             ForEach(Array(VoicePersona.allPersonas.enumerated()), id: \.element.id) { index, voice in
-                VoicePersonaCard(
+                PremiumVoicePersonaCard(
                     voice: voice,
                     isSelected: onboardingState.selectedVoice?.id == voice.id,
-                    isPlaying: onboardingViewModel.isAudioPlaying,
-                    isPremiumUser: isPremium,
+                    isLocked: voice.isPremium && !isPremium,
+                    playingVoiceId: $playingVoiceId,
                     onTap: {
                         handleVoiceSelection(voice)
-                    },
-                    onPlayPreview: {
-                        playVoicePreview(voice)
                     }
                 )
                 .animation(
@@ -141,6 +156,35 @@ struct VoiceSelectionView: View {
                     value: showVoices
                 )
             }
+        }
+    }
+    
+    // MARK: - Upgrade Prompt Overlay
+    
+    private func upgradePromptOverlay(for voice: VoicePersona) -> some View {
+        ZStack {
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    showUpgradePrompt = false
+                    selectedPremiumVoice = nil
+                }
+            
+            UpgradePromptView(
+                title: "Premium Voice",
+                message: "\(voice.name) is a premium voice. Upgrade to unlock all voice styles and unlimited AI alarms!",
+                featureIcon: "waveform",
+                onUpgrade: {
+                    showUpgradePrompt = false
+                    selectedPremiumVoice = nil
+                    showPaywall = true
+                },
+                onDismiss: {
+                    showUpgradePrompt = false
+                    selectedPremiumVoice = nil
+                }
+            )
+            .padding(20)
         }
     }
     
@@ -161,14 +205,11 @@ struct VoiceSelectionView: View {
     private func handleVoiceSelection(_ voice: VoicePersona) {
         print("🎯 handleVoiceSelection called with: \(voice.name)")
         
-        // Check if voice is premium and user is not premium
-        if voice.isPremium && !isPremium {
-            print("🔒 Premium voice selected by free user - showing upgrade prompt")
-            selectedPremiumVoice = voice
-            showUpgradePrompt = true
-            return
-        }
+        // Haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
         
+        // All voices are now available - no premium check needed
         // Call the callback if provided
         onVoiceSelected?(voice)
         
@@ -178,37 +219,41 @@ struct VoiceSelectionView: View {
     
     private func checkPremiumStatus() {
         // Check if user is premium
-        isPremium = false // Will be updated when subscription service is integrated
-    }
-    
-    private func playVoicePreview(_ voice: VoicePersona) {
-        // Provide haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
-        
-        // Play the voice preview
-        onboardingViewModel.playVoicePreview(for: voice)
+        // During onboarding, user hasn't created account yet, so default to false
+        // Premium status will be checked after account creation
+        isPremium = false
     }
 }
 
-// MARK: - Voice Persona Card
+// MARK: - Premium Voice Persona Card
 
-struct VoicePersonaCard: View {
+struct PremiumVoicePersonaCard: View {
     let voice: VoicePersona
     let isSelected: Bool
-    let isPlaying: Bool
-    let isPremiumUser: Bool
+    let isLocked: Bool
+    @Binding var playingVoiceId: String?
     let onTap: () -> Void
-    let onPlayPreview: () -> Void
     
     @State private var isPressed = false
     @State private var showContent = false
     @State private var playButtonScale: CGFloat = 1.0
-    @State private var isThisCardPlaying = false
-    @State private var synthesizer: AVSpeechSynthesizer?
+    @State private var audioPlayer: AVAudioPlayer?
     
-    private var isLocked: Bool {
-        voice.isPremium && !isPremiumUser
+    private var isThisCardPlaying: Bool {
+        playingVoiceId == voice.id
+    }
+    
+    private var voiceColor: Color {
+        switch voice.tone {
+        case .gentle:
+            return DesignSystem.green
+        case .energetic:
+            return Color(red: 1.0, green: 0.72, blue: 0.0) // Gold/yellow
+        case .toughLove:
+            return Color(red: 0.94, green: 0.27, blue: 0.27) // Red
+        case .storyteller:
+            return DesignSystem.purple
+        }
     }
     
     var body: some View {
@@ -222,7 +267,7 @@ struct VoicePersonaCard: View {
                         .overlay(
                             Circle()
                                 .stroke(
-                                    isSelected ? voiceColor.opacity(0.8) : voiceColor.opacity(0.4),
+                                    isSelected ? voiceColor : voiceColor.opacity(0.4),
                                     lineWidth: isSelected ? 3 : 2
                                 )
                         )
@@ -230,21 +275,6 @@ struct VoicePersonaCard: View {
                     Image(systemName: voice.tone.iconName)
                         .font(.system(size: 24, weight: .medium))
                         .foregroundColor(voiceColor)
-                        .opacity(isLocked ? 0.5 : 1.0)
-                    
-                    // Lock badge for premium voices
-                    if isLocked {
-                        ZStack {
-                            Circle()
-                                .fill(Color.black.opacity(0.6))
-                                .frame(width: 24, height: 24)
-                            
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.white)
-                        }
-                        .offset(x: 18, y: -18)
-                    }
                 }
                 .scaleEffect(isSelected ? 1.1 : 1.0)
                 .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isSelected)
@@ -252,10 +282,8 @@ struct VoicePersonaCard: View {
                 // Play button
                 Button(action: {
                     if isThisCardPlaying {
-                        // Stop playback
                         stopAudio()
                     } else {
-                        // Start playback
                         playSampleAudio()
                     }
                 }) {
@@ -266,8 +294,8 @@ struct VoicePersonaCard: View {
                         
                         Image(systemName: isThisCardPlaying ? "stop.fill" : "play.fill")
                             .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.primary)
-                            .offset(x: isThisCardPlaying ? 0 : 1) // Offset play icon slightly for better visual balance
+                            .foregroundColor(Color.black)
+                            .offset(x: isThisCardPlaying ? 0 : 1)
                     }
                     .scaleEffect(playButtonScale)
                     .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
@@ -283,8 +311,6 @@ struct VoicePersonaCard: View {
                     },
                     perform: {}
                 )
-                .opacity(showContent ? 1 : 0)
-                .animation(.easeOut(duration: 0.6).delay(0.4), value: showContent)
             }
             
             // Voice information
@@ -294,27 +320,11 @@ struct VoicePersonaCard: View {
                         Text(voice.name)
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(.white)
-                        
-                        if isLocked {
-                            HStack(spacing: 4) {
-                                Image(systemName: "crown.fill")
-                                    .font(.system(size: 10, weight: .semibold))
-                                Text("PRO")
-                                    .font(.system(size: 11, weight: .bold))
-                            }
-                            .foregroundColor(.yellow)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(
-                                Capsule()
-                                    .fill(Color.yellow.opacity(0.2))
-                            )
-                        }
                     }
                     
                     Text(voice.description)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(.white.opacity(0.7))
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -323,19 +333,16 @@ struct VoicePersonaCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Sample:")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(.white.opacity(0.5))
                     
                     Text("\"\(voice.sampleText)\"")
                         .font(.system(size: 13, weight: .regular, design: .rounded))
-                        .foregroundColor(.white.opacity(0.9))
+                        .foregroundColor(.white.opacity(0.8))
                         .italic()
                         .lineLimit(3)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .opacity(showContent ? 1 : 0)
-            .offset(x: showContent ? 0 : 20)
-            .animation(.easeOut(duration: 0.6).delay(0.2), value: showContent)
             
             Spacer()
             
@@ -344,12 +351,12 @@ struct VoicePersonaCard: View {
                 VStack {
                     ZStack {
                         Circle()
-                            .fill(Color.white)
+                            .fill(voiceColor)
                             .frame(width: 28, height: 28)
                         
                         Image(systemName: "checkmark")
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.green)
+                            .foregroundColor(.white)
                     }
                     .scaleEffect(isSelected ? 1.0 : 0.5)
                     .opacity(isSelected ? 1 : 0)
@@ -361,43 +368,33 @@ struct VoicePersonaCard: View {
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(
-                    isSelected ?
+            ZStack {
+                Color.white.opacity(isSelected ? 0.06 : 0.04)
+                if isSelected {
                     LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.25),
-                            Color.white.opacity(0.15)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ) :
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.15),
-                            Color.white.opacity(0.08)
-                        ],
+                        gradient: Gradient(colors: [
+                            voiceColor.opacity(0.1),
+                            voiceColor.opacity(0.05)
+                        ]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
+                }
+            }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(
+                    isSelected ? voiceColor.opacity(0.5) : Color.white.opacity(0.08),
+                    lineWidth: isSelected ? 2 : 1
                 )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(
-                            isSelected ?
-                            Color.white.opacity(0.5) :
-                            Color.white.opacity(0.2),
-                            lineWidth: isSelected ? 2 : 1
-                        )
-                )
-                .shadow(
-                    color: isSelected ?
-                    voiceColor.opacity(0.3) :
-                    Color.black.opacity(0.1),
-                    radius: isSelected ? 8 : 4,
-                    x: 0,
-                    y: isSelected ? 4 : 2
-                )
+        )
+        .cornerRadius(20)
+        .shadow(
+            color: isSelected ? voiceColor.opacity(0.3) : Color.black.opacity(0.1),
+            radius: isSelected ? 8 : 4,
+            x: 0,
+            y: isSelected ? 4 : 2
         )
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .scaleEffect(isSelected ? 1.02 : 1.0)
@@ -427,96 +424,73 @@ struct VoicePersonaCard: View {
         // Stop any currently playing audio
         stopAudio()
         
-        // Use text-to-speech to play the sample text
-        let synthesizer = AVSpeechSynthesizer()
-        let utterance = AVSpeechUtterance(string: voice.sampleText)
+        // Update playingVoiceId to mark this card as playing
+        playingVoiceId = voice.id
         
-        // Configure voice based on the persona
-        switch voice.tone {
-        case .gentle:
-            utterance.rate = 0.4
-            utterance.pitchMultiplier = 1.1
-        case .energetic:
-            utterance.rate = 0.5
-            utterance.pitchMultiplier = 1.2
-        case .toughLove:
-            utterance.rate = 0.6
-            utterance.pitchMultiplier = 0.9
-        case .storyteller:
-            utterance.rate = 0.4
-            utterance.pitchMultiplier = 1.0
+        // Generate audio using ElevenLabs API
+        Task {
+            do {
+                // Get ElevenLabs service from dependency container
+                guard let elevenLabsService: ElevenLabsServiceProtocol = await DependencyContainer.shared.resolveSafe() else {
+                    print("❌ ElevenLabs service not available")
+                    playingVoiceId = nil
+                    return
+                }
+                
+                // Generate speech using the voice ID from VoicePersona
+                let audioData = try await elevenLabsService.generateSpeech(
+                    text: voice.sampleText,
+                    voiceId: voice.voiceId
+                )
+                
+                // Save audio data to temporary file
+                let tempURL = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("voice_preview_\(voice.id).mp3")
+                try audioData.write(to: tempURL)
+                
+                // Play the audio
+                await MainActor.run {
+                    self.playAudioFile(at: tempURL)
+                }
+            } catch {
+                print("❌ Failed to generate voice preview: \(error.localizedDescription)")
+                playingVoiceId = nil
+            }
         }
-        
-        utterance.volume = 0.8
-        
-        // Start playing
-        isThisCardPlaying = true
-        synthesizer.speak(utterance)
-        
-        // Store synthesizer to prevent deallocation
-        self.synthesizer = synthesizer
-        
-        // Simulate completion after a reasonable duration
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-            self.isThisCardPlaying = false
+    }
+    
+    private func playAudioFile(at url: URL) {
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default, options: .duckOthers)
+            try audioSession.setActive(true)
+            
+            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            audioPlayer?.delegate = nil
+            audioPlayer?.play()
+            
+            // Estimate duration based on typical speech rate and text length
+            // Average speech is about 150 words per minute = 2.5 words per second
+            let wordCount = voice.sampleText.split(separator: " ").count
+            let estimatedDuration = Double(wordCount) / 2.5
+            
+            // Schedule the playingVoiceId reset
+            DispatchQueue.main.asyncAfter(deadline: .now() + estimatedDuration + 0.5) {
+                if self.playingVoiceId == self.voice.id {
+                    self.playingVoiceId = nil
+                }
+            }
+        } catch {
+            print("❌ Failed to play audio: \(error.localizedDescription)")
+            playingVoiceId = nil
         }
     }
     
     private func stopAudio() {
         // Stop any currently playing audio
-        synthesizer?.stopSpeaking(at: .immediate)
-        isThisCardPlaying = false
-        synthesizer = nil
-    }
-    
-    private var voiceColor: Color {
-        switch voice.tone {
-        case .gentle: return .mint
-        case .energetic: return .orange
-        case .toughLove: return .red
-        case .storyteller: return .purple
-        }
-    }
-}
-
-// MARK: - Audio Waveform Animation
-
-struct AudioWaveformView: View {
-    let isPlaying: Bool
-    @State private var animateBars = false
-    
-    private let barCount = 5
-    
-    var body: some View {
-        HStack(spacing: 2) {
-            ForEach(0..<barCount, id: \.self) { index in
-                RoundedRectangle(cornerRadius: 1)
-                    .fill(Color.white.opacity(0.8))
-                    .frame(width: 2)
-                    .frame(height: barHeight(for: index))
-                    .animation(
-                        isPlaying ?
-                        .easeInOut(duration: 0.5 + Double(index) * 0.1)
-                        .repeatForever(autoreverses: true) :
-                        .easeOut(duration: 0.3),
-                        value: animateBars
-                    )
-            }
-        }
-        .onChange(of: isPlaying) { newValue in
-            animateBars = newValue
-        }
-    }
-    
-    private func barHeight(for index: Int) -> CGFloat {
-        let baseHeight: CGFloat = 4
-        let maxHeight: CGFloat = 16
-        
-        if isPlaying && animateBars {
-            return CGFloat.random(in: baseHeight...maxHeight)
-        } else {
-            return baseHeight
-        }
+        audioPlayer?.stop()
+        playingVoiceId = nil
+        audioPlayer = nil
     }
 }
 
@@ -525,32 +499,11 @@ struct AudioWaveformView: View {
 #if DEBUG
 struct VoiceSelectionView_Previews: PreviewProvider {
     static var previews: some View {
-        Group {
-            VoiceSelectionView(
-                onboardingState: OnboardingState(),
-                onboardingViewModel: OnboardingViewModel()
-            )
-            .background(
-                LinearGradient(
-                    colors: [.green.opacity(0.7), .teal.opacity(0.5)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .preferredColorScheme(.dark)
-            
-            // Single card preview
-            VoicePersonaCard(
-                voice: VoicePersona.allPersonas[0],
-                isSelected: false,
-                isPlaying: false,
-                isPremiumUser: false,
-                onTap: { print("Voice selected") },
-                onPlayPreview: { print("Preview played") }
-            )
-            .padding()
-            .background(Color.black)
-        }
+        VoiceSelectionView(
+            onboardingState: OnboardingState(),
+            onboardingViewModel: OnboardingViewModel()
+        )
+        .preferredColorScheme(.dark)
     }
 }
 #endif

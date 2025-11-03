@@ -14,7 +14,7 @@ import UIKit
 
 @main
 struct StartSmartApp: App {
-    private let logger = Logger(subsystem: "com.startsmart.mobile", category: "StartSmartApp")
+    private static let logger = Logger(subsystem: "com.startsmart.mobile", category: "StartSmartApp")
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     init() {
@@ -42,10 +42,10 @@ struct StartSmartApp: App {
             object: nil,
             queue: .main
         ) { notification in
-            logger.info("🎯 WakeUpIntent notification received: \(notification.userInfo ?? [:])")
+            Self.logger.info("🎯 WakeUpIntent notification received: \(notification.userInfo ?? [:])")
             // The notification will be handled by MainAppView
         }
-        
+
         // NOTE: Defer heavy dependency initialization to avoid blocking UI responsiveness during startup.
         // Full initialization is triggered later by specific features as needed.
     }
@@ -64,10 +64,10 @@ struct StartSmartApp: App {
     }
     
     private func handleDeepLink(url: URL) {
-        logger.info("🔗 Deep link received: \(url.absoluteString)")
+        Self.logger.info("🔗 Deep link received: \(url.absoluteString)")
         
         guard url.scheme == "startsmart" else {
-            logger.warning("⚠️ Unknown URL scheme: \(url.scheme ?? "nil")")
+            Self.logger.warning("⚠️ Unknown URL scheme: \(url.scheme ?? "nil")")
             return
         }
         
@@ -76,7 +76,7 @@ struct StartSmartApp: App {
             let pathComponents = url.pathComponents.filter { $0 != "/" }
             
             if let alarmId = pathComponents.first {
-                logger.info("✅ Parsed alarm ID from deep link: \(alarmId)")
+                Self.logger.info("✅ Parsed alarm ID from deep link: \(alarmId)")
                 
                 // Get user goal from query parameters
                 let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
@@ -101,16 +101,16 @@ struct StartSmartApp: App {
                     )
                 }
             } else {
-                logger.error("❌ No alarm ID found in deep link URL")
+                Self.logger.error("❌ No alarm ID found in deep link URL")
             }
         }
     }
     
     private func checkForPendingAlarmDismissal() {
-        logger.info("🔍 Checking for pending alarm dismissal on app launch...")
+        Self.logger.info("🔍 Checking for pending alarm dismissal on app launch...")
         
         if let dismissal = AlarmDismissalStateManager.shared.getPendingDismissal() {
-            logger.info("✅ Found pending dismissal for alarm: \(dismissal.alarmId)")
+            Self.logger.info("✅ Found pending dismissal for alarm: \(dismissal.alarmId)")
             
             // Track app launch detection success
             Task {
@@ -134,7 +134,7 @@ struct StartSmartApp: App {
                 )
             }
         } else {
-            logger.info("ℹ️ No pending dismissal found")
+            Self.logger.info("ℹ️ No pending dismissal found")
             
             // Track that we checked but found nothing
             Task {
@@ -154,7 +154,7 @@ struct StartSmartApp: App {
             object: nil,
             queue: .main
         ) { _ in
-            self.logger.info("📱 App became active - triggering alarm preload")
+            Self.logger.info("📱 App became active - triggering alarm preload")
             // Trigger alarm preload via notification
             NotificationCenter.default.post(
                 name: .preloadAlarms,
@@ -168,7 +168,7 @@ struct StartSmartApp: App {
             object: nil,
             queue: .main
         ) { _ in
-            self.logger.info("📱 App entering foreground - triggering alarm preload")
+            Self.logger.info("📱 App entering foreground - triggering alarm preload")
             NotificationCenter.default.post(
                 name: .preloadAlarms,
                 object: nil
@@ -237,3 +237,4 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             }
         }
     }
+}

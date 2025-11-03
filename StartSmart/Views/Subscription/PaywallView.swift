@@ -83,7 +83,10 @@ struct PaywallView: View {
     // MARK: - Background Gradient
     private var backgroundGradient: some View {
         LinearGradient(
-            colors: [.blue.opacity(0.8), .purple.opacity(0.6)],
+            gradient: Gradient(colors: [
+                Color(red: 0.06, green: 0.06, blue: 0.12),
+                Color(red: 0.10, green: 0.10, blue: 0.18)
+            ]),
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )

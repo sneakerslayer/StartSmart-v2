@@ -2,8 +2,8 @@
 //  AccountCreationView.swift
 //  StartSmart
 //
-//  Enhanced Account Creation Flow
-//  Focused on saving preferences with social authentication
+//  Onboarding Step 7: Account Creation
+//  Updated to match PremiumLandingPageV2 theme
 //
 
 import SwiftUI
@@ -11,7 +11,7 @@ import AuthenticationServices
 import CryptoKit
 import FirebaseAuth
 
-/// Enhanced account creation focused on saving onboarding preferences
+/// Enhanced account creation with premium design focused on saving onboarding preferences
 struct AccountCreationView: View {
     @ObservedObject var onboardingState: OnboardingState
     let authService: SimpleAuthenticationService
@@ -20,41 +20,77 @@ struct AccountCreationView: View {
     let onComplete: () -> Void
     
     @State private var animateElements = false
-    @State private var showAuthOptions = true // Set to true immediately for testing
+    @State private var showAuthOptions = false
     
     var body: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 16) {
-                    // Header section
-                    headerSection
-                        .opacity(animateElements ? 1 : 0)
-                        .offset(y: animateElements ? 0 : -20)
-                    
-                    // Preference summary
-                    preferenceSummary
-                        .opacity(showAuthOptions ? 1 : 0)
-                        .offset(y: showAuthOptions ? 0 : 20)
-                    
-                    // Authentication options
-                    authenticationSection
-                        .opacity(showAuthOptions ? 1 : 0)
-                        .offset(y: showAuthOptions ? 0 : 30)
-                    
-                    // Value proposition reminder
-                    valueProposition
-                        .opacity(showAuthOptions ? 1 : 0)
-                        .offset(y: showAuthOptions ? 0 : 20)
-                    
-                    // Add space for navigation buttons
-                    Spacer(minLength: 20) // Reduced to minimize dead space
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 10) // Reduced top padding to prevent cutoff
-                .padding(.bottom, 20) // Reduced bottom padding to minimize dead space
-                .frame(minHeight: geometry.size.height)
+        ZStack {
+            // Background - matching landing page theme
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.06, green: 0.06, blue: 0.12),
+                    Color(red: 0.10, green: 0.10, blue: 0.18)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            // Radial gradients for depth
+            ZStack {
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        DesignSystem.purple.opacity(0.15),
+                        Color.clear
+                    ]),
+                    center: .topLeading,
+                    startRadius: 0,
+                    endRadius: 300
+                )
+                
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        DesignSystem.indigo.opacity(0.15),
+                        Color.clear
+                    ]),
+                    center: .bottomTrailing,
+                    startRadius: 0,
+                    endRadius: 300
+                )
             }
-            .scrollContentBackground(.hidden) // Hide default background for better bounce effect
+            .ignoresSafeArea()
+            
+            // Content
+            GeometryReader { geometry in
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: DesignSystem.spacing3) {
+                        // Header section
+                        headerSection
+                            .opacity(animateElements ? 1 : 0)
+                            .offset(y: animateElements ? 0 : 20)
+                        
+                        // Preference summary
+                        preferenceSummary
+                            .opacity(showAuthOptions ? 1 : 0)
+                            .offset(y: showAuthOptions ? 0 : 20)
+                        
+                        // Authentication options
+                        authenticationSection
+                            .opacity(showAuthOptions ? 1 : 0)
+                            .offset(y: showAuthOptions ? 0 : 30)
+                        
+                        // Value proposition reminder
+                        valueProposition
+                            .opacity(showAuthOptions ? 1 : 0)
+                            .offset(y: showAuthOptions ? 0 : 20)
+                        
+                        Spacer(minLength: 20)
+                    }
+                    .padding(.horizontal, DesignSystem.spacing4)
+                    .padding(.top, 0)
+                    .padding(.bottom, DesignSystem.spacing3)
+                    .frame(minHeight: geometry.size.height)
+                }
+            }
         }
         .onAppear {
             startAnimations()
@@ -64,41 +100,53 @@ struct AccountCreationView: View {
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DesignSystem.spacing3) {
             // Success checkmark with celebration
             ZStack {
                 Circle()
-                    .fill(Color.green.opacity(0.2))
-                    .frame(width: 80, height: 80)
+                    .fill(Color.white.opacity(0.04))
+                    .frame(width: 56, height: 56)
                     .overlay(
                         Circle()
-                            .stroke(Color.green.opacity(0.6), lineWidth: 3)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
                     )
-                    .scaleEffect(animateElements ? 1.0 : 0.8)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.6), value: animateElements)
+                
+                // Success ring effect
+                Circle()
+                    .stroke(DesignSystem.green.opacity(0.3), lineWidth: 2)
+                    .frame(width: 56, height: 56)
+                    .scaleEffect(animateElements ? 1.2 : 1.0)
+                    .opacity(animateElements ? 0 : 1)
+                    .animation(
+                        Animation.easeOut(duration: 2.0)
+                            .repeatForever(autoreverses: false),
+                        value: animateElements
+                    )
                 
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 40, weight: .medium))
-                    .foregroundColor(.green)
+                    .font(.system(size: 24))
+                    .foregroundColor(DesignSystem.green)
                     .scaleEffect(animateElements ? 1.0 : 0.95)
                     .animation(.spring(response: 0.4, dampingFraction: 0.7), value: animateElements)
             }
             
-            // Title
-            Text("Save Your Preferences")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .tracking(-1)
-            
-            // Subtitle
-            Text("Create an account to save your motivational profile and track your progress")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white.opacity(0.85))
-                .multilineTextAlignment(.center)
-                .lineSpacing(4)
-                .padding(.horizontal, 8)
+            VStack(spacing: 12) {
+                // Title
+                Text("Save Your\nPreferences")
+                    .font(.system(size: 32, weight: .bold, design: .default))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .tracking(-0.5)
+                
+                // Subtitle
+                Text("Create an account to save your motivational profile and track your progress")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
         }
+        .padding(.top, 60)
     }
     
     // MARK: - Preference Summary
@@ -112,7 +160,7 @@ struct AccountCreationView: View {
             VStack(spacing: 8) {
                 // Motivation
                 if let motivation = onboardingState.selectedMotivation {
-                    PreferenceSummaryRow(
+                    PremiumPreferenceSummaryRow(
                         icon: motivation.iconName,
                         title: "Focus Area",
                         value: motivation.displayName,
@@ -121,7 +169,7 @@ struct AccountCreationView: View {
                 }
                 
                 // Tone
-                PreferenceSummaryRow(
+                PremiumPreferenceSummaryRow(
                     icon: onboardingState.computedTone.iconName,
                     title: "Motivation Style",
                     value: onboardingState.computedTone.displayName,
@@ -130,40 +178,38 @@ struct AccountCreationView: View {
                 
                 // Voice
                 if let voice = onboardingState.selectedVoice {
-                    PreferenceSummaryRow(
+                    PremiumPreferenceSummaryRow(
                         icon: "person.wave.2.fill",
                         title: "Voice Persona",
                         value: voice.name,
-                        color: .purple
+                        color: DesignSystem.purple
                     )
                 }
                 
                 // Notifications
-                PreferenceSummaryRow(
+                PremiumPreferenceSummaryRow(
                     icon: onboardingState.notificationPermissionGranted == true ? "bell.fill" : "bell.slash.fill",
                     title: "Notifications",
                     value: onboardingState.notificationPermissionGranted == true ? "Enabled" : "Disabled",
-                    color: onboardingState.notificationPermissionGranted == true ? .green : .orange
+                    color: onboardingState.notificationPermissionGranted == true ? DesignSystem.green : Color.orange
                 )
             }
         }
         .padding(20)
-        .background(
+        .background(Color.white.opacity(0.04))
+        .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.white.opacity(0.15))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                )
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+        .cornerRadius(16)
     }
     
     private var toneColor: Color {
         switch onboardingState.computedTone {
-        case .gentle: return .mint
-        case .energetic: return .orange
-        case .toughLove: return .red
-        case .storyteller: return .purple
+        case .gentle: return DesignSystem.green
+        case .energetic: return Color(red: 1.0, green: 0.72, blue: 0.0)
+        case .toughLove: return Color(red: 0.94, green: 0.27, blue: 0.27)
+        case .storyteller: return DesignSystem.purple
         }
     }
     
@@ -178,7 +224,6 @@ struct AccountCreationView: View {
             VStack(spacing: 12) {
                 // Sign in with Apple
                 SignInWithAppleButton(.signUp) { request in
-                    // Configure request
                     request.requestedScopes = [.email, .fullName]
                 } onCompletion: { result in
                     handleAppleSignInResult(result)
@@ -186,65 +231,63 @@ struct AccountCreationView: View {
                 .signInWithAppleButtonStyle(.white)
                 .frame(height: 56)
                 .frame(maxWidth: .infinity)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
                 .disabled(isSigningIn)
+                .opacity(isSigningIn ? 0.6 : 1.0)
                 
                 // Sign in with Google
                 Button(action: {
                     handleGoogleSignIn()
                 }) {
-                    HStack {
+                    HStack(spacing: 12) {
                         Image(systemName: "globe")
-                            .font(.title2)
+                            .font(.system(size: 18, weight: .medium))
                         
                         Text("Continue with Google")
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.system(size: 17, weight: .semibold))
                     }
-                    .foregroundColor(.primary)
+                    .foregroundColor(.black)
                     .frame(height: 56)
                     .frame(maxWidth: .infinity)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color(.systemGray4), lineWidth: 1.5)
-                    )
+                    .background(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                 }
                 .disabled(isSigningIn)
+                .opacity(isSigningIn ? 0.6 : 1.0)
                 
                 // Continue as Guest button
                 Button(action: {
                     handleContinueAsGuest()
                 }) {
-                    HStack {
+                    HStack(spacing: 12) {
                         Image(systemName: "person.fill.questionmark")
-                            .font(.title2)
+                            .font(.system(size: 18, weight: .medium))
                         
                         Text("Continue as Guest")
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.system(size: 17, weight: .semibold))
                     }
                     .foregroundColor(.white)
                     .frame(height: 56)
                     .frame(maxWidth: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.5), lineWidth: 2)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.white.opacity(0.1))
-                            )
+                    .background(Color.white.opacity(0.04))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 2)
                     )
+                    .cornerRadius(14)
                 }
                 .disabled(isSigningIn)
+                .opacity(isSigningIn ? 0.6 : 1.0)
                 
                 // Loading state
                 if isSigningIn {
-                    HStack {
+                    HStack(spacing: 8) {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.8)
                         Text("Creating your account...")
-                            .font(.system(size: 14))
+                            .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
                     }
                     .padding(.top, 8)
@@ -254,7 +297,7 @@ struct AccountCreationView: View {
             // Guest mode disclaimer
             Text("Guest mode: Basic alarm features only")
                 .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(.white.opacity(0.5))
                 .multilineTextAlignment(.center)
                 .padding(.top, 4)
         }
@@ -270,51 +313,27 @@ struct AccountCreationView: View {
                 .multilineTextAlignment(.center)
             
             VStack(spacing: 8) {
-                HStack {
-                    Image(systemName: "icloud.fill")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
-                        .frame(width: 16)
-                    
-                    Text("Sync your preferences across devices")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.7))
-                    
-                    Spacer()
-                }
+                PremiumValuePropositionRow(
+                    icon: "icloud.fill",
+                    text: "Sync your preferences across devices"
+                )
                 
-                HStack {
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
-                        .frame(width: 16)
-                    
-                    Text("Track your morning motivation progress")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.7))
-                    
-                    Spacer()
-                }
+                PremiumValuePropositionRow(
+                    icon: "chart.line.uptrend.xyaxis",
+                    text: "Track your morning motivation progress"
+                )
                 
-                HStack {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
-                        .frame(width: 16)
-                    
-                    Text("Get personalized content improvements")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.7))
-                    
-                    Spacer()
-                }
+                PremiumValuePropositionRow(
+                    icon: "sparkles",
+                    text: "Get personalized content improvements"
+                )
             }
             
             // Terms and privacy
             VStack(spacing: 8) {
                 Text("By creating an account, you agree to our")
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.6))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
                     .multilineTextAlignment(.center)
                 
                 HStack(spacing: 4) {
@@ -322,27 +341,24 @@ struct AccountCreationView: View {
                         // Handle terms
                     }
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(.white.opacity(0.7))
                     
                     Text("and")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.6))
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white.opacity(0.5))
                     
                     Button("Privacy Policy") {
                         // Handle privacy
                     }
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(.white.opacity(0.7))
                 }
-                .frame(maxWidth: .infinity)
             }
             .padding(.top, 16)
-            .padding(.bottom, 20) // Reduced bottom padding to minimize dead space
         }
     }
     
     // MARK: - Authentication Handlers
-    
     
     private func handleGoogleSignIn() {
         isSigningIn = true
@@ -354,10 +370,7 @@ struct AccountCreationView: View {
                 isSigningIn = false
                 
                 if success {
-                    // Save onboarding preferences
                     saveOnboardingData()
-                    
-                    // Add a small delay to ensure UI updates properly
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         onComplete()
                     }
@@ -377,7 +390,6 @@ struct AccountCreationView: View {
             
             switch result {
             case .success(let authorization):
-                // Process the authorization from SignInWithAppleButton
                 guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else {
                     errorMsg = "Invalid Apple ID credential"
                     break
@@ -389,10 +401,7 @@ struct AccountCreationView: View {
                     break
                 }
                 
-                // Generate nonce for Firebase
                 let nonce = randomNonceString()
-                
-                // Create Firebase credential
                 let credential = OAuthProvider.appleCredential(
                     withIDToken: idTokenString,
                     rawNonce: nonce,
@@ -400,7 +409,6 @@ struct AccountCreationView: View {
                 )
                 
                 do {
-                    // Sign in with Firebase
                     _ = try await Auth.auth().signIn(with: credential)
                     success = true
                 } catch {
@@ -415,10 +423,7 @@ struct AccountCreationView: View {
                 isSigningIn = false
                 
                 if success {
-                    // Save onboarding preferences
                     saveOnboardingData()
-                    
-                    // Add a small delay to ensure UI updates properly
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         onComplete()
                     }
@@ -432,31 +437,24 @@ struct AccountCreationView: View {
     private func handleContinueAsGuest() {
         print("⏭️ Continue as Guest tapped")
         print("⏭️ Entering guest mode - skipping authentication")
-
-        // Mark onboarding as completed
+        
         UserDefaults.standard.set(true, forKey: "onboardingCompleted")
-
-        // Set guest mode flag (AuthenticationService will check this when initialized)
         UserDefaults.standard.set(true, forKey: "is_guest_user")
         
         print("✅ Guest mode flag set in UserDefaults")
-
-        // Save onboarding preferences locally (not to Firestore since no user account)
+        
         saveOnboardingDataLocally()
-
-        // Navigate to main app
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             onComplete()
         }
-
+        
         print("⏭️ Navigating to MainAppView as guest user")
     }
     
     private func saveOnboardingData() {
-        // Create user preferences from onboarding state
         let preferences = onboardingState.createUserPreferences()
         
-        // Save additional onboarding metadata
         let onboardingData = OnboardingCompletionData(
             motivation: onboardingState.selectedMotivation,
             tonePosition: onboardingState.toneSliderPosition,
@@ -465,7 +463,6 @@ struct AccountCreationView: View {
             completedAt: Date()
         )
         
-        // Save to user defaults for immediate use
         if let encoded = try? JSONEncoder().encode(onboardingData) {
             UserDefaults.standard.set(encoded, forKey: "onboarding_completion_data")
         }
@@ -474,7 +471,6 @@ struct AccountCreationView: View {
     }
     
     private func saveOnboardingDataLocally() {
-        // Save onboarding preferences locally for guest users (no Firestore)
         let preferences = onboardingState.createUserPreferences()
         
         let onboardingData = OnboardingCompletionData(
@@ -485,36 +481,12 @@ struct AccountCreationView: View {
             completedAt: Date()
         )
         
-        // Save to UserDefaults only (guest mode - no cloud sync)
         if let encoded = try? JSONEncoder().encode(onboardingData) {
             UserDefaults.standard.set(encoded, forKey: "onboarding_completion_data")
             UserDefaults.standard.set(true, forKey: "is_guest_user")
         }
         
         print("✅ Guest user preferences saved locally (no cloud sync)")
-    }
-    
-    private func updateUserWithOnboardingData(_ user: User) {
-        // Convert onboarding state to user preferences
-        var updatedUser = user
-        let preferences = onboardingState.createUserPreferences()
-        updatedUser.updatePreferences(preferences)
-        
-        // Save additional onboarding metadata
-        let onboardingData = OnboardingCompletionData(
-            motivation: onboardingState.selectedMotivation,
-            tonePosition: onboardingState.toneSliderPosition,
-            selectedVoice: onboardingState.selectedVoice,
-            preferences: preferences,
-            completedAt: Date()
-        )
-        
-        // Save to user defaults for immediate use
-        if let encoded = try? JSONEncoder().encode(onboardingData) {
-            UserDefaults.standard.set(encoded, forKey: "onboarding_completion_data")
-        }
-        
-        print("✅ User updated with onboarding preferences")
     }
     
     // MARK: - Animation Control
@@ -524,7 +496,7 @@ struct AccountCreationView: View {
             animateElements = true
         }
         
-        withAnimation(.easeOut(duration: 0.8).delay(0.4)) {
+        withAnimation(.easeOut(duration: 0.8).delay(0.3)) {
             showAuthOptions = true
         }
     }
@@ -546,21 +518,11 @@ struct AccountCreationView: View {
         
         return String(nonce)
     }
-    
-    private func sha256(_ input: String) -> String {
-        let inputData = Data(input.utf8)
-        let hashedData = SHA256.hash(data: inputData)
-        let hashString = hashedData.compactMap {
-            String(format: "%02x", $0)
-        }.joined()
-        
-        return hashString
-    }
 }
 
-// MARK: - Preference Summary Row
+// MARK: - Premium Preference Summary Row
 
-struct PreferenceSummaryRow: View {
+struct PremiumPreferenceSummaryRow: View {
     let icon: String
     let title: String
     let value: String
@@ -568,17 +530,22 @@ struct PreferenceSummaryRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Icon
-            Image(systemName: icon)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(color)
-                .frame(width: 20)
+            // Icon with colored background
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 32, height: 32)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(color)
+            }
             
             // Content
             HStack {
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(.white.opacity(0.7))
                 
                 Spacer()
                 
@@ -590,21 +557,21 @@ struct PreferenceSummaryRow: View {
     }
 }
 
-// MARK: - Value Proposition Row
+// MARK: - Premium Value Proposition Row
 
-struct ValuePropositionRow: View {
+struct PremiumValuePropositionRow: View {
     let icon: String
     let text: String
     
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.white.opacity(0.7))
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.6))
                 .frame(width: 16)
             
             Text(text)
-                .font(.system(size: 12))
+                .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.white.opacity(0.7))
             
             Spacer()
@@ -635,15 +602,7 @@ struct AccountCreationView_Previews: PreviewProvider {
                 print("Account creation completed")
             }
         )
-        .background(
-            LinearGradient(
-                colors: [.green.opacity(0.8), .mint.opacity(0.6)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
         .preferredColorScheme(.dark)
     }
 }
-
 #endif

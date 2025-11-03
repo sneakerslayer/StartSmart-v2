@@ -2,14 +2,14 @@
 //  PermissionPrimingView.swift
 //  StartSmart
 //
-//  Permission Priming Implementation
-//  Educational permission request before iOS system prompts
+//  Onboarding Step 6: Permission Priming
+//  Updated to match PremiumLandingPageV2 theme
 //
 
 import SwiftUI
 import UserNotifications
 
-/// Permission priming screen that educates users before system prompts
+/// Permission priming screen with premium design that educates users before system prompts
 struct PermissionPrimingView: View {
     @ObservedObject var onboardingState: OnboardingState
     @State private var animateElements = false
@@ -17,38 +17,74 @@ struct PermissionPrimingView: View {
     @State private var isRequestingPermission = false
     
     var body: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 24) { // Reduced spacing from 32 to 24
-                    // Header section
-                    headerSection
-                        .opacity(animateElements ? 1 : 0)
-                        .offset(y: animateElements ? 0 : -20)
-                    
-                    // Permission explanation
-                    permissionExplanation
-                        .opacity(showFeatures ? 1 : 0)
-                        .offset(y: showFeatures ? 0 : 20)
-                    
-                    // Features that require notifications
-                    notificationFeatures
-                        .opacity(showFeatures ? 1 : 0)
-                        .offset(y: showFeatures ? 0 : 30)
-                    
-                    // Permission request button
-                    permissionRequestButton
-                        .opacity(showFeatures ? 1 : 0)
-                        .offset(y: showFeatures ? 0 : 20)
-                    
-                    // Add space for navigation buttons
-                    Spacer(minLength: 20) // Reduced to minimize dead space
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 10) // Reduced from 40 to 10 to prevent cutoff
-                .padding(.bottom, 20) // Reduced to minimize dead space
-                .frame(minHeight: geometry.size.height)
+        ZStack {
+            // Background - matching landing page theme
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.06, green: 0.06, blue: 0.12),
+                    Color(red: 0.10, green: 0.10, blue: 0.18)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            // Radial gradients for depth
+            ZStack {
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        DesignSystem.purple.opacity(0.15),
+                        Color.clear
+                    ]),
+                    center: .topLeading,
+                    startRadius: 0,
+                    endRadius: 300
+                )
+                
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        DesignSystem.indigo.opacity(0.15),
+                        Color.clear
+                    ]),
+                    center: .bottomTrailing,
+                    startRadius: 0,
+                    endRadius: 300
+                )
             }
-            .scrollContentBackground(.hidden) // Hide default background for better bounce effect
+            .ignoresSafeArea()
+            
+            // Content
+            GeometryReader { geometry in
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: DesignSystem.spacing3) {
+                        // Header section
+                        headerSection
+                            .opacity(animateElements ? 1 : 0)
+                            .offset(y: animateElements ? 0 : 20)
+                        
+                        // Permission explanation
+                        permissionExplanation
+                            .opacity(showFeatures ? 1 : 0)
+                            .offset(y: showFeatures ? 0 : 20)
+                        
+                        // Features that require notifications
+                        notificationFeatures
+                            .opacity(showFeatures ? 1 : 0)
+                            .offset(y: showFeatures ? 0 : 30)
+                        
+                        // Permission request button
+                        permissionRequestButton
+                            .opacity(showFeatures ? 1 : 0)
+                            .offset(y: showFeatures ? 0 : 20)
+                        
+                        Spacer(minLength: 20)
+                    }
+                    .padding(.horizontal, DesignSystem.spacing4)
+                    .padding(.top, 0)
+                    .padding(.bottom, DesignSystem.spacing3)
+                    .frame(minHeight: geometry.size.height)
+                }
+            }
         }
         .onAppear {
             startAnimations()
@@ -58,47 +94,53 @@ struct PermissionPrimingView: View {
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(spacing: 12) { // Standardized spacing
+        VStack(spacing: DesignSystem.spacing3) {
             // Notification bell icon with animation
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 50, height: 50) // Standardized size
+                    .fill(Color.white.opacity(0.04))
+                    .frame(width: 56, height: 56)
                     .overlay(
                         Circle()
-                            .stroke(Color.white.opacity(0.4), lineWidth: 2)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
                     )
-                    .scaleEffect(animateElements ? 1.1 : 1.0)
+                
+                // Animated ring effect
+                Circle()
+                    .stroke(DesignSystem.purple.opacity(0.3), lineWidth: 2)
+                    .frame(width: 56, height: 56)
+                    .scaleEffect(animateElements ? 1.2 : 1.0)
+                    .opacity(animateElements ? 0 : 1)
                     .animation(
-                        .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
+                        Animation.easeOut(duration: 2.0)
+                            .repeatForever(autoreverses: false),
                         value: animateElements
                     )
                 
                 Image(systemName: "bell.fill")
-                    .font(.system(size: 24, weight: .medium)) // Standardized size
-                    .foregroundColor(.white)
+                    .font(.system(size: 24))
+                    .foregroundColor(DesignSystem.purple)
                     .scaleEffect(animateElements ? 1.0 : 0.95)
                     .animation(.spring(response: 0.4, dampingFraction: 0.7), value: animateElements)
             }
             
-            // Title
-            Text("Enable notifications to wake up inspired")
-                .font(.system(size: 28, weight: .bold, design: .rounded)) // Standardized size
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .tracking(-1) // Standardized tracking
-                .lineSpacing(2) // Standardized line spacing
-                .padding(.horizontal, 10) // Standardized padding
-            
-            // Subtitle
-            Text("StartSmart needs permission to play your personalized motivational alarms, even when the app is closed")
-                .font(.system(size: 14, weight: .medium)) // Standardized size
-                .foregroundColor(.white.opacity(0.85)) // Standardized opacity
-                .multilineTextAlignment(.center)
-                .lineSpacing(2) // Standardized line spacing
-                .padding(.horizontal, 10) // Standardized padding
+            VStack(spacing: 12) {
+                // Title
+                Text("Enable notifications to\nwake up inspired")
+                    .font(.system(size: 32, weight: .bold, design: .default))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .tracking(-0.5)
+                
+                // Subtitle
+                Text("StartSmart needs permission to play your personalized motivational alarms, even when the app is closed")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
         }
-        .padding(.top, 10) // Standardized top padding
+        .padding(.top, 60)
     }
     
     // MARK: - Permission Explanation
@@ -107,16 +149,16 @@ struct PermissionPrimingView: View {
         VStack(spacing: 16) {
             // Visual explanation card
             VStack(spacing: 12) {
-                HStack(spacing: 12) {
+                HStack(spacing: 16) {
                     // Phone illustration
                     ZStack {
                         RoundedRectangle(cornerRadius: 8)
                             .fill(Color.white.opacity(0.9))
                             .frame(width: 40, height: 60)
                         
-                        VStack(spacing: 2) {
+                        VStack(spacing: 3) {
                             RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.blue)
+                                .fill(DesignSystem.purple)
                                 .frame(width: 30, height: 4)
                             
                             RoundedRectangle(cornerRadius: 2)
@@ -132,56 +174,55 @@ struct PermissionPrimingView: View {
                     // Arrow
                     Image(systemName: "arrow.right")
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(.white.opacity(0.5))
                     
-                    // Sound waves
-                    HStack(spacing: 2) {
+                    // Sound waves animation
+                    HStack(spacing: 3) {
                         ForEach(0..<4, id: \.self) { index in
                             RoundedRectangle(cornerRadius: 1)
-                                .fill(Color.white.opacity(0.8))
+                                .fill(DesignSystem.purple.opacity(0.8))
                                 .frame(width: 3, height: CGFloat(8 + index * 4))
+                                .offset(y: showFeatures ? 0 : 5)
                                 .animation(
-                                    .easeInOut(duration: 0.6)
-                                    .repeatForever(autoreverses: true)
-                                    .delay(Double(index) * 0.1),
+                                    Animation.easeInOut(duration: 0.6)
+                                        .repeatForever(autoreverses: true)
+                                        .delay(Double(index) * 0.1),
                                     value: showFeatures
                                 )
                         }
                     }
                     
                     // Text
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("Your Alarm")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white)
                         
                         Text("Plays even when closed")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.7))
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6))
                     }
                     
                     Spacer()
                 }
             }
-            .padding(16)
-            .background(
+            .padding(20)
+            .background(Color.white.opacity(0.04))
+            .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.white.opacity(0.15))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                    )
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
             )
+            .cornerRadius(16)
             
             // Why this matters
             VStack(spacing: 8) {
                 Text("Why this matters:")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundColor(DesignSystem.purple)
                 
                 Text("Without notification permission, your AI-generated alarms won't work reliably. iOS needs this permission to play custom audio when the app isn't actively open.")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.8))
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
                     .lineSpacing(3)
                     .padding(.horizontal, 8)
@@ -199,10 +240,11 @@ struct PermissionPrimingView: View {
             
             VStack(spacing: 12) {
                 ForEach(Array(notificationFeaturesList.enumerated()), id: \.offset) { index, feature in
-                    NotificationFeatureRow(
+                    PremiumNotificationFeatureRow(
                         icon: feature.icon,
                         title: feature.title,
-                        description: feature.description
+                        description: feature.description,
+                        iconColor: feature.color
                     )
                     .opacity(showFeatures ? 1 : 0)
                     .offset(x: showFeatures ? 0 : -30)
@@ -215,27 +257,31 @@ struct PermissionPrimingView: View {
         }
     }
     
-    private var notificationFeaturesList: [(icon: String, title: String, description: String)] {
+    private var notificationFeaturesList: [(icon: String, title: String, description: String, color: Color)] {
         [
             (
                 icon: "alarm.waves.left.and.right",
                 title: "Reliable Wake-Ups",
-                description: "Your alarms work even when the app is closed"
+                description: "Your alarms work even when the app is closed",
+                color: DesignSystem.purple
             ),
             (
                 icon: "waveform.path",
                 title: "Custom Audio",
-                description: "Hear your personalized AI messages every morning"
+                description: "Hear your personalized AI messages every morning",
+                color: DesignSystem.indigo
             ),
             (
                 icon: "moon.zzz.fill",
                 title: "Sleep Friendly",
-                description: "No unexpected notifications - only your scheduled alarms"
+                description: "No unexpected notifications - only your scheduled alarms",
+                color: DesignSystem.purple
             ),
             (
                 icon: "lock.shield.fill",
                 title: "Privacy Protected",
-                description: "All processing happens on your device"
+                description: "All processing happens on your device",
+                color: DesignSystem.green
             )
         ]
     }
@@ -259,20 +305,20 @@ struct PermissionPrimingView: View {
                     }
                     
                     Text(isRequestingPermission ? "Requesting Permission..." : "Enable Notifications")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(
                     LinearGradient(
-                        colors: [.blue, .cyan],
-                        startPoint: .leading,
-                        endPoint: .trailing
+                        gradient: Gradient(colors: [DesignSystem.purple, DesignSystem.indigo]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-                .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .shadow(color: DesignSystem.purple.opacity(0.4), radius: 24, x: 0, y: 8)
             }
             .disabled(isRequestingPermission)
             .scaleEffect(isRequestingPermission ? 0.98 : 1.0)
@@ -285,19 +331,19 @@ struct PermissionPrimingView: View {
                 VStack(spacing: 4) {
                     Text("Skip for now")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(.white.opacity(0.7))
                     
                     Text("(Alarms may not work reliably)")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.6))
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white.opacity(0.4))
                 }
             }
             .disabled(isRequestingPermission)
             
             // Privacy note
             Text("Your notification preferences can be changed anytime in Settings")
-                .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.6))
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white.opacity(0.5))
                 .multilineTextAlignment(.center)
                 .padding(.top, 8)
                 .padding(.horizontal, 16)
@@ -362,36 +408,46 @@ struct PermissionPrimingView: View {
             animateElements = true
         }
         
-        withAnimation(.easeOut(duration: 0.8).delay(0.4)) {
+        withAnimation(.easeOut(duration: 0.8).delay(0.3)) {
             showFeatures = true
         }
     }
 }
 
-// MARK: - Notification Feature Row
+// MARK: - Premium Notification Feature Row
 
-struct NotificationFeatureRow: View {
+struct PremiumNotificationFeatureRow: View {
     let icon: String
     let title: String
     let description: String
+    let iconColor: Color
     
     var body: some View {
-        HStack(spacing: 12) {
-            // Icon
-            Image(systemName: icon)
-                .font(.system(size: 20, weight: .medium))
-                .foregroundColor(.white)
-                .frame(width: 24)
+        HStack(spacing: 16) {
+            // Icon with colored background
+            ZStack {
+                Circle()
+                    .fill(iconColor.opacity(0.15))
+                    .frame(width: 40, height: 40)
+                    .overlay(
+                        Circle()
+                            .stroke(iconColor.opacity(0.3), lineWidth: 1)
+                    )
+                
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(iconColor)
+            }
             
             // Text content
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.white)
                 
                 Text(description)
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.8))
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white.opacity(0.6))
                     .fixedSize(horizontal: false, vertical: true)
             }
             
@@ -407,15 +463,7 @@ struct NotificationFeatureRow: View {
 struct PermissionPrimingView_Previews: PreviewProvider {
     static var previews: some View {
         PermissionPrimingView(onboardingState: OnboardingState())
-            .background(
-                LinearGradient(
-                    colors: [.blue.opacity(0.7), .cyan.opacity(0.5)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
             .preferredColorScheme(.dark)
     }
 }
-
 #endif

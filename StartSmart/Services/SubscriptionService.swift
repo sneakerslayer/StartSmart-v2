@@ -46,6 +46,12 @@ class SubscriptionService: NSObject, SubscriptionServiceProtocol, ObservableObje
     func configureRevenueCat() async {
         guard !isConfigured else { return }
         
+        // Guard against missing/placeholder API key
+        if revenueCatApiKey.isEmpty || revenueCatApiKey == "appl_placeholder_key" {
+            print("[RevenueCat] Missing API key. Please set REVENUECAT_API_KEY in Config.plist or env.")
+            return
+        }
+        
         // Configure RevenueCat
         Purchases.logLevel = .debug
         Purchases.configure(withAPIKey: revenueCatApiKey)

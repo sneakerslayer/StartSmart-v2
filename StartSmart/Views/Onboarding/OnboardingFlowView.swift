@@ -65,17 +65,8 @@ struct OnboardingFlowView: View {
                 backgroundGradient
                     .ignoresSafeArea()
                 
-                VStack(spacing: 0) {
-                    // Progress indicator (hidden on premium landing screen)
-                    if currentStep != .premiumLanding {
-                        progressIndicator
-                            .padding(.top, 20) // Increased top padding to prevent cutoff
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 10) // Added bottom padding
-                    }
-                    
-                    // Main content area - Conditional View System (No TabView)
-                    Group {
+                // Main content area - fills entire screen
+                Group {
                         switch currentStep {
                         case .premiumLanding:
                             PremiumLandingPageV2(onGetStarted: {
@@ -129,7 +120,6 @@ struct OnboardingFlowView: View {
                         }
                     }
                     .animation(.easeInOut(duration: 0.3), value: onboardingViewModel.onboardingState.currentStep)
-                }
                 
                 // Floating navigation controls (positioned outside VStack to float over background)
                 VStack {
@@ -138,6 +128,16 @@ struct OnboardingFlowView: View {
                         navigationControls
                             .padding(.horizontal, 20)
                             .padding(.bottom, 20)
+                    }
+                }
+                
+                // Progress indicator overlayed at the top (hidden on premium landing screen)
+                if currentStep != .premiumLanding {
+                    VStack {
+                        progressIndicator
+                            .padding(.top, 8)
+                            .padding(.horizontal, 20)
+                        Spacer()
                     }
                 }
             }
@@ -160,54 +160,15 @@ struct OnboardingFlowView: View {
     // MARK: - Background Gradient
     
     private var backgroundGradient: some View {
-        Group {
-            switch currentStep {
-            case .premiumLanding:
-                LinearGradient(
-                    colors: [.blue.opacity(0.8), .purple.opacity(0.6)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            case .motivation:
-                LinearGradient(
-                    colors: toneGradientColors,
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .animation(.easeInOut(duration: 0.3), value: onboardingViewModel.toneSliderPositionProxy)
-            case .tone:
-                LinearGradient(
-                    colors: toneGradientColors,
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .animation(.easeInOut(duration: 0.3), value: onboardingViewModel.toneSliderPositionProxy)
-            case .voice:
-                LinearGradient(
-                    colors: [.green.opacity(0.7), .teal.opacity(0.5)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            case .demo:
-                LinearGradient(
-                    colors: [.purple.opacity(0.8), .indigo.opacity(0.6)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            case .permissions:
-                LinearGradient(
-                    colors: [.blue.opacity(0.7), .cyan.opacity(0.5)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            case .accountCreation:
-                LinearGradient(
-                    colors: [.green.opacity(0.8), .mint.opacity(0.6)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            }
-        }
+        // Unified dark gradient for all screens - matching the premium landing page
+        LinearGradient(
+            gradient: Gradient(colors: [
+                Color(red: 0.06, green: 0.06, blue: 0.12),
+                Color(red: 0.10, green: 0.10, blue: 0.18)
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
     
     private var toneGradientColors: [Color] {

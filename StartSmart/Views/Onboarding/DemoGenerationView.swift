@@ -1,71 +1,100 @@
-//#if DEBUG
 //
 //  DemoGenerationView.swift
 //  StartSmart
 //
-//  Magic Moment Demo Screen
-//  Engaging animation with AI-generated audio playback
+//  Onboarding Step 5: Demo Generation
+//  Updated to match PremiumLandingPageV2 theme
 //
 
 import SwiftUI
 import AVFoundation
 
-/// Magic moment demo screen with engaging animations and audio playback
+/// Magic moment demo screen with premium design and engaging animations
 struct DemoGenerationView: View {
     @ObservedObject var onboardingState: OnboardingState
     @ObservedObject var onboardingViewModel: OnboardingViewModel
     
-    @State private var animateElements = false
     @State private var showGenerationAnimation = false
     @State private var showContent = false
     @State private var showPlaybackControls = false
     @State private var currentAnimationStep = 0
-    
-    // Demo service
     @State private var demoService: OnboardingDemoService?
     
     var body: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                        VStack(spacing: 20) { // Reduced spacing from 24 to 20
-                            // Header section with forced centering
-                            HStack {
-                                Spacer()
-                                headerSection
-                                Spacer()
-                            }
-                            
-                            // Main animation area
-                            mainAnimationArea
-                                .opacity(showGenerationAnimation ? 1 : 0)
-                                .offset(y: showGenerationAnimation ? 0 : 30)
-                            
-                            // Generated content display
-                            if let content = onboardingState.generatedDemoContent {
-                                generatedContentSection(content)
-                                    .opacity(showContent ? 1 : 0)
-                                    .offset(y: showContent ? 0 : 20)
-                            }
-                            
-                            // Error handling
-                            if let error = onboardingState.demoError {
-                                errorSection(error)
-                                    .opacity(showContent ? 1 : 0)
-                                    .offset(y: showContent ? 0 : 20)
-                            }
-                            
-                            // Add space for navigation buttons
-                            Spacer(minLength: 20) // Further reduced to minimize dead space
-                        }
-                .padding(.horizontal, 24)
-                .padding(.top, 10) // Reduced from 40 to 10 to prevent cutoff
-                .padding(.bottom, 20) // Further reduced to minimize dead space
-                .frame(minHeight: geometry.size.height)
+        ZStack {
+            // Background - matching landing page theme
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.06, green: 0.06, blue: 0.12),
+                    Color(red: 0.10, green: 0.10, blue: 0.18)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            // Radial gradients for depth
+            ZStack {
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        DesignSystem.purple.opacity(0.15),
+                        Color.clear
+                    ]),
+                    center: .topLeading,
+                    startRadius: 0,
+                    endRadius: 300
+                )
+                
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        DesignSystem.indigo.opacity(0.15),
+                        Color.clear
+                    ]),
+                    center: .bottomTrailing,
+                    startRadius: 0,
+                    endRadius: 300
+                )
             }
-            .scrollContentBackground(.hidden) // Hide default background for better bounce effect
+            .ignoresSafeArea()
+            
+            // Content
+            GeometryReader { geometry in
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: DesignSystem.spacing3) {
+                        // Header section
+                        headerSection
+                            .opacity(showGenerationAnimation ? 1 : 0)
+                            .offset(y: showGenerationAnimation ? 0 : 20)
+                        
+                        // Main animation area
+                        mainAnimationArea
+                            .opacity(showGenerationAnimation ? 1 : 0)
+                            .offset(y: showGenerationAnimation ? 0 : 30)
+                        
+                        // Generated content display
+                        if let content = onboardingState.generatedDemoContent {
+                            generatedContentSection(content)
+                                .opacity(showContent ? 1 : 0)
+                                .offset(y: showContent ? 0 : 20)
+                        }
+                        
+                        // Error handling
+                        if let error = onboardingState.demoError {
+                            errorSection(error)
+                                .opacity(showContent ? 1 : 0)
+                                .offset(y: showContent ? 0 : 20)
+                        }
+                        
+                        Spacer(minLength: 20)
+                    }
+                    .padding(.horizontal, DesignSystem.spacing4)
+                    .padding(.top, 0)
+                    .padding(.bottom, DesignSystem.spacing3)
+                    .frame(minHeight: geometry.size.height)
+                }
+            }
         }
         .onAppear {
-            // Initialize demo service
             demoService = OnboardingDemoService()
             startDemoGeneration()
         }
@@ -74,82 +103,98 @@ struct DemoGenerationView: View {
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(spacing: 12) { // Standardized spacing
+        VStack(spacing: DesignSystem.spacing3) {
             // Magic wand icon
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 50, height: 50) // Standardized size
+                    .fill(Color.white.opacity(0.04))
+                    .frame(width: 56, height: 56)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
                 
                 Image(systemName: "wand.and.stars")
-                    .font(.system(size: 24, weight: .medium)) // Standardized size
-                    .foregroundColor(.white)
+                    .font(.system(size: 24))
+                    .foregroundColor(DesignSystem.purple)
                     .modifier(PulseAnimationModifier(animate: true))
             }
             
-            // Title
-            Text("Creating Your First Wake-Up...")
-                .font(.system(size: 28, weight: .bold, design: .rounded)) // Standardized size
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .tracking(-1) // Standardized tracking
-                .lineSpacing(2) // Standardized line spacing
-                .padding(.horizontal, 10) // Standardized padding
-            
-            // Subtitle with personalization details
-            VStack(spacing: 6) {
+            VStack(spacing: 12) {
+                // Title
+                Text("Creating Your First\nWake-Up...")
+                    .font(.system(size: 32, weight: .bold, design: .default))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .tracking(-0.5)
+                
+                // Subtitle with personalization details
                 if let motivation = onboardingState.selectedMotivation,
                    let voice = onboardingState.selectedVoice {
                     Text("Crafting a \(onboardingState.computedTone.displayName.lowercased()) message about \(motivation.displayName.lowercased()) in \(voice.name)'s voice")
-                        .font(.system(size: 14, weight: .medium)) // Standardized size
-                        .foregroundColor(.white.opacity(0.85)) // Standardized opacity
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
                         .multilineTextAlignment(.center)
-                        .lineSpacing(2) // Standardized line spacing
+                        .lineSpacing(4)
                 } else {
                     Text("Personalizing your perfect wake-up experience")
-                        .font(.system(size: 14, weight: .medium)) // Standardized size
-                        .foregroundColor(.white.opacity(0.85)) // Standardized opacity
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
                         .multilineTextAlignment(.center)
-                        .lineSpacing(2) // Standardized line spacing
+                        .lineSpacing(4)
                 }
             }
-            .padding(.horizontal, 10) // Standardized padding
         }
-        .padding(.top, 10) // Standardized top padding
+        .padding(.top, 60)
     }
     
     // MARK: - Main Animation Area
     
     private var mainAnimationArea: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DesignSystem.spacing3) {
             if onboardingState.isGeneratingDemo {
-                generationAnimationView
+                loadingAnimationView
             } else if onboardingState.generatedDemoContent != nil {
                 successAnimationView
-            } else if onboardingState.demoError != nil {
-                errorAnimationView
             }
         }
-        .frame(height: 200)
-        .frame(maxWidth: .infinity)
     }
     
-    // MARK: - Generation Animation
+    // MARK: - Loading Animation
     
-    private var generationAnimationView: some View {
+    private var loadingAnimationView: some View {
         VStack(spacing: 20) {
-            // Neural network style animation
-            NeuralNetworkAnimation(isAnimating: onboardingState.isGeneratingDemo)
-                .frame(width: 120, height: 120)
+            // Loading spinner with premium gradient
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.1), lineWidth: 4)
+                    .frame(width: 120, height: 120)
+                
+                Circle()
+                    .trim(from: 0, to: 0.7)
+                    .stroke(
+                        LinearGradient(
+                            gradient: Gradient(colors: [DesignSystem.purple, DesignSystem.indigo]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                    )
+                    .frame(width: 120, height: 120)
+                    .rotationEffect(Angle(degrees: onboardingState.isGeneratingDemo ? 360 : 0))
+                    .animation(
+                        Animation.linear(duration: 1.5)
+                            .repeatForever(autoreverses: false),
+                        value: onboardingState.isGeneratingDemo
+                    )
+            }
             
-            // Status text
             Text(generationStatusText)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.8))
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .animation(.easeInOut(duration: 0.5), value: currentAnimationStep)
         }
-        .frame(maxWidth: .infinity)
         .onAppear {
             startGenerationStatusAnimation()
         }
@@ -171,19 +216,19 @@ struct DemoGenerationView: View {
     
     private var successAnimationView: some View {
         VStack(spacing: 20) {
-            // Success icon with celebration
+            // Success icon
             ZStack {
                 Circle()
-                    .fill(Color.green.opacity(0.2))
+                    .fill(DesignSystem.green.opacity(0.15))
                     .frame(width: 120, height: 120)
                     .overlay(
                         Circle()
-                            .stroke(Color.green.opacity(0.6), lineWidth: 3)
+                            .stroke(DesignSystem.green.opacity(0.5), lineWidth: 3)
                     )
                 
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 60, weight: .medium))
-                    .foregroundColor(.green)
+                    .foregroundColor(DesignSystem.green)
                     .scaleEffect(showContent ? 1.0 : 0.95)
                     .animation(.spring(response: 0.4, dampingFraction: 0.7), value: showContent)
             }
@@ -200,78 +245,62 @@ struct DemoGenerationView: View {
         .frame(maxWidth: .infinity)
     }
     
-    // MARK: - Error Animation
-    
-    private var errorAnimationView: some View {
-        VStack(spacing: 20) {
-            // Error icon
-            ZStack {
-                Circle()
-                    .fill(Color.orange.opacity(0.2))
-                    .frame(width: 120, height: 120)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.orange.opacity(0.6), lineWidth: 3)
-                    )
-                
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 60, weight: .medium))
-                    .foregroundColor(.orange)
-            }
-            
-            // Error message
-            Text("Using a sample message instead")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.white)
-        }
-        .frame(maxWidth: .infinity)
-    }
-    
     // MARK: - Generated Content Section
     
     private func generatedContentSection(_ content: GeneratedContent) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DesignSystem.spacing2) {
             // Content preview card
-            VStack(spacing: 12) {
+            VStack(spacing: DesignSystem.spacing2) {
                 // Content text
                 ScrollView {
                     Text(content.textContent)
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .font(.system(size: 17, weight: .medium, design: .rounded))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .lineSpacing(6)
                         .padding(.horizontal, 16)
                 }
-                .frame(maxHeight: 180) // Increased from 120 to 180
+                .frame(maxHeight: 180)
                 
                 // Audio playback controls
                 audioPlaybackControls(for: content)
                     .opacity(showPlaybackControls ? 1 : 0)
                     .animation(.easeInOut(duration: 0.5).delay(0.5), value: showPlaybackControls)
             }
-            .padding(20) // Reduced from 24 to 20
-            .background(
+            .padding(20)
+            .background(Color.white.opacity(0.04))
+            .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color.white.opacity(0.15))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                    )
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
             )
+            .cornerRadius(20)
             
             // Magic moment message
-            VStack(spacing: 6) { // Reduced spacing from 8 to 6
-                Text("✨ This is just a preview")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
+            VStack(spacing: 6) {
+                HStack(spacing: 6) {
+                    Text("✨")
+                        .font(.system(size: 16))
+                    Text("This is just a preview")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(DesignSystem.purple)
+                }
                 
                 Text("Every morning, you'll get a fresh, personalized message based on your goals")
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.7))
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white.opacity(0.6))
                     .multilineTextAlignment(.center)
-                    .lineSpacing(2)
+                    .lineSpacing(3)
             }
             .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(DesignSystem.purple.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(DesignSystem.purple.opacity(0.3), lineWidth: 1)
+                    )
+            )
         }
     }
     
@@ -289,22 +318,28 @@ struct DemoGenerationView: View {
             }) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.9))
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [DesignSystem.purple, DesignSystem.indigo]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
                         .frame(width: 56, height: 56)
                     
                     Image(systemName: onboardingViewModel.isAudioPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.primary)
+                        .foregroundColor(.white)
                         .offset(x: onboardingViewModel.isAudioPlaying ? 0 : 2)
                 }
-                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                .shadow(color: DesignSystem.purple.opacity(0.4), radius: 8, x: 0, y: 4)
             }
             .scaleEffect(onboardingViewModel.isAudioPlaying ? 1.1 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: onboardingViewModel.isAudioPlaying)
             
-            // Audio visualization
+            // Audio visualization or label
             if onboardingViewModel.isAudioPlaying {
-                AudioVisualizationView(isPlaying: onboardingViewModel.isAudioPlaying)
+                PremiumAudioVisualizationView(isPlaying: onboardingViewModel.isAudioPlaying)
             } else {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Tap to hear your message")
@@ -312,8 +347,8 @@ struct DemoGenerationView: View {
                         .foregroundColor(.white)
                     
                     Text("Delivered by \(onboardingState.selectedVoice?.name ?? "your chosen voice")")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.7))
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
                 }
             }
         }
@@ -322,111 +357,55 @@ struct DemoGenerationView: View {
     // MARK: - Error Section
     
     private func errorSection(_ error: String) -> some View {
-        VStack(spacing: 16) {
-            Text("Don't worry - here's a sample!")
-                .font(.system(size: 18, weight: .semibold))
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 40))
+                .foregroundColor(Color.orange)
+            
+            Text("Oops! Something went wrong")
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white)
             
             Text(error)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 16)
             
-            // Retry button (if needed)
-            Button(action: {
-                retryDemoGeneration()
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 14, weight: .medium))
-                    
-                    Text("Try Again")
-                        .font(.system(size: 14, weight: .semibold))
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white.opacity(0.2))
-                )
+            Button(action: startDemoGeneration) {
+                Text("Try Again")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [DesignSystem.purple, DesignSystem.indigo]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .cornerRadius(12)
             }
         }
+        .padding(24)
+        .background(Color.white.opacity(0.04))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+        )
+        .cornerRadius(20)
     }
     
-    // MARK: - Demo Generation Logic
+    // MARK: - Helper Functions
     
     private func startDemoGeneration() {
-        startAnimations()
+        withAnimation(.easeOut(duration: 0.6)) {
+            showGenerationAnimation = true
+        }
         
-        // Skip dependency-heavy demo service for now, use fallback content
-        // This prevents the app crash from DependencyContainer timeout
+        // Use fallback content instead of dependency-heavy demo service
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             generateFallbackContent()
-        }
-    }
-    
-    private func generateDemoContent() {
-        guard let motivation = onboardingState.selectedMotivation,
-              let voice = onboardingState.selectedVoice else {
-            onboardingState.demoError = "Missing required selection data"
-            return
-        }
-        
-        onboardingState.isGeneratingDemo = true
-        onboardingState.demoError = nil
-        onboardingState.generatedDemoContent = nil
-        
-        Task {
-            do {
-                let content = try await demoService?.generateDemoContent(
-                    motivation: motivation,
-                    tone: onboardingState.computedTone,
-                    voicePersona: voice
-                )
-                
-                await MainActor.run {
-                    onboardingState.isGeneratingDemo = false
-                    onboardingState.generatedDemoContent = content
-                    
-                    withAnimation(.easeInOut(duration: 0.6)) {
-                        showContent = true
-                    }
-                    
-                    withAnimation(.easeInOut(duration: 0.5).delay(0.3)) {
-                        showPlaybackControls = true
-                    }
-                    
-                    // Auto-advance after a moment
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                        onboardingState.proceedToNext()
-                    }
-                }
-                
-            } catch {
-                await MainActor.run {
-                    onboardingState.isGeneratingDemo = false
-                    onboardingState.demoError = error.localizedDescription
-                    
-                    // Still show demo content if we have fallback
-                    if let fallbackContent = demoService?.getFallbackContent(
-                        motivation: motivation,
-                        tone: onboardingState.computedTone
-                    ) {
-                        onboardingState.generatedDemoContent = fallbackContent
-                    }
-                    
-                    withAnimation(.easeInOut(duration: 0.6)) {
-                        showContent = true
-                    }
-                    
-                    // Auto-advance after showing error
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                        onboardingState.proceedToNext()
-                    }
-                }
-            }
         }
     }
     
@@ -441,7 +420,7 @@ struct DemoGenerationView: View {
         // Create fallback content without depending on external services
         let fallbackContent = GeneratedContent(
             textContent: getFallbackText(for: motivation),
-            audioURL: nil, // No audio for fallback
+            audioURL: nil,
             audioData: nil,
             voiceId: voice.name,
             metadata: ContentMetadata(
@@ -459,9 +438,7 @@ struct DemoGenerationView: View {
             
             withAnimation(.easeInOut(duration: 0.6)) {
                 showContent = true
-                
-                // Don't auto-advance - let user manually tap Next button
-                // This ensures proper state synchronization with OnboardingFlowView
+                showPlaybackControls = true
             }
         }
     }
@@ -483,27 +460,6 @@ struct DemoGenerationView: View {
         }
     }
     
-    private func retryDemoGeneration() {
-        // Reset state and try again
-        onboardingState.demoError = nil
-        onboardingState.generatedDemoContent = nil
-        showContent = false
-        showPlaybackControls = false
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            generateDemoContent()
-        }
-    }
-    
-    // MARK: - Animation Control
-    
-    private func startAnimations() {
-        // Header is now always visible for consistent centering
-        withAnimation(.easeOut(duration: 0.8).delay(0.3)) {
-            showGenerationAnimation = true
-        }
-    }
-    
     private func startGenerationStatusAnimation() {
         Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { timer in
             if onboardingState.isGeneratingDemo {
@@ -517,103 +473,54 @@ struct DemoGenerationView: View {
     }
 }
 
-// MARK: - Neural Network Animation
+// MARK: - Pulse Animation Modifier
 
-struct NeuralNetworkAnimation: View {
-    let isAnimating: Bool
-    @State private var pulse = false
-    @State private var rotate = false
+struct PulseAnimationModifier: ViewModifier {
+    let animate: Bool
+    @State private var scale: CGFloat = 1.0
     
-    var body: some View {
-        ZStack {
-            // Outer ring
-            Circle()
-                .stroke(Color.white.opacity(0.3), lineWidth: 2)
-                .frame(width: 120, height: 120)
-            
-            // Middle ring
-            Circle()
-                .stroke(Color.white.opacity(0.5), lineWidth: 1.5)
-                .frame(width: 80, height: 80)
-                .rotationEffect(.degrees(rotate ? 360 : 0))
-                .animation(
-                    isAnimating ? .linear(duration: 4).repeatForever(autoreverses: false) : .default,
-                    value: rotate
-                )
-            
-            // Inner nodes
-            ForEach(0..<6, id: \.self) { index in
-                Circle()
-                    .fill(Color.white.opacity(0.8))
-                    .frame(width: 8, height: 8)
-                    .offset(x: 30)
-                    .rotationEffect(.degrees(Double(index) * 60 + (rotate ? 360 : 0)))
-                    .scaleEffect(pulse ? 1.5 : 1.0)
-                    .animation(
-                        isAnimating ? .easeInOut(duration: 1.5).repeatForever(autoreverses: true).delay(Double(index) * 0.1) : .default,
-                        value: pulse
-                    )
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(scale)
+            .onAppear {
+                if animate {
+                    withAnimation(
+                        Animation.easeInOut(duration: 1.5)
+                            .repeatForever(autoreverses: true)
+                    ) {
+                        scale = 1.15
+                    }
+                }
             }
-            
-            // Center brain icon
-            Image(systemName: "brain")
-                .font(.system(size: 24, weight: .medium))
-                .foregroundColor(.white)
-                .scaleEffect(pulse ? 1.2 : 1.0)
-                .animation(
-                    isAnimating ? .easeInOut(duration: 2).repeatForever(autoreverses: true) : .default,
-                    value: pulse
-                )
-        }
-        .onChange(of: isAnimating) { newValue in
-            if newValue {
-                pulse = true
-                rotate = true
-            } else {
-                pulse = false
-                rotate = false
-            }
-        }
     }
 }
 
-// MARK: - Audio Visualization
+// MARK: - Premium Audio Visualization View
 
-struct AudioVisualizationView: View {
+struct PremiumAudioVisualizationView: View {
     let isPlaying: Bool
-    @State private var animateBars = false
-    
-    private let barCount = 8
     
     var body: some View {
-        HStack(spacing: 3) {
-            ForEach(0..<barCount, id: \.self) { index in
+        HStack(spacing: 4) {
+            ForEach(0..<4) { index in
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.white.opacity(0.8))
-                    .frame(width: 3)
-                    .frame(height: barHeight(for: index))
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [DesignSystem.purple, DesignSystem.indigo]),
+                            startPoint: .bottom,
+                            endPoint: .top
+                        )
+                    )
+                    .frame(width: 3, height: isPlaying ? CGFloat.random(in: 10...24) : 10)
                     .animation(
                         isPlaying ?
-                        .easeInOut(duration: 0.4 + Double(index) * 0.1)
-                        .repeatForever(autoreverses: true) :
-                        .easeOut(duration: 0.3),
-                        value: animateBars
+                        Animation.easeInOut(duration: 0.4)
+                            .repeatForever(autoreverses: true)
+                            .delay(Double(index) * 0.1) :
+                        .default,
+                        value: isPlaying
                     )
             }
-        }
-        .onChange(of: isPlaying) { newValue in
-            animateBars = newValue
-        }
-    }
-    
-    private func barHeight(for index: Int) -> CGFloat {
-        let baseHeight: CGFloat = 6
-        let maxHeight: CGFloat = 24
-        
-        if isPlaying && animateBars {
-            return CGFloat.random(in: baseHeight...maxHeight)
-        } else {
-            return baseHeight
         }
     }
 }
@@ -632,13 +539,6 @@ struct DemoGenerationView_Previews: PreviewProvider {
                 return state
             }(),
             onboardingViewModel: OnboardingViewModel()
-        )
-        .background(
-            LinearGradient(
-                colors: [.purple.opacity(0.8), .indigo.opacity(0.6)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
         )
         .preferredColorScheme(.dark)
     }

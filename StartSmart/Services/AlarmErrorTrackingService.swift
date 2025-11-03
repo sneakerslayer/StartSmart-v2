@@ -132,8 +132,11 @@ class AlarmErrorTrackingService {
     /// Private helper to log to Firestore
     private func logToFirestore(eventName: String, data: [String: Any]) async {
         do {
-            // Get Firebase service from dependency container
-            let firebaseService: FirebaseServiceProtocol = DependencyContainer.shared.resolve()
+            // Get Firebase service from dependency container (use resolveSafe to wait for initialization)
+            guard let firebaseService: FirebaseServiceProtocol = await DependencyContainer.shared.resolveSafe() else {
+                logger.info("ℹ️ FirebaseService not available yet - skipping Firestore logging")
+                return
+            }
             
             // Get current user ID
             guard let userId = firebaseService.currentUser?.id.uuidString else {

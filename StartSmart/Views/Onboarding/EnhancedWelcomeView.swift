@@ -320,22 +320,6 @@ struct EnhancedFeatureRow: View {
     }
 }
 
-// MARK: - Pulse Animation Modifier
-
-struct PulseAnimationModifier: ViewModifier {
-    let animate: Bool
-    
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(animate ? 1.1 : 1.0)
-            .opacity(animate ? 0.8 : 1.0)
-            .animation(
-                .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
-                value: animate
-            )
-    }
-}
-
 // MARK: - Preview
 
 #if DEBUG

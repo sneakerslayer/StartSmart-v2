@@ -2,18 +2,17 @@
 //  MotivationSelectionView.swift
 //  StartSmart
 //
-//  Interactive Motivation Selection Cards
-//  Beautiful tappable cards with animations and icons
+//  Onboarding Step 2: What Drives You
+//  Premium themed motivation selection with enhanced visual design
 //
 
 import SwiftUI
 
-/// Interactive motivation selection step with animated cards
+/// Interactive motivation selection step with premium design matching landing page
 struct MotivationSelectionView: View {
     @ObservedObject var onboardingState: OnboardingState
     let onMotivationSelected: ((MotivationCategory) -> Void)?
-    @State private var animateCards = false
-    @State private var showInstructions = false
+    @State private var animationStarted = false
     
     init(onboardingState: OnboardingState, onMotivationSelected: ((MotivationCategory) -> Void)? = nil) {
         self.onboardingState = onboardingState
@@ -22,103 +21,118 @@ struct MotivationSelectionView: View {
     
     // Grid layout configuration
     private let columns = [
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible(), spacing: 16)
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
     ]
     
     var body: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Header section
-                    headerSection
-                        .opacity(showInstructions ? 1 : 0)
-                        .offset(y: showInstructions ? 0 : -20)
-                    
-                    // Motivation cards grid
-                    motivationCardsGrid
-                        .opacity(animateCards ? 1 : 0)
-                        .offset(y: animateCards ? 0 : 30)
-                    
-                    // Bottom spacing to ensure content doesn't get cut off
-                    Spacer()
-                        .frame(height: 20) // Reduced to minimize dead space
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
-                .frame(minHeight: geometry.size.height)
+        ZStack {
+            // Background - matching landing page
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.06, green: 0.06, blue: 0.12),
+                    Color(red: 0.10, green: 0.10, blue: 0.18)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            // Radial gradients for depth
+            ZStack {
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        DesignSystem.purple.opacity(0.15),
+                        Color.clear
+                    ]),
+                    center: .topLeading,
+                    startRadius: 0,
+                    endRadius: 300
+                )
+                
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        DesignSystem.indigo.opacity(0.15),
+                        Color.clear
+                    ]),
+                    center: .bottomTrailing,
+                    startRadius: 0,
+                    endRadius: 300
+                )
             }
-            .scrollContentBackground(.hidden) // Hide default background for better bounce effect
+            .ignoresSafeArea()
+            
+            // Content
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 16) {
+                    // Header with Icon
+                    VStack(spacing: 16) {
+                        // Question Icon
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.04))
+                                .frame(width: 56, height: 56)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                )
+                            
+                            Image(systemName: "target")
+                                .font(.system(size: 24))
+                                .foregroundColor(DesignSystem.purple)
+                        }
+                        
+                        // Question Text
+                        VStack(spacing: 12) {
+                            Text("What drives you\nright now?")
+                                .font(.system(size: 32, weight: .bold, design: .default))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .tracking(-0.5)
+                            
+                            Text("Choose what motivates you most to help us create your perfect wake-up message")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white.opacity(0.6))
+                                .multilineTextAlignment(.center)
+                                .lineSpacing(4)
+                        }
+                    }
+                    .padding(.top, 60)
+                    .padding(.bottom, 8)
+                    .opacity(animationStarted ? 1 : 0)
+                    .offset(y: animationStarted ? 0 : 20)
+                    
+                    // Options Grid
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(Array(MotivationCategory.allCases.enumerated()), id: \.element) { index, motivation in
+                            PremiumMotivationCard(
+                                motivation: motivation,
+                                isSelected: onboardingState.selectedMotivation == motivation,
+                                onTap: {
+                                    handleMotivationSelection(motivation)
+                                }
+                            )
+                            .animation(
+                                .spring(response: 0.6, dampingFraction: 0.8)
+                                .delay(Double(index) * 0.08),
+                                value: animationStarted
+                            )
+                        }
+                    }
+                    .opacity(animationStarted ? 1 : 0)
+                    .offset(y: animationStarted ? 0 : 20)
+                    
+                    // Bottom spacing for navigation buttons
+                    Spacer()
+                        .frame(height: 100)
+                }
+                .padding(.horizontal, DesignSystem.spacing4)
+            }
         }
         .onAppear {
-            startAnimations()
-        }
-    }
-    
-    // MARK: - Header Section
-    
-    private var headerSection: some View {
-        VStack(spacing: 12) {
-            // Question icon
-            ZStack {
-                Circle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 50, height: 50)
-                
-                Image(systemName: "questionmark.bubble.fill")
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundColor(.white)
+            withAnimation(.easeOut(duration: 0.8).delay(0.1)) {
+                animationStarted = true
             }
-            
-            // Main question
-            Text("What drives you right now?")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .tracking(-1)
-            
-            // Subtitle
-            Text("Choose what motivates you most to help us create your perfect wake-up message")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.85))
-                .multilineTextAlignment(.center)
-                .lineSpacing(2)
-                .padding(.horizontal, 16)
-        }
-        .padding(.top, -10)
-    }
-    
-    // MARK: - Motivation Cards Grid
-    
-    private var motivationCardsGrid: some View {
-        LazyVGrid(columns: columns, spacing: 20) {
-            ForEach(Array(MotivationCategory.allCases.enumerated()), id: \.element) { index, motivation in
-                MotivationCard(
-                    motivation: motivation,
-                    isSelected: onboardingState.selectedMotivation == motivation,
-                    onTap: {
-                        handleMotivationSelection(motivation)
-                    }
-                )
-                .animation(
-                    .spring(response: 0.6, dampingFraction: 0.7)
-                    .delay(Double(index) * 0.1),
-                    value: animateCards
-                )
-            }
-        }
-        .padding(.horizontal, 8)
-    }
-    
-    // MARK: - Animation Control
-    
-    private func startAnimations() {
-        withAnimation(.easeOut(duration: 0.8)) {
-            showInstructions = true
-        }
-        
-        withAnimation(.easeOut(duration: 0.8).delay(0.3)) {
-            animateCards = true
         }
     }
     
@@ -126,6 +140,10 @@ struct MotivationSelectionView: View {
     
     private func handleMotivationSelection(_ motivation: MotivationCategory) {
         print("🎯 handleMotivationSelection called with: \(motivation.rawValue)")
+        
+        // Haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
         
         // Call the callback if provided
         onMotivationSelected?(motivation)
@@ -135,173 +153,101 @@ struct MotivationSelectionView: View {
     }
 }
 
-// MARK: - Motivation Card Component
+// MARK: - Premium Motivation Card Component
 
-struct MotivationCard: View {
+struct PremiumMotivationCard: View {
     let motivation: MotivationCategory
     let isSelected: Bool
     let onTap: () -> Void
     
-    @State private var isPressed = false
-    @State private var showContent = false
-    
     var body: some View {
-        Button(action: {
-            onTap()
-        }) {
-            VStack(spacing: 16) {
-                // Icon with animated background
-                ZStack {
-                    Circle()
-                        .fill(motivation.iconColor.opacity(isSelected ? 0.3 : 0.15))
-                        .frame(width: 56, height: 56)
-                        .overlay(
+        Button(action: onTap) {
+            VStack(spacing: 0) {
+                // Selection indicator
+                if isSelected {
+                    HStack {
+                        Spacer()
+                        ZStack {
                             Circle()
-                                .stroke(
-                                    motivation.iconColor.opacity(isSelected ? 0.6 : 0.0),
-                                    lineWidth: 2
-                                )
-                        )
-                        .scaleEffect(isSelected ? 1.1 : 1.0)
+                                .fill(DesignSystem.purple)
+                                .frame(width: 24, height: 24)
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .padding([.top, .trailing], 12)
+                    .frame(height: 24)
+                } else {
+                    Spacer()
+                        .frame(height: 36)
+                }
+                
+                // Icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(motivation.iconColor.opacity(isSelected ? 0.25 : 0.15))
+                        .frame(width: 56, height: 56)
                     
                     Image(systemName: motivation.iconName)
-                        .font(.system(size: 24, weight: .medium))
+                        .font(.system(size: 28))
                         .foregroundColor(motivation.iconColor)
-                        .scaleEffect(isSelected ? 1.1 : 1.0)
                 }
-                .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isSelected)
+                .padding(.bottom, 16)
                 
-                // Text content
+                // Text
                 VStack(spacing: 8) {
                     Text(motivation.displayName)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                         .minimumScaleFactor(0.8)
-                        .fixedSize(horizontal: false, vertical: true)
                     
                     Text(motivation.description)
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(.white.opacity(0.75))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
                         .multilineTextAlignment(.center)
+                        .lineSpacing(2)
                         .lineLimit(3)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .opacity(showContent ? 1 : 0)
-                .offset(y: showContent ? 0 : 10)
-                .animation(.easeOut(duration: 0.6).delay(0.2), value: showContent)
+                .padding(.horizontal, 8)
+                
+                Spacer(minLength: 16)
             }
-            .padding(20)
+            .frame(minHeight: 180)
             .frame(maxWidth: .infinity)
-            .frame(height: 180)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(
-                        isSelected ?
+                ZStack {
+                    Color.white.opacity(isSelected ? 0.06 : 0.04)
+                    if isSelected {
                         LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.25),
-                                Color.white.opacity(0.15)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ) :
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.15),
-                                Color.white.opacity(0.08)
-                            ],
+                            gradient: Gradient(colors: [
+                                DesignSystem.purple.opacity(0.1),
+                                DesignSystem.indigo.opacity(0.1)
+                            ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(
-                                isSelected ?
-                                Color.white.opacity(0.4) :
-                                Color.white.opacity(0.2),
-                                lineWidth: isSelected ? 2 : 1
-                            )
-                    )
-                    .shadow(
-                        color: isSelected ?
-                        motivation.iconColor.opacity(0.3) :
-                        Color.black.opacity(0.1),
-                        radius: isSelected ? 8 : 4,
-                        x: 0,
-                        y: isSelected ? 4 : 2
-                    )
-            )
-            .scaleEffect(isPressed ? 0.95 : 1.0)
-            .scaleEffect(isSelected ? 1.05 : 1.0)
-            .animation(.easeInOut(duration: 0.2), value: isPressed)
-            .animation(.spring(response: 0.5, dampingFraction: 0.7), value: isSelected)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .onLongPressGesture(
-            minimumDuration: 0,
-            maximumDistance: .infinity,
-            pressing: { pressing in
-                isPressed = pressing
-            },
-            perform: {}
-        )
-        .onAppear {
-            withAnimation(.easeOut(duration: 0.6).delay(0.1)) {
-                showContent = true
-            }
-        }
-    }
-}
-
-// MARK: - Selection Animation Modifier
-
-struct SelectionAnimationModifier: ViewModifier {
-    let isSelected: Bool
-    
-    func body(content: Content) -> some View {
-        content
-            .overlay(
-                // Selection indicator
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(Color.white, lineWidth: 3)
-                    .opacity(isSelected ? 1 : 0)
-                    .scaleEffect(isSelected ? 1.05 : 1.0)
-                    .animation(.spring(response: 0.5, dampingFraction: 0.6), value: isSelected)
-            )
-            .overlay(
-                // Checkmark indicator
-                VStack {
-                    HStack {
-                        Spacer()
-                        
-                        ZStack {
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 24, height: 24)
-                            
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.green)
-                        }
-                        .opacity(isSelected ? 1 : 0)
-                        .scaleEffect(isSelected ? 1.0 : 0.5)
-                        .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isSelected)
                     }
-                    .padding(.trailing, 8)
-                    .padding(.top, 8)
-                    
-                    Spacer()
                 }
             )
-    }
-}
-
-extension View {
-    func selectionAnimation(isSelected: Bool) -> some View {
-        modifier(SelectionAnimationModifier(isSelected: isSelected))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(isSelected ? DesignSystem.purple : Color.white.opacity(0.08), lineWidth: isSelected ? 2 : 1)
+            )
+            .cornerRadius(20)
+            .scaleEffect(isSelected ? 1.02 : 1.0)
+            .shadow(
+                color: isSelected ? DesignSystem.purple.opacity(0.3) : Color.black.opacity(0.1),
+                radius: isSelected ? 8 : 4,
+                x: 0,
+                y: isSelected ? 4 : 2
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isSelected)
     }
 }
 
@@ -310,38 +256,8 @@ extension View {
 #if DEBUG
 struct MotivationSelectionView_Previews: PreviewProvider {
     static var previews: some View {
-        Group {
-            // Light mode
-            MotivationSelectionView(onboardingState: OnboardingState())
-                .background(
-                    LinearGradient(
-                        colors: [.orange.opacity(0.7), .pink.opacity(0.5)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .preferredColorScheme(.light)
-            
-            // Dark mode
-            MotivationSelectionView(onboardingState: OnboardingState())
-                .background(
-                    LinearGradient(
-                        colors: [.orange.opacity(0.7), .pink.opacity(0.5)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .preferredColorScheme(.dark)
-            
-            // Single card preview
-            MotivationCard(
-                motivation: .fitness,
-                isSelected: false,
-                onTap: { print("Fitness selected") }
-            )
-            .frame(width: 160, height: 160)
-            .background(Color.black)
-        }
+        MotivationSelectionView(onboardingState: OnboardingState())
+            .preferredColorScheme(.dark)
     }
 }
 #endif

@@ -9,6 +9,8 @@
 import Foundation
 import SwiftUI
 import Combine
+import AVFoundation
+import ObjectiveC
 
 // MARK: - Motivation Categories
 enum MotivationCategory: String, CaseIterable, Codable {
@@ -81,8 +83,8 @@ struct VoicePersona: Identifiable, Codable, Equatable {
             description: "Warm, encouraging guidance like a caring coach",
             tone: .gentle,
             sampleText: "Good morning. You've got this. Take a deep breath and gently begin your day with purpose.",
-            voiceId: "gentle",
-            isPremium: false // Free voice
+            voiceId: "84Fal4DSXWfp7nJ8emqQ", // Motivational Mike
+            isPremium: false
         ),
         VoicePersona(
             id: "energetic_coach",
@@ -90,8 +92,8 @@ struct VoicePersona: Identifiable, Codable, Equatable {
             description: "High-energy motivation to get you moving",
             tone: .energetic,
             sampleText: "Rise and shine! Today is your day to absolutely crush those goals. Let's go make it happen!",
-            voiceId: "energetic",
-            isPremium: false // Free voice
+            voiceId: "DGzg6RaUqxGRTHSBjfgF", // Drill Sergeant Drew
+            isPremium: false
         ),
         VoicePersona(
             id: "tough_challenger",
@@ -99,8 +101,8 @@ struct VoicePersona: Identifiable, Codable, Equatable {
             description: "Direct, no-nonsense motivation that pushes you",
             tone: .toughLove,
             sampleText: "Time to get up. No excuses today. That goal isn't going to crush itself. Move!",
-            voiceId: "tough_love",
-            isPremium: true // Premium voice
+            voiceId: "KLZOWyG48RjZkAAjuM89", // Angry Allen
+            isPremium: false
         ),
         VoicePersona(
             id: "wise_storyteller",
@@ -108,8 +110,8 @@ struct VoicePersona: Identifiable, Codable, Equatable {
             description: "Inspiring through metaphors and vivid imagery",
             tone: .storyteller,
             sampleText: "Like the sunrise breaking through the darkness, your potential awakens. Rise and embrace your journey.",
-            voiceId: "storyteller",
-            isPremium: true // Premium voice
+            voiceId: "DLsHlh26Ugcm6ELvS0qi", // Mrs. Walker - Warm & Caring Southern Mom
+            isPremium: false
         )
     ]
     
@@ -401,6 +403,9 @@ class OnboardingState: ObservableObject {
     }
 }
 
+// MARK: - Audio Player Key for Associated Objects
+private var audioPlayerKey: UInt8 = 0
+
 // MARK: - Onboarding Progress View Model
 @MainActor
 class OnboardingViewModel: ObservableObject {
@@ -449,16 +454,72 @@ class OnboardingViewModel: ObservableObject {
     
     func playDemoContent() {
         guard let content = onboardingState.generatedDemoContent,
+              let selectedVoice = onboardingState.selectedVoice,
               !isAudioPlaying else { return }
         
         isAudioPlaying = true
         audioError = nil
         
-        print("🔊 Playing demo content: \(content.textContent.prefix(50))...")
+        print("🔊 Playing demo content with voice: \(selectedVoice.name)...")
         
-        // Simulate audio playback
-        DispatchQueue.main.asyncAfter(deadline: .now() + content.estimatedDuration) {
+        // Generate and play audio using ElevenLabs
+        Task {
+            do {
+                // Get ElevenLabs service from dependency container
+                guard let elevenLabsService: ElevenLabsServiceProtocol = await DependencyContainer.shared.resolveSafe() else {
+                    print("❌ ElevenLabs service not available")
+                    await MainActor.run {
+                        self.isAudioPlaying = false
+                        self.audioError = "Audio service unavailable"
+                    }
+                    return
+                }
+                
+                // Generate speech using the voice ID from VoicePersona
+                let audioData = try await elevenLabsService.generateSpeech(
+                    text: content.textContent,
+                    voiceId: selectedVoice.voiceId
+                )
+                
+                // Save audio data to temporary file
+                let tempURL = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("demo_content_\(selectedVoice.id).mp3")
+                try audioData.write(to: tempURL)
+                
+                // Play the audio
+                await MainActor.run {
+                    self.playAudioFile(at: tempURL, estimatedDuration: content.estimatedDuration)
+                }
+            } catch {
+                print("❌ Failed to play demo content: \(error.localizedDescription)")
+                await MainActor.run {
+                    self.isAudioPlaying = false
+                    self.audioError = "Failed to generate audio"
+                }
+            }
+        }
+    }
+    
+    private func playAudioFile(at url: URL, estimatedDuration: TimeInterval) {
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default, options: .duckOthers)
+            try audioSession.setActive(true)
+            
+            let audioPlayer = try AVAudioPlayer(contentsOf: url)
+            audioPlayer.play()
+            
+            // Store the audio player in the view model to keep it alive
+            objc_setAssociatedObject(self, &audioPlayerKey, audioPlayer, .OBJC_ASSOCIATION_RETAIN)
+            
+            // Schedule the playback stop
+            DispatchQueue.main.asyncAfter(deadline: .now() + audioPlayer.duration + 0.5) {
+                self.isAudioPlaying = false
+            }
+        } catch {
+            print("❌ Failed to play audio: \(error.localizedDescription)")
             self.isAudioPlaying = false
+            self.audioError = "Failed to play audio"
         }
     }
     
