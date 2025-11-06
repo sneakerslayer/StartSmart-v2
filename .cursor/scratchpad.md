@@ -3673,3 +3673,29 @@ while Date() < timeoutDeadline {
 **Code Quality**: ✅ EXCELLENT - Follows Swift concurrency best practices
 **Ready for Submission**: ✅ YES - Critical crash fixed AND Stage 2 service issue resolved
 
+---
+
+## ✅ ONBOARDING BUTTON TEXT COLOR UPDATE - COMPLETED
+
+**Task**: Change the "Next" button text color to match the "Back" button text color across all onboarding screens.
+
+**Status**: ✅ COMPLETED
+
+**Changes Made**:
+- **File**: `StartSmart/Views/Onboarding/OnboardingFlowView.swift`
+- **Line 284**: Changed `.foregroundColor(.black)` to `.foregroundColor(.white)` on the "Next" button
+
+**Analysis**:
+- Scanned all onboarding view files for button styling
+- Identified that OnboardingFlowView.swift had the only inconsistency
+- Back button (line 260): `.foregroundColor(.white)` ✅
+- Next button (line 284): `.foregroundColor(.black)` → Changed to `.foregroundColor(.white)` ✅
+- Other onboarding screens (ToneSelectionView, VoiceSelectionView, MotivationSelectionView, etc.) don't have navigation controls—they're managed by OnboardingFlowView
+- AccountCreationView has a Google sign-in button with black text on white background (intentional design)
+
+**Result**:
+- ✅ Next button now matches Back button text color (white on frosted glass background)
+- ✅ Consistent visual styling across all onboarding steps
+- ✅ No linting errors
+- ✅ Change applied once in the main navigation controller (affects all screens)
+

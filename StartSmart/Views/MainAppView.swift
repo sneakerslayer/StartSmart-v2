@@ -333,6 +333,10 @@ struct HomeView: View {
     @State private var showPaywall = false
     @State private var isPremium = false
     
+    // Subscription state observation
+    @State private var subscriptionService: SubscriptionService?
+    @State private var cancellables = Set<AnyCancellable>()
+    
     // Voice preview state
     @State private var currentlyPlayingVoice: String?
     @State private var voiceAudioPlayer: AVAudioPlayer?
@@ -605,6 +609,7 @@ struct HomeView: View {
         .onAppear { 
             logger.info("HomeView appeared")
             loadData()
+            setupSubscriptionObserver()
         }
         .onReceive(streakService.enhancedStats) { stats in
             enhancedStats = stats
@@ -614,6 +619,46 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
+        }
+    }
+    
+    // MARK: - Subscription Observer Setup
+    
+    private func setupSubscriptionObserver() {
+        // Resolve SubscriptionService from DependencyContainer
+        guard subscriptionService == nil else { return }
+        
+        Task {
+            do {
+                // ⚠️ IMPORTANT: Resolve as SubscriptionServiceProtocol (how it's registered in DependencyContainer)
+                // NOT as concrete SubscriptionService class (which would not be found)
+                guard let serviceProtocol: SubscriptionServiceProtocol = await DependencyContainer.shared.resolveSafe() else {
+                    print("⚠️ SubscriptionService not available in HomeView (DependencyContainer may still be initializing)")
+                    return
+                }
+                
+                // Cast to concrete class for storing in @State
+                guard let service = serviceProtocol as? SubscriptionService else {
+                    print("⚠️ SubscriptionServiceProtocol is not a SubscriptionService instance")
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    self.subscriptionService = service
+                    
+                    // Observe subscription status changes
+                    service.subscriptionStatusPublisher
+                        .receive(on: DispatchQueue.main)
+                        .sink { status in
+                            self.isPremium = status.isPremium
+                            self.logger.info("🔄 Subscription status updated in HomeView: \(status.rawValue), isPremium: \(status.isPremium)")
+                        }
+                        .store(in: &self.cancellables)
+                    
+                    // Set initial state
+                    self.isPremium = service.currentSubscriptionStatus.isPremium
+                }
+            }
         }
     }
     

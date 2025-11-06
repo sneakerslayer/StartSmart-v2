@@ -30,6 +30,11 @@ class UserViewModel: ObservableObject {
             
             if let user = currentUser {
                 preferences = user.preferences
+                
+                // Check if there's a pending subscription sync from RevenueCat
+                Task {
+                    await retryPendingSubscriptionSync()
+                }
             } else {
                 // Load preferences even if no user (for anonymous usage)
                 preferences = (try? storageManager.loadUserPreferences()) ?? UserPreferences()
@@ -107,6 +112,88 @@ class UserViewModel: ObservableObject {
         user.subscription = startSmartSubscription
         currentUser = user
         saveCurrentUser()
+    }
+    
+    /// Syncs subscription status from RevenueCat to Firebase User Profile
+    /// - Parameter status: The new subscription status from RevenueCat
+    /// - Returns: True if sync was successful, false otherwise
+    func syncSubscriptionWithRevenueCat(_ status: StartSmartSubscriptionStatus) async -> Bool {
+        // STEP 1: Save to UserDefaults IMMEDIATELY (for local persistence even if Firebase fails)
+        UserDefaults.standard.set(status.rawValue, forKey: "pending_subscription_status")
+        print("💾 Subscription saved to local cache: \(status.rawValue)")
+        
+        // Check if user is in guest mode
+        let isGuestMode = UserDefaults.standard.bool(forKey: "is_guest_user")
+        if isGuestMode {
+            print("📱 Guest user - subscription cached locally only")
+            return true
+        }
+        
+        // STEP 2: Update local user model if it exists
+        if var user = currentUser {
+            user.subscription = status
+            currentUser = user
+            saveCurrentUser()
+            print("✅ Subscription updated in local user profile")
+            
+            // STEP 3: Try to sync to Firebase (don't fail if this doesn't work yet)
+            return await syncToFirebase(user: user, status: status)
+        } else {
+            // Profile not loaded yet - that's OK, we'll sync when it loads
+            print("⏳ User profile not loaded yet - subscription cached, will sync when profile loads")
+            
+            // Schedule a retry after a short delay (profile might load soon)
+            Task {
+                try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+                await retryPendingSubscriptionSync()
+            }
+            
+            // Return true because we successfully saved locally
+            return true
+        }
+    }
+    
+    /// Helper method to sync user profile to Firebase
+    private func syncToFirebase(user: User, status: StartSmartSubscriptionStatus) async -> Bool {
+        do {
+            guard let firebaseService: FirebaseServiceProtocol = await DependencyContainer.shared.resolveSafe() else {
+                print("⚠️ FirebaseService not available yet - will retry sync later")
+                return false
+            }
+            
+            try await firebaseService.saveUserProfile(user)
+            print("✅ Subscription status synced to Firebase: \(status.rawValue)")
+            
+            // Clear pending status since sync succeeded
+            UserDefaults.standard.removeObject(forKey: "pending_subscription_status")
+            return true
+        } catch {
+            print("⚠️ Failed to sync subscription to Firebase (will retry): \(error.localizedDescription)")
+            return false
+        }
+    }
+    
+    /// Retry syncing a pending subscription status to Firebase
+    private func retryPendingSubscriptionSync() async {
+        guard let pendingStatusString = UserDefaults.standard.string(forKey: "pending_subscription_status"),
+              let pendingStatus = StartSmartSubscriptionStatus(rawValue: pendingStatusString) else {
+            return // No pending sync
+        }
+        
+        guard var user = currentUser else {
+            print("⏳ Profile still not loaded - will retry sync later")
+            return
+        }
+        
+        print("🔄 Retrying pending subscription sync: \(pendingStatus.rawValue)")
+        user.subscription = pendingStatus
+        currentUser = user
+        saveCurrentUser()
+        
+        let success = await syncToFirebase(user: user, status: pendingStatus)
+        if success {
+            print("✅ Pending subscription sync completed successfully")
+        }
     }
     
     // MARK: - Statistics Methods

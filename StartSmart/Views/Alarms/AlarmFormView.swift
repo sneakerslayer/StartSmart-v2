@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+import Combine
 
 // MARK: - Keyboard Dismissal Helper
 extension UIApplication {
@@ -28,6 +29,10 @@ struct AlarmFormView: View {
     @State private var showUpgradePrompt = false
     @State private var showPaywall = false
     @State private var isPremium = false
+    
+    // Subscription status tracking
+    @State private var subscriptionService: SubscriptionService?
+    @State private var cancellables = Set<AnyCancellable>()
     
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
@@ -393,12 +398,44 @@ struct AlarmFormView: View {
     
     // MARK: - Helper Methods
     private func checkPremiumStatus() {
-        // Check if user is premium (from subscription service or UserDefaults)
-        // For now, default to free unless they have a subscription
-        let isGuestUser = UserDefaults.standard.bool(forKey: "is_guest_user")
-        isPremium = false // Will be updated when subscription service is integrated
+        // Don't resolve again if already done
+        guard subscriptionService == nil else { return }
         
-        print("📊 Premium status: \(isPremium ? "Premium" : "Free"), Guest: \(isGuestUser)")
+        Task {
+            do {
+                // Resolve SubscriptionService from DependencyContainer
+                guard let serviceProtocol: SubscriptionServiceProtocol = await DependencyContainer.shared.resolveSafe() else {
+                    print("⚠️ SubscriptionService not available in AlarmFormView (may still be initializing)")
+                    self.isPremium = false
+                    return
+                }
+                
+                // Cast to concrete type to access publisher
+                guard let service = serviceProtocol as? SubscriptionService else {
+                    print("⚠️ SubscriptionServiceProtocol is not a SubscriptionService instance")
+                    self.isPremium = false
+                    return
+                }
+                
+                // Subscribe to status changes on main thread
+                await MainActor.run {
+                    self.subscriptionService = service
+                    
+                    // Set initial status
+                    self.isPremium = service.currentSubscriptionStatus.isPremium
+                    print("📊 Initial premium status: \(service.currentSubscriptionStatus.rawValue), isPremium: \(self.isPremium)")
+                    
+                    // Subscribe to future changes
+                    service.subscriptionStatusPublisher
+                        .receive(on: DispatchQueue.main)
+                        .sink { status in
+                            self.isPremium = status.isPremium
+                            print("🔄 Premium status updated in AlarmFormView: \(status.rawValue), isPremium: \(status.isPremium)")
+                        }
+                        .store(in: &self.cancellables)
+                }
+            }
+        }
     }
     
     private func saveAlarm() {

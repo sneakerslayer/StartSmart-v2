@@ -68,6 +68,9 @@ class SubscriptionStateManager: ObservableObject {
             self.customerInfo = customerInfo
             self.subscriptionStatus = mapToSubscriptionStatus(customerInfo)
             
+            // Sync the new subscription status to Firebase
+            await syncSubscriptionToFirebase(self.subscriptionStatus)
+            
             showSuccess("Welcome to StartSmart Pro! You now have access to all premium features.")
             return true
             
@@ -88,6 +91,9 @@ class SubscriptionStateManager: ObservableObject {
             let customerInfo = try await subscriptionService.restorePurchases()
             self.customerInfo = customerInfo
             self.subscriptionStatus = mapToSubscriptionStatus(customerInfo)
+            
+            // Sync the restored subscription status to Firebase
+            await syncSubscriptionToFirebase(self.subscriptionStatus)
             
             if subscriptionStatus.isPremium {
                 showSuccess("Purchases restored successfully! Welcome back to StartSmart Pro.")
@@ -244,6 +250,24 @@ extension SubscriptionStateManager {
             return "\(discount.subscriptionPeriod.value) year trial"
         @unknown default:
             return "Trial available"
+        }
+    }
+}
+
+// MARK: - Firebase Sync
+extension SubscriptionStateManager {
+    private func syncSubscriptionToFirebase(_ status: StartSmartSubscriptionStatus) async {
+        do {
+            // Use resolveSafe() to handle cases where UserViewModel might not be available yet
+            guard let userViewModel: UserViewModel = await DependencyContainer.shared.resolveSafe() else {
+                print("⚠️ UserViewModel not available for Firebase sync (DependencyContainer may be initializing)")
+                return
+            }
+            
+            let syncSuccess = await userViewModel.syncSubscriptionWithRevenueCat(status)
+            if !syncSuccess {
+                print("⚠️ Warning: Failed to sync subscription to Firebase, but purchase was successful")
+            }
         }
     }
 }

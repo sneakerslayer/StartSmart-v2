@@ -203,8 +203,41 @@ class SubscriptionService: NSObject, SubscriptionServiceProtocol, ObservableObje
 extension SubscriptionService: PurchasesDelegate {
     func purchases(_ purchases: Purchases, receivedUpdated customerInfo: CustomerInfo) {
         DispatchQueue.main.async { [weak self] in
-            self?.customerInfo = customerInfo
-            self?.currentSubscriptionStatus = self?.mapToSubscriptionStatus(customerInfo) ?? .free
+            guard let self = self else { return }
+            
+            let newStatus = self.mapToSubscriptionStatus(customerInfo)
+            let previousStatus = self.currentSubscriptionStatus
+            
+            self.customerInfo = customerInfo
+            self.currentSubscriptionStatus = newStatus
+            
+            // Detect subscription status changes and sync to Firebase
+            Task { @MainActor in
+                await self.handleSubscriptionStatusChange(from: previousStatus, to: newStatus)
+            }
+        }
+    }
+    
+    /// Handles subscription status changes and syncs to Firebase
+    private func handleSubscriptionStatusChange(from previousStatus: StartSmartSubscriptionStatus, to newStatus: StartSmartSubscriptionStatus) async {
+        // If subscription status changed, sync to Firebase
+        if previousStatus != newStatus {
+            print("📱 Subscription status changed: \(previousStatus.rawValue) → \(newStatus.rawValue)")
+            
+            // Sync the new status to Firebase (use resolveSafe for safety)
+            do {
+                guard let userViewModel: UserViewModel = await DependencyContainer.shared.resolveSafe() else {
+                    print("⚠️ UserViewModel not available for Firebase sync (DependencyContainer may be initializing)")
+                    return
+                }
+                
+                let syncSuccess = await userViewModel.syncSubscriptionWithRevenueCat(newStatus)
+                if syncSuccess {
+                    print("✅ Subscription status change synced to Firebase")
+                } else {
+                    print("⚠️ Warning: Failed to sync subscription status change to Firebase")
+                }
+            }
         }
     }
     

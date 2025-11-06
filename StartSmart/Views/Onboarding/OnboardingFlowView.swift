@@ -281,7 +281,7 @@ struct OnboardingFlowView: View {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 16, weight: .medium))
                     }
-                    .foregroundColor(.black)
+                    .foregroundColor(.white)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
                     .background(

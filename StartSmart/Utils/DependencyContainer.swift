@@ -225,6 +225,11 @@ class DependencyContainer: DependencyContainerProtocol, ObservableObject {
                 localStorage: localStorage
             )
             register(subscriptionManager, for: SubscriptionManagerProtocol.self)
+            
+            // ✅ NEW: Register SubscriptionStateManager in Stage 1 (needed for Settings and onboarding)
+            let subscriptionStateManager = SubscriptionStateManager(subscriptionService: subscriptionService)
+            register(subscriptionStateManager, for: SubscriptionStateManager.self)
+            
             print("✅ Subscription services ready")
         }
         

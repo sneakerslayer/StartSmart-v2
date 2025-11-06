@@ -8,6 +8,7 @@
 
 import SwiftUI
 import AVFoundation
+import Combine // Added for Combine
 
 /// Voice persona selection with audio previews and premium design
 struct VoiceSelectionView: View {
@@ -21,6 +22,10 @@ struct VoiceSelectionView: View {
     @State private var selectedPremiumVoice: VoicePersona?
     @State private var isPremium = false
     @State private var playingVoiceId: String?
+    
+    // Subscription state observation
+    @State private var subscriptionService: SubscriptionService?
+    @State private var cancellables = Set<AnyCancellable>()
     
     init(onboardingState: OnboardingState, onboardingViewModel: OnboardingViewModel, onVoiceSelected: ((VoicePersona) -> Void)? = nil) {
         self.onboardingState = onboardingState
@@ -218,10 +223,47 @@ struct VoiceSelectionView: View {
     }
     
     private func checkPremiumStatus() {
-        // Check if user is premium
-        // During onboarding, user hasn't created account yet, so default to false
-        // Premium status will be checked after account creation
-        isPremium = false
+        // Check if user is premium from RevenueCat
+        guard subscriptionService == nil else { return }
+        
+        // ⚠️ IMPORTANT: Use resolveSafe() during onboarding since DependencyContainer 
+        // may not be fully initialized yet. resolve() would crash with 
+        // "Dependency requested before container initialized"
+        Task {
+            do {
+                // ⚠️ IMPORTANT: Resolve as SubscriptionServiceProtocol (how it's registered in DependencyContainer)
+                // NOT as concrete SubscriptionService class (which would not be found)
+                guard let serviceProtocol: SubscriptionServiceProtocol = await DependencyContainer.shared.resolveSafe() else {
+                    print("⚠️ SubscriptionService not available yet during onboarding (may be initializing)")
+                    // Default to free if service not ready yet
+                    self.isPremium = false
+                    return
+                }
+                
+                // Cast to concrete class for storing in @State
+                guard let service = serviceProtocol as? SubscriptionService else {
+                    print("⚠️ SubscriptionServiceProtocol is not a SubscriptionService instance")
+                    self.isPremium = false
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    self.subscriptionService = service
+                    
+                    // Set initial state
+                    self.isPremium = service.currentSubscriptionStatus.isPremium
+                    
+                    // Observe subscription status changes
+                    service.subscriptionStatusPublisher
+                        .receive(on: DispatchQueue.main)
+                        .sink { status in
+                            self.isPremium = status.isPremium
+                            print("🔄 Premium status updated in VoiceSelectionView: \(status.rawValue), isPremium: \(status.isPremium)")
+                        }
+                        .store(in: &self.cancellables)
+                }
+            }
+        }
     }
 }
 
